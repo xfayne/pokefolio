@@ -1,5 +1,8 @@
 # Firestore rules addition for card-condition analyses
 
+> **Pokefolio safety — do not apply these rules to the production Vintage Binder database.** This file was imported as a legacy reference. Pokefolio's separate staging Firestore and complete ruleset must be created and verified under [Issue #2](https://github.com/xfayne/pokefolio/issues/2); this snippet is not a Pokefolio deployment procedure.
+
+
 The browser stores successful, per-user AI grading results in a **new** subcollection:
 
 `users/{uid}/conditionAnalyses/{analysisKey}`

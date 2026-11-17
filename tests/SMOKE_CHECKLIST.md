@@ -1,5 +1,8 @@
 # Pokémon Vintage Binder — regression and release checklist
 
+> **Pokefolio first-import note:** The manual production-account checklist below refers to the legacy application. For Pokefolio, use only mock fixtures and offline browser checks until a **separate** staging Firebase and Worker have been provisioned and verified in [Issue #2](https://github.com/xfayne/pokefolio/issues/2). Never sign in to or edit the original collection as a smoke test.
+
+
 The checks below are deliberately separated into CI-safe automated tests and
 optional **manual** end-to-end checks. Never test imports, edits or deletions on
 the owner's real Firestore collection.

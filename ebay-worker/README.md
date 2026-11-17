@@ -1,5 +1,8 @@
 # eBay Live Search — secure Cloudflare Worker
 
+> **Pokefolio safety — historical legacy instructions only.** Do **not** run `wrangler deploy`, `wrangler secret put`, or copy any original production eBay, Gemini, Firebase or 17TRACK credentials into this repository. The copied Worker is intentionally disabled until [Issue #2](https://github.com/xfayne/pokefolio/issues/2) creates isolated staging. The deployment steps below describe Vintage Binder's legacy setup, **not** Pokefolio's current setup. See [SAFE_IMPORT.md](../docs/SAFE_IMPORT.md).
+
+
 This is the backend for the existing **🔎 מציאות** tab. It fetches live auctions and Buy It Now listings via the **official eBay Browse API**, not a third-party scraper. The `Client ID` and `Client Secret` remain private in the Worker.
 
 ## Setup (one time)
