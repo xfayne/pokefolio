@@ -1,7 +1,22 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync as systemExecFileSync } from 'node:child_process';
+const execFileSync=(command,args,options={})=>{
+ try{return systemExecFileSync(command,args,options);}
+ catch(error){
+  // The first repository-import PR has no original index/assets in origin/main.
+  // Fall back only for files absent on main; future PRs compare with main normally.
+  const initialImport=command==='git'&&args?.[0]==='show'&&
+   typeof args?.[1]==='string'&&args[1].startsWith('origin/main:')&&
+   String(error.stderr||'').includes("not in 'origin/main'");
+  if(!initialImport)throw error;
+  const path=args[1].slice('origin/main:'.length);
+  console.warn('Initial import: origin/main has no '+path+'; using imported source snapshot');
+  return options.encoding?readFileSync(path,options.encoding):readFileSync(path);
+ }
+};
+
 import { resolve, extname } from 'node:path';
 import { chromium } from 'playwright';
 

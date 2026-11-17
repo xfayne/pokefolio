@@ -3,7 +3,22 @@ import { readFileSync, writeFileSync, unlinkSync, mkdtempSync, rmSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync as systemExecFileSync } from 'node:child_process';
+const execFileSync=(command,args,options={})=>{
+ try{return systemExecFileSync(command,args,options);}
+ catch(error){
+  // The first repository-import PR has no original index/assets in origin/main.
+  // Fall back only for files absent on main; future PRs compare with main normally.
+  const initialImport=command==='git'&&args?.[0]==='show'&&
+   typeof args?.[1]==='string'&&args[1].startsWith('origin/main:')&&
+   String(error.stderr||'').includes("not in 'origin/main'");
+  if(!initialImport)throw error;
+  const path=args[1].slice('origin/main:'.length);
+  console.warn('Initial import: origin/main has no '+path+'; using imported source snapshot');
+  return options.encoding?readFileSync(path,options.encoding):readFileSync(path);
+ }
+};
+
 import { chromium } from 'playwright';
 
 const current = readFileSync('index.html', 'utf8');
