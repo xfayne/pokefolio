@@ -2,7 +2,7 @@
 
 A mobile-first Pokémon card portfolio manager, evolving from the production [Pokémon Vintage Binder](https://github.com/xfayne/pokemon-vintage-binder).
 
-**Foundation status:** The existing app is being imported as an isolated baseline under [Issue #1](https://github.com/xfayne/pokefolio/issues/1). This is **not** a live replacement, and there is no Pokefolio production deployment or connected database yet. The original [Vintage Binder app](https://xfayne.github.io/pokemon-vintage-binder/) remains operational and independent.
+**Foundation status:** The original application has been imported as an isolated baseline under [Issue #1](https://github.com/xfayne/pokefolio/issues/1), starting with [PR #22](https://github.com/xfayne/pokefolio/pull/22). This is **not** a live replacement, and there is no Pokefolio production deployment or connected database yet. The original [Vintage Binder app](https://xfayne.github.io/pokemon-vintage-binder/) remains operational and independent.
 
 ## Architecture and roadmap
 
