@@ -1,5 +1,8 @@
 # 🔎 מציאות — Live eBay deal discovery
 
+> **Pokefolio baseline note:** The functionality below describes the original Vintage Binder implementation. In Pokefolio, live Deals and grading are deliberately **disabled** pending the isolated Worker and Firebase staging work in [Issue #2](https://github.com/xfayne/pokefolio/issues/2). The Worker URL is no longer hardcoded in `live.js`; it is supplied only by the guarded staging runtime configuration. Never reuse the original production Worker.
+
+
 The Deals tab displays **live eBay auctions and Buy It Now listings**, without a fake/sample auction feed.
 
 ## Visible UI
