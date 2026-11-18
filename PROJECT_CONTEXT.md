@@ -1,6 +1,6 @@
 # Pokefolio — Project Context
 
-_Last updated: 2026-11-17 · Foundation import completed; isolated staging pending._
+_Last updated: 2026-11-18 · Cloudflare staging Worker safely created; Firebase and Pages staging pending._
 
 ## Source of truth
 
@@ -12,7 +12,7 @@ _Last updated: 2026-11-17 · Foundation import completed; isolated staging pendi
 
 ## Current state
 
-Issue #1 imported the baseline and safety bootstrap in [PR #22](https://github.com/xfayne/pokefolio/pull/22); [PR #23](https://github.com/xfayne/pokefolio/pull/23) clarifies legacy-only deployment documentation. The source remains vanilla JavaScript, static generated HTML and Cloudflare Worker code until the incremental React/TypeScript migration in #3. No production Pokefolio Firebase, Cloudflare or GitHub Pages environment has been provisioned. Issue #2 is the blocking prerequisite for any writable staging integration.
+Issue #1 imported the baseline and safety bootstrap in [PR #22](https://github.com/xfayne/pokefolio/pull/22); [PR #23](https://github.com/xfayne/pokefolio/pull/23) clarifies legacy-only deployment documentation. The source remains vanilla JavaScript, static generated HTML and Cloudflare Worker code until the incremental React/TypeScript migration in #3. An isolated Cloudflare Worker `pokefolio-ebay-deals-staging` has been created and verified with **one undeployed deny-only version, no public routes/subdomains, no bindings/secrets, and zero deployments** ([PR #25](https://github.com/xfayne/pokefolio/pull/25)). No Pokefolio Firebase project, user-data backend, public Pages site or production deployment has been provisioned. Issue #2 remains the blocking prerequisite for any writable staging integration.
 
 The runtime safety gate in `js/pokefolio-environment.js` defaults Firebase and Workers to disabled. It refuses the legacy Firebase project and legacy Worker endpoint; client modules only read validated staging settings. In addition, the cloned Worker uses a new staging name with `workers_dev=false` and a denied-by-default origin, and its token validator refuses legacy Firebase projects. Pokefolio does **not** delete Vintage Binder localStorage on the shared `xfayne.github.io` origin.
 
