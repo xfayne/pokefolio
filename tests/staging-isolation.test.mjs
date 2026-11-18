@@ -20,7 +20,7 @@ test('copied Worker is not configured to deploy to production',()=>{
  assert.doesNotMatch(config,/^route\s*=/m);
  const worker=read('ebay-worker/index.js');
  assert.match(worker,/POKEFOLIO_FIREBASE_PROJECT_ID/);
- assert.match(worker,/id!==\s*'pokemon-vintage-binder'/);
+ assert.match(worker,/id===\s*'pokefolio-staging'/);
 });
 test('CI contains no deployment or cloud mutation commands',()=>{
  const paths=readdirSync('.github/workflows').filter(path=>/\.ya?ml$/.test(path));

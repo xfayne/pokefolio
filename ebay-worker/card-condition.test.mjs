@@ -54,7 +54,7 @@ test('public route never reaches provider without Firebase authentication',async
 });
 
 test('authenticated analysis downloads eBay photos with Workers-compatible redirect handling',async(t)=>{
- const project='pokefolio-fixture',owner='owner@example.com',kid='fixture-signing-key';
+ const project='pokefolio-staging',owner='owner@example.com',kid='fixture-signing-key';
  const keys=await crypto.subtle.generateKey({
   name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'
  },true,['sign','verify']);
