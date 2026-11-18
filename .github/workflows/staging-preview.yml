@@ -1,0 +1,54 @@
+name: Pokefolio Staging Preview
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokefolio-staging-preview
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify current main and required checks
+        run: node scripts/verify-staging-source.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: node scripts/build-index.mjs --check
+      - name: Package staging frontend only
+        run: node scripts/build-staging-preview.mjs
+        env:
+          POKEFOLIO_FIREBASE_WEB_CONFIG: ${{ vars.POKEFOLIO_FIREBASE_WEB_CONFIG }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/pokefolio-staging
+          retention-days: 1
+  deploy:
+    needs: build
+    if: github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pokefolio-staging
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy verified staging artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

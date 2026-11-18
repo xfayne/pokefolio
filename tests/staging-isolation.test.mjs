@@ -22,7 +22,7 @@ test('copied Worker is not configured to deploy to production',()=>{
  assert.match(worker,/POKEFOLIO_FIREBASE_PROJECT_ID/);
  assert.match(worker,/id===\s*'pokefolio-staging'/);
 });
-test('CI contains no deployment or cloud mutation commands',()=>{
+test('CI contains no backend deployment or cloud mutation commands',()=>{
  const paths=readdirSync('.github/workflows').filter(path=>/\.ya?ml$/.test(path));
  assert.ok(paths.length>0,'No CI workflows found');
  for(const file of paths){
@@ -32,4 +32,15 @@ test('CI contains no deployment or cloud mutation commands',()=>{
   assert.doesNotMatch(body,/\bgh-pages\s+-d\b/i,file);
   assert.doesNotMatch(body,/\bcloudflare\/wrangler-action\b/i,file);
  }
+});
+
+test('Pages staging deployment is manual, main-only and verifies source before packaging',()=>{
+ const workflow=read('.github/workflows/staging-preview.yml');
+ assert.match(workflow,/on:\s*\n\s+workflow_dispatch:/);
+ assert.doesNotMatch(workflow,/^\s+(push|pull_request|pull_request_target|workflow_run|schedule):/m);
+ assert.match(workflow,/github\.repository == 'xfayne\/pokefolio' && github\.ref == 'refs\/heads\/main'/);
+ assert.ok(workflow.indexOf('node scripts/verify-staging-source.mjs')<workflow.indexOf('node scripts/build-staging-preview.mjs'));
+ assert.match(workflow,/name: pokefolio-staging/);
+ assert.match(workflow,/vars\.POKEFOLIO_FIREBASE_WEB_CONFIG/);
+ assert.doesNotMatch(workflow,/secrets\.(EBAY|TRACK17|GEMINI|FIREBASE_ADMIN|GOOGLE_APPLICATION)/);
 });

@@ -19,7 +19,7 @@ python3 -m http.server 8000
 
 The copied app can display the catalog and static UI, but **Firebase sign-in, Firestore writes, eBay Deals, shipping tracking and AI grading are intentionally disabled** until independent staging credentials/configuration exist. No production Firebase configuration or Worker endpoint is bundled. Never point `window.PokefolioRuntimeConfig` at the original Firebase project or Worker; the runtime safety gate rejects those values.
 
-**Do not deploy `ebay-worker/` or enable GitHub Pages for Pokefolio until Issue #2 is completed and independently checked.** The copied `wrangler.toml` uses a different name, a disabled public workers.dev endpoint and a nonfunctional allowed origin.
+**Do not deploy `ebay-worker/`.** A private-Firebase Pages preview may be published only through the manual, protected-main workflow after owner/runtime/browser isolation and required CI checks pass. External providers remain disabled. See [Staging preview](docs/STAGING_PREVIEW.md). The copied `wrangler.toml` uses a different name, a disabled public workers.dev endpoint and a nonfunctional allowed origin.
 
 Edit the HTML template, **not** generated `index.html`. Rebuild and verify:
 
