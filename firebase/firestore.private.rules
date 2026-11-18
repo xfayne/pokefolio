@@ -1,0 +1,67 @@
+// Private staging policy for the retained legacy document format.
+// users/{uid}: progress (opaque legacy map, preserved without normalization),
+// revision (positive integer), updatedAt (server timestamp), clientTimestamp (integer).
+// Nested sharing/settings and conditionAnalyses retain their existing client schemas.
+// Public sharedBinders and every unknown path remain denied.
+// No transaction schema, data migration, or public-sharing policy is introduced.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function validProgress(data) {
+      return data.keys().hasAll(['progress','revision','updatedAt','clientTimestamp'])
+        && data.keys().hasOnly(['progress','revision','updatedAt','clientTimestamp'])
+        && data.progress is map && data.progress.size() <= 32
+        && data.revision is int && data.revision >= 1 && data.revision <= 9007199254740991
+        && data.updatedAt is timestamp && data.updatedAt == request.time
+        && data.clientTimestamp is int && data.clientTimestamp >= 0
+        && data.clientTimestamp <= 9007199254740991;
+    }
+    function validSharing(data) {
+      return data.keys().hasAll(['shareId','enabled','includeWish'])
+        && data.keys().hasOnly(['shareId','enabled','includeWish'])
+        && data.shareId is string && data.shareId.size() == 36
+        && data.shareId.matches('^[a-fA-F0-9-]{36}$')
+        && data.enabled is bool && data.includeWish is bool;
+    }
+    function validAnalysis(data) {
+      return data.keys().hasAll(['schemaVersion','source','analysis','photoIndices','imageCount','analyzedAt','clientAnalyzedAt'])
+        && data.keys().hasOnly(['schemaVersion','source','analysis','photoIndices','imageCount','analyzedAt','clientAnalyzedAt'])
+        && data.schemaVersion == 1
+        && data.source is map && data.source.keys().hasOnly(['type','marketplace','itemId'])
+        && data.source.type == 'ebay-listing'
+        && data.source.marketplace in ['EBAY_US','EBAY_GB','EBAY_DE']
+        && data.source.itemId is string && data.source.itemId.size() <= 64
+        && data.analysis is map && data.analysis.size() <= 64
+        && data.analysis.grade in ['NM','LP','MP','HP','DMG']
+        && data.photoIndices is list && data.photoIndices.size() <= 8
+        && data.photoIndices.hasOnly([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25])
+        && data.imageCount is int && data.imageCount >= 0 && data.imageCount <= 25
+        && data.analyzedAt is timestamp && data.analyzedAt == request.time
+        && data.clientAnalyzedAt is int && data.clientAnalyzedAt >= 0
+        && data.clientAnalyzedAt <= 9007199254740991;
+    }
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create, update: if isOwner(uid) && validProgress(request.resource.data);
+      allow delete: if false;
+      match /sharing/{documentId} {
+        allow read: if isOwner(uid) && documentId == 'settings';
+        allow create, update: if isOwner(uid) && documentId == 'settings'
+          && validSharing(request.resource.data);
+        allow delete: if false;
+      }
+      match /conditionAnalyses/{analysisKey} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validAnalysis(request.resource.data);
+        allow delete: if false;
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
