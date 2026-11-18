@@ -3,7 +3,7 @@
 Target: `pokefolio-staging` (project number `403637067452`).
 Database: `(default)`, Standard edition, `europe-west1`, no-cost Spark plan.
 
-The live bootstrap denies every client read and write. Google sign-in is independently enabled, but the frontend remains disconnected until owner-scoped rules and sign-in are tested. Do not reuse legacy credentials, data, or project aliases.
+The live bootstrap denies every client read and write. Google sign-in is independently enabled, and Web app `Pokefolio Staging Web` is registered. A temporary localhost diagnostic verified Google sign-in, the independent token issuer/audience, and denied Firestore reads and writes for both unauthenticated and authenticated clients. No Firestore test document was created. The product frontend remains disconnected until owner-scoped rules are tested. Do not reuse legacy credentials, data, or project aliases.
 
 ## Read-only verification
 
