@@ -1,12 +1,14 @@
 # Issue #2 — Staging isolation and approval checklist
 
-Status: **architecture approved 2026-11-18; cloud staging being provisioned incrementally**. The approved design uses distinct Firebase projects and Workers for Pokefolio and Vintage Binder.
+Status: **architecture approved 2026-11-18; separate Cloudflare staging Worker created and verified; Firebase and hosting still pending**. The approved design uses distinct Firebase projects and Workers for Pokefolio and Vintage Binder.
 
 ## Read-only inventory
 
 GitHub: `xfayne/pokefolio` main contains the safe Vintage Binder snapshot from #1. Three CI workflows passed. No Pokefolio Pages deployment was enabled at the last audit. No rulesets returned in accessible GitHub API; branch protection cannot be independently read with the current connector.
 
 Cloudflare: the account initially contained only production Worker `pokemon-vintage-ebay-deals`. Its existing secrets and bindings must never be read, copied, edited or attached to Pokefolio. There were no Pokefolio Workers, KV namespaces or Pages projects at the initial audit.
+
+**Cloudflare verification (2026-11-18):** Worker `pokefolio-ebay-deals-staging` was created via the Worker resource API with `subdomain.enabled=false`, `previews_enabled=false`. Version 1 (`8baa6e12-8cb7-47a1-9082-dfcf3e1a0ecb`) was uploaded from the merged deny-only source in PR #25 and has **no bindings or secrets**. Read-back confirmed `deployed_on=null`, zero deployments, and disabled public/preview subdomains. The original Worker remained listed, and no production resource was modified. No routes or custom domains were created.
 
 Firebase: `pokemon-vintage-binder` is legacy production. A separate Pokefolio staging Firebase project and Auth/Firestore **are not yet provisioned or verified**. The Firebase plugin shows as installed, but this chat session exposes no callable Firebase administration action. Do not fall back to the production project.
 
@@ -21,7 +23,7 @@ Firebase: `pokemon-vintage-binder` is legacy production. A separate Pokefolio st
 
 ## Acceptance and verification remaining
 
-- [ ] Verify the staging Worker exists, has no production-resource bindings, has no public route/subdomain, and has no active deployment.
+- [x] Verify the staging Worker exists, has no production-resource bindings, has no public route/subdomain, and has no active deployment (verified against Cloudflare API 2026-11-18).
 - [ ] Create a separate Firebase staging project and confirm independent Authentication, authorized domains, security rules and synthetic read/write tests.
 - [ ] Configure separate staging secrets and any KV namespace with no reuse of production values/resources, then test token issuer/audience and owner isolation.
 - [ ] Enable a safe staging preview only after above tests; set protected CI and documented rollback.
