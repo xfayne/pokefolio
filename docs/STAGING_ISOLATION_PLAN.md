@@ -4,7 +4,7 @@ Status: **architecture approved 2026-11-18; separate Cloudflare staging Worker a
 
 ## Read-only inventory
 
-GitHub: `xfayne/pokefolio` main contains the safe Vintage Binder snapshot from #1. Three CI workflows passed. No Pokefolio Pages deployment was enabled at the last audit. GitHub API read-back on 2026-11-18 confirms active ruleset `27585981` (`Pokefolio main CI protection`) targets only `refs/heads/main`, has no bypass actors, blocks deletion and force pushes, requires a pull request with zero manual approvals, and requires up-to-date `staging-isolation`, `javascript-parity`, and `style-parity` checks from GitHub Actions (`integration_id=15368`). Branch read-back reports `protected=true`.
+GitHub: `xfayne/pokefolio` main contains the safe Vintage Binder snapshot from #1. Three CI workflows passed. No Pokefolio Pages deployment was enabled at the last audit. GitHub API read-back on 2026-11-18 confirms active ruleset `27585981` (`Pokefolio main CI protection`) targets only `refs/heads/main`, has no bypass actors, blocks deletion and force pushes, requires a pull request with zero manual approvals, and requires up-to-date `staging-isolation`, `javascript-parity`, `style-parity`, and `firestore-rules` checks from GitHub Actions (`integration_id=15368`). Branch read-back reports `protected=true`.
 
 Cloudflare: the account initially contained only production Worker `pokemon-vintage-ebay-deals`. Its existing secrets and bindings must never be read, copied, edited or attached to Pokefolio. There were no Pokefolio Workers, KV namespaces or Pages projects at the initial audit.
 
@@ -36,10 +36,13 @@ An isolated CI emulator suite tests both the deployed deny-all policy and an und
 - [x] Verify staging Google sign-in through localhost diagnostic and validate token issuer/audience; verify unauthenticated and authenticated Firestore requests both deny access (2026-11-18).
 - [ ] Implement and test owner-scoped rules, two-user synthetic read/write isolation, and product frontend integration.
 - [ ] Configure separate staging secrets and any KV namespace with no reuse of production values/resources, then test token issuer/audience and owner isolation.
-- [x] Enforce PRs and all three current CI checks on main, with no bypass actors; independently verify via GitHub API (2026-11-18).
+- [x] Enforce PRs and all four current CI checks on main, with no bypass actors; independently verify via GitHub API (2026-11-18).
 - [ ] Enable a safe staging preview only after above tests; document preview rollback.
 - [ ] Verify new frontend cannot mutate old Firestore, Worker, shipments or browser storage.
 
 **Before any real user data:** receive explicit migration approval, verify complete backup independently, dry-run data import and compare cards, copies, orders, pending shipments, 3×3 binder pages/pockets and Wishlist order. Roll back by disabling Pokefolio, never by overwriting Vintage Binder.
 
 Issue #2 stays **open** until all acceptance criteria pass.
+
+
+The private application candidate in `firebase/firestore.private.rules` retains the existing `users/{uid}` progress format and private sharing/analysis paths. The progress payload remains opaque so security setup does not normalize or migrate binder positions, empty pockets, Wishlist order, snapshots or shipments. Ownership and top-level metadata are validated; full per-card business-schema validation belongs to the approved later data-model work. User-document deletion and public shared-binder access remain denied. The default deployed/rollback policy is still deny-all; the private candidate must pass emulator tests and a separate verified staging rollout before frontend wiring.
