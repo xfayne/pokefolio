@@ -1,29 +1,26 @@
-# Firebase staging bootstrap
+# Firebase staging
 
-Target: `pokefolio-staging` (project number `403637067452`).
-Database: `(default)`, Standard edition, `europe-west1`, no-cost Spark plan.
+Target: `pokefolio-staging` (`403637067452`). Standard Firestore `(default)`, `europe-west1`, Spark plan.
 
-The live bootstrap denies every client read and write. Google sign-in is independently enabled, and Web app `Pokefolio Staging Web` is registered. A temporary localhost diagnostic verified Google sign-in, the independent token issuer/audience, and denied Firestore reads and writes for both unauthenticated and authenticated clients. No Firestore test document was created. The product frontend remains disconnected until owner-scoped rules are tested. Do not reuse legacy credentials, data, or project aliases.
+The active policy is `firestore.private.rules` from PR #31, deployed only after 18 emulator checks passed and the console confirmed an empty staging database. A live synthetic diagnostic verified owner reads/writes, cross-user and anonymous denials, schema checks and denied root deletion/public access. One marked synthetic analysis record remains; no collection, binder, Wishlist or shipment data was imported.
 
-## Read-only verification
+The retained progress map is opaque so infrastructure cannot normalize or migrate it. This is ownership/top-level validation, not the future transaction schema or complete nested business-data validation. Public sharing remains closed. The product frontend is still disconnected.
+
+## Verification
 
 ```sh
 node scripts/firebase-staging.mjs --check
 node --test tests/firebase-staging.test.mjs
 ```
 
-These commands require no Firebase login or network. CI runs them without cloud credentials.
+These validate the exact deny-all rollback target/configuration, not the currently deployed policy, and need no credentials/network. See `testing/README.md` for all emulator policies and two-user tests.
 
 ## Explicit deny-all rollback
-
-After authenticating the Firebase CLI to an account authorized for the independent staging project:
 
 ```sh
 node scripts/firebase-staging.mjs --deploy-bootstrap
 ```
 
-The wrapper pins the project, database, configuration and rules. It rejects every project override, extra CLI argument, additional Firebase service or rule that grants client access. It deploys **only Firestore deny-all rules** to Pokefolio staging; it does not create projects, enable Auth, deploy hosting, or read/write/delete documents.
+After authenticating the Firebase CLI for staging, the wrapper publishes only `firestore.rules` to `pokefolio-staging`. It rejects project overrides, extra arguments, additional services and access-granting rules. It does not read, replace or delete documents. Remote CLI execution remains unverified in this restricted terminal; the console also retains the previous deny-all version.
 
-This rollback disables staging client access without overwriting documents. It never rolls back by modifying Vintage Binder. This wrapper's local validation is tested; remote CLI execution remains unverified in the current restricted terminal.
-
-Do not use the bootstrap wrapper to deploy future owner-scoped rules. Those require a separate validated rollout. No real collection import is authorized by this setup.
+The wrapper deliberately cannot deploy the private policy. That rollout was performed through the console from verified merged source, followed by live synthetic checks. No public Firebase Hosting, production credentials or real-data migration is enabled by this setup.

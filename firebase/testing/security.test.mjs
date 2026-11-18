@@ -28,7 +28,7 @@ async function seed(env) {
   await setDoc(doc(db,'sharedBinders','synthetic-share'),{ownerUid:alice,cards:[]});
  });
 }
-test('deployed deny-all bootstrap rejects both synthetic users and anonymous clients',async t=>{
+test('deny-all rollback bootstrap rejects both synthetic users and anonymous clients',async t=>{
  const env=await environment('firestore.rules');
  try {
   await seed(env);
@@ -117,7 +117,7 @@ test('undeployed infrastructure probe enforces owner access and complete validat
  } finally { await env.cleanup(); }
 });
 
-test('private application candidate preserves legacy data and isolates owners',async t=>{
+test('private application policy preserves legacy data and isolates owners',async t=>{
  const env=await environment('firestore.private.rules');
  try {
   await seed(env);

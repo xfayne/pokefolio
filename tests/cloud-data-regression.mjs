@@ -49,8 +49,8 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 function installFakeFirebase(options) {
   window.PokefolioRuntimeConfig={
-    firebase:{apiKey:'fixture',projectId:'pokefolio-fixture',authDomain:'pokefolio-fixture.firebaseapp.com',appId:'fixture'},
-    workerUrl:'https://pokefolio-fixture.workers.dev'
+    firebase:{apiKey:'fixture',projectId:'pokefolio-staging',authDomain:'pokefolio-staging.firebaseapp.com',appId:'fixture'},
+    workerUrl:'https://pokefolio-ebay-deals-staging.xfayne.workers.dev'
   };
   const copy = value => structuredClone(value);
   const docs = copy(options.docs);

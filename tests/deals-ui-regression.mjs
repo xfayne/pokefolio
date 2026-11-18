@@ -64,7 +64,7 @@ try{
   await context.addInitScript(()=>{
     window.PokefolioEnvironment={workerUrl:'https://pokefolio-fixture.workers.dev'};
     // Existing fixture assertions use USD; this also verifies persistence on load.
-    localStorage.setItem('pokemon-vintage-display-currency','USD');
+    localStorage.setItem('pokefolio-display-currency','USD');
     window.VintageDealBridge={
       getWishlistCards:()=>[{id:'neo1-14',name:'Slowking',setName:'Neo Genesis',
         number:'14/111',finish:'holo',firstEdition:false}],
