@@ -2,7 +2,7 @@
    Missing reference rates never silently become original-currency prices. */
 (()=>{
  'use strict';
- const KEY='pokemon-vintage-display-currency';
+ const KEY='pokefolio-display-currency';
  const allowed=new Set(['ILS','USD','EUR']);
  const rates={USD:1};
  let currency='ILS',fxDate=null,status='loading';

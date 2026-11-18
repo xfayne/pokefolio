@@ -6,16 +6,15 @@
  const candidate=input.firebase;
  const project=String(candidate?.projectId||'').trim();
  const authDomain=String(candidate?.authDomain||'').trim();
- const firebaseConfig=project&&project!=='pokemon-vintage-binder'&&
+ const firebaseConfig=project==='pokefolio-staging'&&
   authDomain===project+'.firebaseapp.com'&&
   typeof candidate.apiKey==='string'&&candidate.apiKey.length>0&&
   typeof candidate.appId==='string'&&candidate.appId.length>0
-   ? Object.freeze({...candidate}):null;
+   ? Object.freeze({apiKey:candidate.apiKey,projectId:project,authDomain,appId:candidate.appId}):null;
  let workerUrl='';
  try{
   const url=new URL(String(input.workerUrl||''));
-  if(url.protocol==='https:'&&url.hostname.endsWith('.workers.dev')&&
-     url.hostname!=='pokemon-vintage-ebay-deals.xfayne.workers.dev'&&
+  if(url.origin==='https://pokefolio-ebay-deals-staging.xfayne.workers.dev'&&
      !url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/')
    workerUrl=url.origin;
  }catch(_){}

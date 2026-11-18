@@ -12,7 +12,7 @@ function environment(config){
 }
 const isolated={
  firebase:{apiKey:'test-only',projectId:'pokefolio-staging',authDomain:'pokefolio-staging.firebaseapp.com',appId:'test-only'},
- workerUrl:'https://pokefolio-staging.workers.dev'
+ workerUrl:'https://pokefolio-ebay-deals-staging.xfayne.workers.dev'
 };
 test('empty runtime configuration disables cloud and worker access',()=>{
  const result=environment(undefined);
@@ -31,7 +31,7 @@ test('legacy Firebase and Cloudflare production settings are always rejected',()
 test('independent staging settings can be enabled after Issue #2',()=>{
  const result=environment(isolated);
  assert.equal(result.firebaseConfig.projectId,'pokefolio-staging');
- assert.equal(result.workerUrl,'https://pokefolio-staging.workers.dev');
+ assert.equal(result.workerUrl,'https://pokefolio-ebay-deals-staging.xfayne.workers.dev');
  assert.ok(Object.isFrozen(result));
 });
 test('entry page loads the safety gate before any legacy controller',()=>{
@@ -61,4 +61,24 @@ test('copied Worker cannot deploy over production or accept legacy signed tokens
  const worker=read('ebay-worker/index.js');
  assert.match(worker,/POKEFOLIO_FIREBASE_PROJECT_ID/);
  assert.doesNotMatch(worker,/const FIREBASE_PROJECT\s*=\s*['"]pokemon-vintage-binder/);
+});
+
+test('unrelated Firebase projects and Worker endpoints are rejected',()=>{
+ for(const projectId of ['unrelated-project','pokefolio-production','pokefolio-staging-copy']){
+  assert.equal(environment({firebase:{...isolated.firebase,projectId,authDomain:projectId+'.firebaseapp.com'}}).firebaseConfig,null);
+ }
+ for(const workerUrl of [
+  'https://other.workers.dev','https://pokefolio-ebay-deals-staging.other.workers.dev',
+  'https://pokefolio-ebay-deals-staging.xfayne.workers.dev:8443',
+  'https://user@pokefolio-ebay-deals-staging.xfayne.workers.dev',
+  'https://pokefolio-ebay-deals-staging.xfayne.workers.dev/api',
+  'https://pokefolio-ebay-deals-staging.xfayne.workers.dev/?redirect=production'
+ ])assert.equal(environment({workerUrl}).workerUrl,'',workerUrl);
+});
+test('validated Firebase settings are canonical, immutable and omit alternate service endpoints',()=>{
+ const result=environment({firebase:{...isolated.firebase,databaseURL:'https://foreign.example',storageBucket:'foreign-bucket'}});
+ assert.equal(result.firebaseConfig.projectId,'pokefolio-staging');
+ assert.equal(result.firebaseConfig.databaseURL,undefined);
+ assert.equal(result.firebaseConfig.storageBucket,undefined);
+ assert.ok(Object.isFrozen(result.firebaseConfig));
 });

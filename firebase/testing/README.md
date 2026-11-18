@@ -3,12 +3,12 @@
 These tests run only against the loopback emulator at `127.0.0.1:8080` with project `demo-pokefolio-isolation`. They use synthetic users, cards, binder pockets and Wishlist positions. They require no Google login, API key, service account or real collection export.
 
 Three policies are tested:
-- `../firestore.rules`: the currently deployed deny-all bootstrap. Anonymous clients and both synthetic users must be denied application reads, queries, creates, updates and deletes.
+- `../firestore.rules`: the deny-all bootstrap/rollback policy. Anonymous clients and both synthetic users must be denied application reads, queries, creates, updates and deletes.
 - `../firestore.owner-probe.rules`: an **undeployed prototype**, granting access only to a synthetic `stagingChecks/{uid}` document owned by the authenticated UID. Required fields, schema, length, server timestamps, immutable identity and createdAt are validated on creates and updates. All actual collection, binder, Wishlist, shipment, sharing and analysis paths remain denied.
 
-- `../firestore.private.rules`: an **undeployed candidate** for private application access using the existing `users/{uid}` document and private sharing/analysis subcollections. It validates top-level metadata, preserves the legacy progress map as an opaque payload, denies root deletion and public binder access, and does not introduce the future transaction schema.
+- `../firestore.private.rules`: the **active staging policy** for private application access using the existing `users/{uid}` document and private sharing/analysis subcollections. It validates top-level metadata, preserves the legacy progress map as an opaque payload, denies root deletion and public binder access, and does not introduce the future transaction schema.
 
-The prototype checks the owner-access mechanism without choosing or migrating an application data model. It is not a complete application ruleset and is not referenced by the staging deployment wrapper. Deployment of it is not automated.
+The prototype checks the owner-access mechanism without choosing or migrating an application data model. It is not a complete application ruleset and is not referenced by the staging deployment wrapper. Deployment of the probe is not automated. The private application policy was published separately to staging after CI and checked with a live synthetic diagnostic.
 
 ## Run
 

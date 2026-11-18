@@ -9,7 +9,7 @@ const rates=[
  {base:'USD',quote:'GBP',rate:0.8,date:'2026-11-12'}
 ];
 function app(saved,reply=rates){
- const storage=new Map(saved?[['pokemon-vintage-display-currency',saved]]:[]);
+ const storage=new Map(saved?[['pokefolio-display-currency',saved]]:[]);
  const events=[];
  const window={addEventListener(){},dispatchEvent(event){events.push(event.type);}};
  const document={querySelectorAll:()=>[],getElementById:()=>null,addEventListener(){}};
@@ -36,7 +36,7 @@ test('currency changes preserve USD scoring, notify UI and persist device settin
  assert.equal(fx.convert(42.51,'EUR'),fx.toUSD(42.51,'EUR'));
  assert.equal(fx.setCurrency('EUR'),true);
  assert.equal(fx.getCurrency(),'EUR');
- assert.equal(storage.get('pokemon-vintage-display-currency'),'EUR');
+ assert.equal(storage.get('pokefolio-display-currency'),'EUR');
  assert.ok(fx.format(10,'USD').includes('€'));
  assert.equal(fx.setCurrency('GBP'),false);
  assert.equal(fx.getCurrency(),'EUR');
@@ -118,4 +118,22 @@ test('GBP purchase amount persists with its original currency and is selected on
  elements.modalPurchaseCurrency.onchange();
  assert.deepEqual(JSON.parse(JSON.stringify(state.purchasePrices['base1-1'])),{amount:19.95,currency:'EUR'});
  assert.equal(saves,2);
+});
+
+test('display currency changes never read or mutate the legacy browser preference',async()=>{
+ const storage=new Map([['pokemon-vintage-display-currency','EUR']]);
+ const reads=[],writes=[];
+ const window={addEventListener(){},dispatchEvent(){}};
+ const document={querySelectorAll:()=>[],getElementById:()=>null,addEventListener(){}};
+ runInNewContext(source,{window,document,localStorage:{
+  getItem:key=>{reads.push(key);return storage.get(key)||null;},
+  setItem:(key,value)=>{writes.push(key);storage.set(key,value);}
+ },fetch:async()=>({ok:true,json:async()=>rates}),Event:class{},console:{warn(){}}});
+ await window.VintageCurrency.ready;
+ assert.equal(window.VintageCurrency.getCurrency(),'ILS');
+ window.VintageCurrency.setCurrency('USD');
+ assert.deepEqual(reads,['pokefolio-display-currency']);
+ assert.deepEqual(writes,['pokefolio-display-currency']);
+ assert.equal(storage.get('pokemon-vintage-display-currency'),'EUR');
+ assert.equal(storage.get('pokefolio-display-currency'),'USD');
 });
