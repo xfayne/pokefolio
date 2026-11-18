@@ -17,6 +17,6 @@ test('bootstrap has no external backend imports or secret/resource references', 
   const { readFileSync } = await import('node:fs');
   const source = readFileSync('staging/locked-worker.mjs', 'utf8');
   const executable = source.split('\n').filter(line => !line.trimStart().startsWith('//')).join('\n');
-  assert.doesNotMatch(executable, /\\b(?:firebase|firestore|ebay|KV_|17TRACK|GEMINI_|API_KEY|CLIENT_SECRET|workers\\.dev)\\b/i);
+  assert.doesNotMatch(executable, /\b(?:firebase|firestore|ebay|KV_|17TRACK|GEMINI_|API_KEY|CLIENT_SECRET|workers\.dev)\b/i);
   assert.match(source, /STAGING_NOT_CONFIGURED/);
 });
