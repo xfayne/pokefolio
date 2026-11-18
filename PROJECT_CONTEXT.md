@@ -18,6 +18,8 @@ The runtime safety gate in `js/pokefolio-environment.js` defaults Firebase and W
 
 Main is protected by active GitHub ruleset `27585981`: PR required, no manual approval required, up-to-date `staging-isolation`, `javascript-parity` and `style-parity` checks from GitHub Actions required, no bypass actors, deletion and force pushes blocked. Protection was configured through the authenticated GitHub browser and independently read back via API. Pokefolio does **not** delete Vintage Binder localStorage on the shared `xfayne.github.io` origin.
 
+An isolated Firestore emulator suite now covers the active deny-all bootstrap and an **undeployed**, schema-validated owner-probe prototype limited to `stagingChecks/{uid}`. The probe is infrastructure test scaffolding; every application data path stays denied. Tests require the exact loopback emulator address and a `demo-` project, and use synthetic users and binder/Wishlist fixtures only. No live rule deployment or product data model change is included. See `firebase/testing/README.md`.
+
 ## Product decisions that must be preserved
 
 - Transactions are the primary purchase/sale record; physical copies and eBay lots are distinct, with unknown cost represented explicitly, not invented.

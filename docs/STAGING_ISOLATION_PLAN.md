@@ -18,6 +18,8 @@ The current imported Worker does not reference a KV binding; the connected accou
 
 The full Worker source now accepts Firebase tokens only for `pokefolio-staging`, including strict numeric time claims and a string UID. Signed synthetic tests verify legacy/foreign projects, other users, unverified email, malformed timestamps, invalid signatures and origins cannot reach the mocked 17TRACK mutation endpoint. No credentials or real provider calls are used by these tests. This source has not been deployed.
 
+An isolated CI emulator suite tests both the deployed deny-all policy and an undeployed owner-probe prototype under `stagingChecks/{uid}`. It checks two-user and anonymous isolation, schema/timestamp/ownership attacks and unchanged synthetic binder/Wishlist fixtures. This does **not** authorize application data or deploy rules. Owner-scoped application integration is still pending.
+
 ## Approved staging architecture
 
 1. Distinct Firebase **project**, not a second database in Vintage Binder. Independent Auth, Firestore Rules and service identities. Synthetic users/cards only.
