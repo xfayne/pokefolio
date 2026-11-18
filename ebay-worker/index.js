@@ -331,7 +331,7 @@ async function analyzeConditionApi(request,env,headers){
    and restrict the account email so public sign-ups cannot exhaust credits. */
 const TRACK_BASE='https://api.17track.net/track/v2.4';
 // A missing or legacy Firebase project always rejects authenticated write routes.
-const firebaseProject=env=>{const id=String(env.POKEFOLIO_FIREBASE_PROJECT_ID||'').trim();return id&&id!=='pokemon-vintage-binder'?id:'';};
+const firebaseProject=env=>{const id=String(env.POKEFOLIO_FIREBASE_PROJECT_ID||'').trim();return id==='pokefolio-staging'?id:'';};
 const FIREBASE_JWKS='https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 let firebaseKeys=null, firebaseKeysUntil=0;
 function base64urlBytes(str){
@@ -347,12 +347,16 @@ async function verifyFirebaseBearer(request,env,ownerEmail=env.TRACK17_OWNER_EMA
  if(parts.length!==3)return false;
  let header,claims;
  try{header=decodeJwtPart(parts[0]);claims=decodeJwtPart(parts[1]);}catch{return false;}
+ if(!header||typeof header!=='object'||Array.isArray(header)||
+    !claims||typeof claims!=='object'||Array.isArray(claims))return false;
  const project=firebaseProject(env);
  if(!project)return false;
  const now=Math.floor(Date.now()/1000);
- if(header.alg!=='RS256'||!header.kid||claims.aud!==project||
+ if(header.alg!=='RS256'||typeof header.kid!=='string'||!header.kid||claims.aud!==project||
     claims.iss!=='https://securetoken.google.com/'+project||
-    !claims.sub||claims.sub.length>128||claims.exp<=now||claims.iat>now+60||
+    typeof claims.sub!=='string'||!claims.sub||claims.sub.length>128||
+    ![claims.exp,claims.iat,claims.auth_time].every(value=>Number.isSafeInteger(value)&&value>=0)||
+    claims.exp<=now||claims.exp<=claims.iat||claims.iat>now+60||
     claims.auth_time>now+60)return false;
  // 17TRACK credits are private. A public Firebase project permits new Google sign-ins,
  // so enforce a configured owner-email allowlist in addition to the signed token.

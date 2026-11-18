@@ -6,3 +6,4 @@ workers_dev = false
 
 [vars]
 ALLOWED_ORIGIN = "https://pokefolio.invalid"
+POKEFOLIO_FIREBASE_PROJECT_ID = "pokefolio-staging"
