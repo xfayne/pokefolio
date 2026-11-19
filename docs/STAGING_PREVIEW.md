@@ -1,49 +1,33 @@
-# Verified Pokefolio staging preview
+# Pokefolio staging deployment
 
-The preview workflow accepts manual dispatch on protected `main`, or completion of the main-push `Main UI JavaScript Parity` workflow. Automatic activation requires a successful push event from the same repository, branch `main`, and the triggering SHA must equal the workflow/current main SHA. It never deploys pull request workflow artifacts or code. The existing source guard independently requires all four successful checks for that exact current commit.
+## Active resources
 
-Before packaging, `verify-staging-source.mjs` independently reads the current main SHA and requires all four successful GitHub Actions checks for that exact commit. The fixed repository, ref, source SHA and Actions app identity are checked. A stale, unchecked or foreign commit fails before packaging.
+- Frontend: https://xfayne.github.io/pokefolio/
+- API: https://pokefolio-api-staging.xfayne.workers.dev
+- Firebase: `pokefolio-staging`, registered Web app `1:403637067452:web:ea6738aebf38f14c637ab9`.
+- API code comes from merged PR #38 (`1d55e3a3fe5e918ad59f738c6266e7942c496925`), version `c191f5cb-e28a-449a-8da2-752b928f7016`, deployment `6070c433-bbba-43e0-bbb5-88e436439a01`.
+- The empty old staging service was retired. Vintage Binder's production deployment remains unchanged.
 
-`build-staging-preview.mjs` copies only frontend `index.html`, `js/`, `css/`, `assets/` and `deal-finder/` code/styles/images/fonts into a new output directory. Backend code, Firebase policies, docs, hidden files, secrets and user data are excluded. Links and reused output directories are rejected. The generated index loads validated runtime settings before the safety gate and displays a small staging marker.
+## Frontend publishing
 
-## Configuration
+The workflow accepts manual dispatch from main, or completion of a successful main-push `Main UI JavaScript Parity` run. Automatic callbacks must be pushes from the same repository on main and their SHA must equal the deployment context. No PR artifacts or callback-supplied code are consumed. Before packaging, `verify-staging-source.mjs` independently checks the current main SHA and all four successful GitHub Actions checks for that exact commit. A stale or unchecked commit is rejected.
 
-Repository Actions variable `POKEFOLIO_FIREBASE_WEB_CONFIG` holds the four-field **public Firebase Web configuration** for the already registered staging app: `apiKey`, `projectId`, `authDomain`, `appId`. This public browser configuration is not a Firebase Admin credential. The builder rejects every other project, app, auth domain or extra field; provider credentials must never be placed in it.
+The builder copies only frontend code/styles/images/fonts into a new output directory; backend/docs/hidden files, links, reused outputs and credentials are excluded. Runtime configuration loads before the safety gate. The visible staging marker and public `pokefolio-staging-manifest.json` identify the deployed SHA, Firebase project and enabled API capability. The Firebase Web configuration is public browser configuration, not an Admin/provider credential.
 
-The artifact enables only the independent staging Firebase (private collection plus opt-in public binder projection). The exact `pokefolio-api-staging.xfayne.workers.dev` URL can be enabled via manual `enable_api` input and is enabled for successful automatic main-CI deployments. Other URLs are rejected. The API keeps shared-account 17TRACK registration disabled; read-only calls and the existing AI owner policy remain enforced. No private provider key is required or included. A public manifest records source SHA and enabled capabilities without the Web API key or user identity.
+Repository variable `POKEFOLIO_FIREBASE_WEB_CONFIG` contains only the exact registered public `apiKey`, `projectId`, `authDomain` and `appId`. Automatic CI deployments enable the registered API; manual dispatch can choose `enable_api: false` for a disconnected preview. Any other API/Firebase endpoint is rejected. Pages uses Actions publishing, environment `pokefolio-staging` allows only branch main, and only the deploy job gets Pages/OIDC write permission.
 
-The deploy job uses environment `pokefolio-staging`, restricted to main in GitHub settings. The build token has only contents/checks/Pages read access; only the deploy job gets Pages/OIDC write access. GitHub Pages must use the Actions publishing source before the manual run.
+First automatic API-enabled preview: https://github.com/xfayne/pokefolio/actions/runs/44471785519 , source `3e5eec14ce0ac1a2628d23addf6893fec1620cf5`. Its live manifest and runtime settings were read back and matched staging Firebase plus the exact API URL. The live manifest is authoritative for subsequent deployments; the final acceptance receipt is on Issue #2.
 
-## Verification and rollback
+## Provider and authorization verification
 
-```sh
-node --test tests/staging-preview.test.mjs
-```
+All five owner-authorized provider credentials are encrypted Worker secrets. They never enter Git, Pages runtime configuration or artifacts. The temporary encrypted local transfer checkpoint was removed after import. Live eBay OAuth/search passed (24 search results, no provider errors); the configured Gemini model lookup and unchanged grading core returned a valid image analysis; 17TRACK read-only quota authentication passed. The API identifies itself as Pokefolio API. Private endpoints reject invalid bearer tokens; signed owner/cross-user/legacy-project tests run against mocked services. Positive authenticated browser AI/shipment workflows remain part of later product regression testing.
 
-Deployment requires verified protected main, whether automatically after main push CI or by manual dispatch. Pages uses the Actions publishing source; `pokefolio-staging` permits only branch `main` and no tags. The registered public Web configuration is configured in the repository Actions variable. Enabling a private-Firebase preview does not complete Issue #2's external integrations or public-sharing work.
+Shipment registration defaults to disabled through `TRACK17_MUTATIONS_ENABLED="false"`, even for a valid staging owner, because the reused key shares upstream account state with Vintage Binder. Read-only queries remain available. Do not enable registration to test real legacy shipments. No namespace is used or required.
 
-Verify the deployed manifest SHA, Firebase project, disabled Worker and visible staging marker. Test sign-in and read/write authorization against staging only; never import real collection data for a preview.
+Firebase private/public-projection rules from PR #36 (blob `4ab7d9b12274af9b631591dabb348d5504f3a03d`) passed 24 emulator tests. Private progress stays owner-only; opt-in public snapshots contain only bounded catalog IDs/kinds and preserve empty pockets. Live empty-binder publication and viewing after sign-out passed; automated tests cover nonempty/full-capacity order, atomic opt-in, schema rejection and link revocation. No real collection migration occurred.
 
-To withdraw access, disable this repository's Pages site and apply the verified deny-all staging Firestore rollback if needed. No production site or document is modified. To restore a prior frontend, revert it through a tested PR and manually deploy protected main again. The workflow does not publish arbitrary SHA inputs. Automatic callbacks with a foreign repository, PR event, non-main branch, failed conclusion or stale SHA are rejected before checkout/build; the source guard rejects any unchecked current main.
+## Rollback and release
 
-## Verified deployment — 2026-11-19
+Disable only Pokefolio API workers.dev and/or its Pages site, or revert source through a tested PR and redeploy checked main. Republish the prior private-only staging rules from PR #31 to revoke public sharing, or `firebase/firestore.rules` for full deny-all rollback; neither rewrites documents. Never overwrite Vintage Binder to roll back Pokefolio.
 
-- URL: https://xfayne.github.io/pokefolio/
-- Successful build and deploy: https://github.com/xfayne/pokefolio/actions/runs/44463075103
-- Source SHA: `2de8294894dd40735a01610c729bf49d3ed3c271`; all four required checks passed before dispatch.
-- Live `pokefolio-staging-manifest.json` matches the source SHA, `pokefolio-staging`, `firebaseEnabled: true`, `workerEnabled: false`.
-- Catalog loaded with zero owned/Wishlist/binder cards and a visible staging marker. No collection data was imported or edited.
-- After explicit user authorization, Google sign-in from this Pages URL succeeded on 2026-11-19 and the app confirmed successful private collection loading from Firestore. No collection edits, imports or manual sync writes were performed. Earlier localhost synthetic owner/cross-user authorization checks passed, as recorded in PROJECT_CONTEXT.md.
-- External providers remain disabled; Issue #2 is not complete.
-
-## Public sharing verification — 2026-11-19
-
-PR #36 passed all four required checks, including 24 Firestore emulator tests and browser publication/viewer regression checks. Merged rules blob `4ab7d9b12274af9b631591dabb348d5504f3a03d` was published to staging only. Successful preview run: https://github.com/xfayne/pokefolio/actions/runs/44466136119 ; live manifest source `4dd48e00b60fdb21cb3c303fff5e3e78362d28b1`.
-
-The actual binder button created an empty schema-v2 public projection and owner opt-in settings; the viewer loaded successfully and still loaded after owner sign-out. Private collection progress was not created, imported or changed. Automated cases cover nonempty ordered pockets, null placeholders, all kinds, 1,252 pockets, foreign access, schema pollution, atomic opt-in and link revocation. The public projection is a bounded token string so rules validate every entry; the reader decodes it to the existing 3×3 view. This is not a private collection migration.
-
-Public-sharing rollback: republish the prior private-only rules from PR #31 (blob `0286137cee6c768ac325fbb6897fa27c0b7700f5`) to staging to deny shared reads immediately, or disable the owner's sharing settings. Deny-all remains the full staging rollback. No production environment exists for Pokefolio.
-
-## Backend activation — 2026-11-19
-
-`pokefolio-api-staging` contains the five authorized provider secrets and serves merged PR #38 source `1d55e3a3fe5e918ad59f738c6266e7942c496925` (Worker version `c191f5cb-e28a-449a-8da2-752b928f7016`). Live health and eBay search passed (24 results, no provider errors). The unchanged Gemini core produced a valid image analysis using the configured model; 17TRACK read-only quota authentication passed. No shipment registration, collection import or legacy production deployment change was made. End-to-end authenticated browser use remains part of product regression testing; signed owner authorization is covered by automated tests.
+No Pokefolio production environment exists yet. Provision separate production resources near Issue #21 release from the same code/policies/tests. Any real data transfer requires explicit approval, a verified private backup, dry-run comparisons and rollback. Do not duplicate the application or point staging at production.
