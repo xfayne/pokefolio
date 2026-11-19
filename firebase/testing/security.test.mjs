@@ -198,7 +198,7 @@ test('public binder policy permits only opt-in single-link reads of a strict pro
   const payload=()=>({schemaVersion:2,ownerUid:alice,pockets:'o:base1-1;_;w:base2-3;p:movie2000-ancient-mew',includeWish:true,updatedAt:serverTimestamp()});
   const publish=async(data=payload())=>{
    const batch=writeBatch(db);batch.set(ref,data);
-   batch.set(settings,{shareId:id,enabled:true,includeWish:data.includeWish});return batch.commit();
+   batch.set(settings,{shareId:id,enabled:true,includeWish:data.includeWish??true});return batch.commit();
   };
   await t.test('publication requires a matching owner opt-in in the same atomic batch',async()=>{
    await assertFails(setDoc(ref,payload()));
