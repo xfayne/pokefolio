@@ -40,3 +40,7 @@ The safe legacy baseline was imported in PRs #22–#23. The app remains vanilla 
 - `index.html` is generated with `node scripts/build-index.mjs`. Keep generated file identical to its template and catalog sources.
 - No secrets or production snapshots in Git. Use fake cloud fixtures in automated tests.
 - See `docs/SAFE_IMPORT.md` for the import checklist, history limitation and staging prerequisites.
+
+## Production provisioning update — 2026-11-19
+
+The owner authorized creating Production now and copying all five existing provider secrets. The same API source supports exact staging/production Firebase identities with cross-environment rejection tests; `ebay-worker/wrangler.production.toml` is an explicit separate deployment target. These are preparations, not a live environment. Firebase management/browser access is unavailable in this session; local authentication-file access is denied and CLI installation encountered a blocked dependency. No production project/Worker, provider secret copy or frontend deployment has been completed. See [Production setup](docs/PRODUCTION_SETUP.md) for the verified blocker and resume sequence. Real-data migration remains separate under #21.

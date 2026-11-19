@@ -36,3 +36,7 @@ Browser regressions run in GitHub Actions with Playwright. Existing CI does not 
 No production user data is copied, modified, deleted, or migrated by this foundation import. Preserve physical-card data, 3×3 binder ordering and reserved empty pockets, Wishlist manual ordering and pending shipments; any migration of real data requires an independently verified backup, dry-run comparison, approval, and rollback plan.
 
 Pokefolio has no production environment yet; the public Pages URL is explicitly a staging preview.
+
+## Production provisioning update — 2026-11-19
+
+The owner authorized creating Production now and copying all five existing provider secrets. The same API source supports exact staging/production Firebase identities with cross-environment rejection tests; `ebay-worker/wrangler.production.toml` is an explicit separate deployment target. These are preparations, not a live environment. Firebase management/browser access is unavailable in this session; local authentication-file access is denied and CLI installation encountered a blocked dependency. No production project/Worker, provider secret copy or frontend deployment has been completed. See [Production setup](docs/PRODUCTION_SETUP.md) for the verified blocker and resume sequence. Real-data migration remains separate under #21.

@@ -70,6 +70,17 @@ test('staging Worker verifies signed Firebase identity before any shipment mutat
   }
   assert.equal(trackingCalls,before,'Staging must not mutate the shared upstream account');
  });
+ const productionEnv={...env,POKEFOLIO_FIREBASE_PROJECT_ID:'pokefolio-production'};
+ const productionClaims={aud:'pokefolio-production',iss:'https://securetoken.google.com/pokefolio-production'};
+ await t.test('production accepts its own owner and rejects staging identities',async()=>{
+  const before=trackingCalls;
+  assert.equal((await worker.fetch(request(await token(productionClaims)),productionEnv)).status,200);
+  assert.equal(trackingCalls,before+1);
+  assert.equal((await worker.fetch(request(await token()),productionEnv)).status,403);
+  assert.equal((await worker.fetch(request(await token(productionClaims)),env)).status,403);
+  assert.equal((await worker.fetch(request(await token({...productionClaims,email:'other@example.test'})),productionEnv)).status,403);
+  assert.equal(trackingCalls,before+1);
+ });
  const cases = [
   ['no bearer token', null, env],
   ['malformed token', 'invalid.token.value', env],
