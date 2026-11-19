@@ -1,0 +1,27 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+export const resources = {
+  en: { translation: {
+    foundation: 'Application foundation', staging: 'Staging · Test environment',
+    description: 'Your portfolio screens are being built. This is the new application foundation.',
+    dashboard: 'Dashboard', collection: 'Collection', wishlist: 'Wishlist', deals: 'Deals', transactions: 'Transactions',
+    search: 'Search', analyze: 'Analyze', settings: 'Settings', missing: 'Page not found',
+    loading: 'Loading…', failed: 'Something went wrong. Reload to try again.', reload: 'Reload', navigation: 'Main navigation',
+  } },
+  he: { translation: {
+    foundation: 'תשתית האפליקציה', staging: 'Staging · סביבת בדיקה',
+    description: 'מסכי תיק האוסף נמצאים בבנייה. זו התשתית של האפליקציה החדשה.',
+    dashboard: 'דשבורד', collection: 'אוסף', wishlist: 'רשימת משאלות', deals: 'מציאות', transactions: 'עסקאות',
+    search: 'חיפוש', analyze: 'ניתוח', settings: 'הגדרות', missing: 'העמוד לא נמצא',
+    loading: 'טוען…', failed: 'אירעה שגיאה. טען מחדש כדי לנסות שוב.', reload: 'טעינה מחדש', navigation: 'ניווט ראשי',
+  } },
+};
+void i18n.use(initReactI18next).init({ resources, lng: 'en', fallbackLng: 'en', interpolation: { escapeValue: false }, initAsync: false });
+function updateDirection(language: string) {
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
+}
+i18n.on('languageChanged', updateDirection);
+updateDirection(i18n.language);
+export default i18n;
