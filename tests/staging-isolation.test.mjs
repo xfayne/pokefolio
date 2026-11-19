@@ -34,13 +34,20 @@ test('CI contains no backend deployment or cloud mutation commands',()=>{
  }
 });
 
-test('Pages staging deployment is manual, main-only and verifies source before packaging',()=>{
+test('Pages staging deployment trusts only manual main or completed main push CI and verifies source before packaging',()=>{
  const workflow=read('.github/workflows/staging-preview.yml');
  assert.match(workflow,/on:\s*\n\s+workflow_dispatch:/);
- assert.doesNotMatch(workflow,/^\s+(push|pull_request|pull_request_target|workflow_run|schedule):/m);
+ assert.doesNotMatch(workflow,/^\s+(push|pull_request|pull_request_target|schedule):/m);
  assert.match(workflow,/github\.repository == 'xfayne\/pokefolio' && github\.ref == 'refs\/heads\/main'/);
  assert.ok(workflow.indexOf('node scripts/verify-staging-source.mjs')<workflow.indexOf('node scripts/build-staging-preview.mjs'));
  assert.match(workflow,/name: pokefolio-staging/);
+ assert.match(workflow,/workflow_run:/);
+ assert.match(workflow,/workflows: \[Main UI JavaScript Parity\]/);
+ assert.ok(workflow.includes("github.event.workflow_run.event == 'push'"));
+ assert.ok(workflow.includes("github.event.workflow_run.conclusion == 'success'"));
+ assert.ok(workflow.includes("github.event.workflow_run.head_repository.full_name == 'xfayne/pokefolio'"));
+ assert.ok(workflow.includes('github.event.workflow_run.head_sha == github.sha'));
+
  assert.match(workflow,/vars\.POKEFOLIO_FIREBASE_WEB_CONFIG/);
  assert.doesNotMatch(workflow,/secrets\.(EBAY|TRACK17|GEMINI|FIREBASE_ADMIN|GOOGLE_APPLICATION)/);
 });
