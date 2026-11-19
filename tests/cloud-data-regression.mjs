@@ -125,6 +125,7 @@ function installFakeFirebase(options) {
       // Firestore may echo the write through onSnapshot.
       queueMicrotask(()=>test.emit(ref.path,saved,{hasPendingWrites:true}));
     },
+    writeBatch:()=>{const writes=[];return {set:(ref,value)=>writes.push([ref,value]),commit:async()=>{for(const [ref,value] of writes)await window.__mockFirebase.setDoc(ref,value);}};},
     deleteDoc:async ref=>{delete docs[ref.path];}
   };
   localStorage.setItem('pokemon-vintage-binder-progress-v1-old','legacy-cache-must-not-win');
@@ -910,7 +911,7 @@ try {
     viewport:{width:390,height:844},serviceWorkers:'block'
   });
   await publicContext.addInitScript(installFakeFirebase,{
-    docs:{['sharedBinders/'+shareId]:{cards:publicCards,includeWish:true,updatedAt:42}},
+    docs:{['sharedBinders/'+shareId]:{schemaVersion:2,pockets:publicCards.map(c=>(c.kind==='wish'?'w':'o')+':'+c.id).join(';'),includeWish:true,updatedAt:42}},
     user:null
   });
   await publicContext.route('**/*',route=>route.request().url().startsWith(origin)

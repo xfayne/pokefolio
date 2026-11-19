@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test tests/staging-isolation.test.mjs tests/import-safety.test.mjs tests/locked-worker.test.mjs tests/firebase-staging.test.mjs ebay-worker/firebase-auth.test.mjs tests/staging-preview.test.mjs
+      - run: node --test tests/staging-isolation.test.mjs tests/import-safety.test.mjs tests/locked-worker.test.mjs tests/firebase-staging.test.mjs ebay-worker/firebase-auth.test.mjs tests/staging-preview.test.mjs tests/public-sharing.test.mjs
       - run: node scripts/firebase-staging.mjs --check

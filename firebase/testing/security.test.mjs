@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment, assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
-import {doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp} from 'firebase/firestore';
+import {doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp, writeBatch} from 'firebase/firestore';
 
 const projectId='demo-pokefolio-isolation';
 const host='127.0.0.1', port=8080;
@@ -184,4 +184,66 @@ test('private application policy preserves legacy data and isolates owners',asyn
    await assertFails(setDoc(doc(db,'stagingChecks',alice),{ownerUid:alice}));
   });
  } finally { await env.cleanup(); }
+});
+
+test('public binder policy permits only opt-in single-link reads of a strict projection',async t=>{
+ const env=await environment('firestore.private.rules');
+ try{
+  await seed(env);
+  const db=env.authenticatedContext(alice).firestore();
+  const other=env.authenticatedContext(bob).firestore();
+  const anon=env.unauthenticatedContext().firestore();
+  const id='12345678-1234-4234-8234-123456789abc';
+  const ref=doc(db,'sharedBinders',id),settings=doc(db,'users',alice,'sharing','settings');
+  const payload=()=>({schemaVersion:2,ownerUid:alice,pockets:'o:base1-1;_;w:base2-3;p:movie2000-ancient-mew',includeWish:true,updatedAt:serverTimestamp()});
+  const publish=async(data=payload())=>{
+   const batch=writeBatch(db);batch.set(ref,data);
+   batch.set(settings,{shareId:id,enabled:true,includeWish:data.includeWish});return batch.commit();
+  };
+  await t.test('publication requires a matching owner opt-in in the same atomic batch',async()=>{
+   await assertFails(setDoc(ref,payload()));
+   await assertSucceeds(publish());
+   assert.equal((await assertSucceeds(getDoc(doc(anon,'sharedBinders',id)))).data().pockets,payload().pockets);
+  });
+  await t.test('anonymous and foreign owners cannot write, hijack or enumerate public links',async()=>{
+   for(const client of [anon,other]){
+    await assertFails(getDocs(collection(client,'sharedBinders')));
+    await assertFails(setDoc(doc(client,'sharedBinders',id),payload()));
+    await assertFails(updateDoc(doc(client,'sharedBinders',id),{ownerUid:bob,updatedAt:serverTimestamp()}));
+    await assertFails(deleteDoc(doc(client,'sharedBinders',id)));
+   }
+   await assertFails(getDocs(collection(db,'sharedBinders')));
+   await assertFails(updateDoc(ref,{ownerUid:bob,updatedAt:serverTimestamp()}));
+  });
+  await t.test('strict create/update validators reject private fields, types, oversized and malformed contents',async()=>{
+   for(const change of [
+    {schemaVersion:1},{ownerUid:bob},{pockets:[]},{pockets:'o:private-notes'},
+    {pockets:'o:base1-1;email@example.com'},{pockets:'_;'.repeat(1252)+'_'},
+    {pockets:'x'.repeat(40001)},{pockets:'w:base1-1',includeWish:false},
+    {pockets:'o:base1-1;\n_'},{pockets:'o:base1-1;'}, {cards:[{notes:'private'}]},
+    {notes:'private'},{updatedAt:Timestamp.fromMillis(1)}
+   ]){
+    await assertFails(publish({...payload(),...change}));
+    await assertFails(updateDoc(ref,{...change,updatedAt:change.updatedAt||serverTimestamp()}));
+   }
+   for(const key of Object.keys(payload())){
+    const invalid=payload();delete invalid[key];await assertFails(publish(invalid));
+   }
+  });
+  await t.test('full capacity, empty pockets and all three kinds preserve ordering',async()=>{
+   const pockets=Array.from({length:1252},(_,i)=>i%2?'_':'o:base1-1').join(';');
+   await assertSucceeds(publish({...payload(),pockets}));
+   assert.equal((await getDoc(doc(anon,'sharedBinders',id))).data().pockets,pockets);
+   await assertSucceeds(publish({...payload(),pockets:'',includeWish:false}));
+  });
+  await t.test('revocation and link rotation immediately block old link reads without deleting private data',async()=>{
+   await assertSucceeds(setDoc(settings,{shareId:id,enabled:false,includeWish:false}));
+   await assertFails(getDoc(doc(anon,'sharedBinders',id)));
+   await assertFails(setDoc(ref,{...payload(),pockets:'',includeWish:false}));
+   await assertSucceeds(setDoc(settings,{shareId:'22345678-1234-4234-8234-123456789abc',enabled:true,includeWish:false}));
+   await assertFails(getDoc(doc(anon,'sharedBinders',id)));
+   assert.deepEqual((await getDoc(doc(db,'users',alice))).data().progress,fixture.progress);
+   await assertFails(getDoc(doc(anon,'users',alice)));
+  });
+ }finally{await env.cleanup();}
 });
