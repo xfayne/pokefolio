@@ -1,4 +1,4 @@
-# Pokefolio backend API: eBay, AI analysis and read-only shipment queries.
+# Pokefolio backend API: eBay, AI analysis and shipment registration and queries.
 name = "pokefolio-api-staging"
 main = "./index.js"
 compatibility_date = "2026-11-06"
@@ -9,5 +9,5 @@ preview_urls = false
 ALLOWED_ORIGIN = "https://xfayne.github.io"
 POKEFOLIO_FIREBASE_PROJECT_ID = "pokefolio-staging"
 
-# The authorized provider key is shared with the legacy account; do not mutate it.
-TRACK17_MUTATIONS_ENABLED = "false"
+# Owner explicitly approved shipment registration with the shared provider account.
+TRACK17_MUTATIONS_ENABLED = "true"
