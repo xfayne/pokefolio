@@ -1,3 +1,15 @@
+# React staging publisher — roadmap #3
+
+The current publisher builds only the fresh React app in `frontend/` using Node 24, the committed npm lock and `scripts/package-react-staging.mjs`. It does not publish or load the old screens. The preserved legacy packaging details below are historical reference and a rollback aid.
+
+The automatic trigger is successful current-main `React Foundation` CI. Before packaging, the source guard waits for and verifies all five current-main checks, including retained reference/security checks. If main advances or a required check fails, publication is rejected. Manual dispatch uses the same guard and staging-only config validation.
+
+The artifact contains Vite assets, index, `.nojekyll`, and a public source manifest identifying `application=react-foundation`. Hash routes preserve direct reloads under `/pokefolio/`. Public Firebase configuration is build-injected only after registered staging validation; no provider secrets, legacy scripts, docs or backend source enter the artifact. The new screens remain placeholders until separately designed and implemented.
+
+Rollback: revert the React staging activation PR through a checked PR to main to restore the retained previous publisher. This changes frontend files only; it must not restore or modify user data. Production release remains separate under #21.
+
+---
+
 # Pokefolio staging deployment
 
 ## Active resources

@@ -12,7 +12,7 @@ _Last updated: 2026-11-19 — independent Production Firebase/API provisioned; s
 
 ## Current state
 
-The safe legacy baseline was imported in PRs #22–#23. The app remains vanilla JavaScript until the approved React/TypeScript migration in #3.
+The safe legacy baseline was imported in PRs #22–#23. The owner approved a fresh React foundation in #3. The new application is in `frontend/`; retained Vanilla JS source is reference only, with no compatibility bridge and no old screens loaded in the new app.
 
 - **Firebase:** independent `pokefolio-staging`, project number `403637067452`, Spark plan; Standard `(default)` Firestore in `europe-west1`. Google sign-in and Web app `1:403637067452:web:ea6738aebf38f14c637ab9` are configured independently. Authorized domains are `localhost`, `pokefolio-staging.firebaseapp.com`, `pokefolio-staging.web.app` and `xfayne.github.io`.
 - **Active Firestore policy:** `firebase/firestore.private.rules` from merged PR #36 (blob `4ab7d9b12274af9b631591dabb348d5504f3a03d`) was published only to staging after 24 emulator tests passed. Private roots/settings/analyses retain their owner-only policy. Public schema-v2 binder projections permit single-document gets only when the owner's settings enable that exact link; collection listing, foreign writes, ownership changes and extra/private fields remain denied. The public payload encodes only catalog references and pocket kinds, preserving ordering and empty pockets; private progress is unchanged. Publication atomically commits the snapshot and matching opt-in. Disabling/rotating owner settings revokes old reads without deleting data.
@@ -44,3 +44,9 @@ The safe legacy baseline was imported in PRs #22–#23. The app remains vanilla 
 ## Production provisioning update — 2026-11-19
 
 Separate Production Firebase (`pokefolio-production`) and API (`pokefolio-api-production`) are provisioned and verified. The owner-authorized five provider secrets are installed; Google sign-in, private read isolation, live eBay search, Gemini model authentication and read-only 17TRACK quota checks passed. The public Pages URL remains staging; the production frontend runtime and release are pending. See [Production setup](docs/PRODUCTION_SETUP.md) for identifiers, acceptance evidence and rollback. Real-data migration remains separate under #21.
+
+## React foundation — 2026-11-19
+
+Owner approved replacing the old staging UI with a fresh minimal React shell. Toolchain/dependencies are locked under `frontend/`; navigation is hash-based with Dashboard home. English/Hebrew RTL, Tailwind/shadcn Button, transient Zustand UI state, Query defaults, typed catalog/price contracts, isolated Axios transport and Firebase auth boundaries are included. Routes remain placeholders; screen designs require separate mocks and approval. The foundation defines no transaction/physical-copy persistence schema and performs no Firestore writes.
+
+The React staging pipeline replaces the legacy artifact packaging. The prior frontend, runtime injection and build descriptions above are historical infrastructure receipts. The current publisher compiles only `frontend/`, validates registered staging config, preserves `/pokefolio/`, excludes all legacy/backend files, and emits a source manifest. Five successful current-main checks are required, including `react-foundation`. Synthetic-config packaging and mobile Playwright checks cover route reload, RTL and absence of legacy controller/Firestore requests. Real production cutover remains #21. For rollback, revert the staging activation PR through protected main after checks; the retained legacy source/build remains available. Never restore or modify user data as part of a frontend rollback.

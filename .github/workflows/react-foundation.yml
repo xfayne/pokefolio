@@ -25,3 +25,10 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Verify staging artifact with synthetic public configuration
+        run: node ../scripts/package-react-staging.mjs
+        env:
+          POKEFOLIO_STAGING_API_URL: https://pokefolio-api-staging.xfayne.workers.dev
+          POKEFOLIO_FIREBASE_WEB_CONFIG: '{"apiKey":"AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","appId":"1:403637067452:web:ea6738aebf38f14c637ab9","authDomain":"pokefolio-staging.firebaseapp.com","projectId":"pokefolio-staging"}'
+      - run: npm run test:e2e

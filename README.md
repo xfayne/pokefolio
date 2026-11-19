@@ -1,42 +1,47 @@
 # Pokefolio
 
-A mobile-first Pokémon card portfolio manager, evolving from the production [Pokémon Vintage Binder](https://github.com/xfayne/pokemon-vintage-binder).
+Mobile-first Pokémon card portfolio application built with React, TypeScript and Vite. The new application lives in `frontend/`. Legacy Vanilla JS files remain as reference only and are not bundled or loaded by the React entrypoint.
 
-**Foundation status:** The legacy application was imported as an isolated baseline under [Issue #1](https://github.com/xfayne/pokefolio/issues/1). Separate `pokefolio-staging` Firebase Auth/Firestore now has tested, deployed private owner rules; both emulator tests and a live synthetic authorization check passed. The independent `pokefolio-api-staging` backend is deployed with authorized provider secrets, staging-only identity checks and owner-authorized shipment registration enabled. Main requires PRs and four passing Actions checks. The [staging frontend](https://xfayne.github.io/pokefolio/) is deployed with independent Firebase configuration; Google sign-in and the private Firestore collection load from that URL have been verified. Opt-in public binder sharing is deployed and was verified after sign-out. eBay search, configured Gemini analysis and read-only 17TRACK credentials were verified; [Issue #2](https://github.com/xfayne/pokefolio/issues/2) records infrastructure acceptance. The original [Vintage Binder app](https://xfayne.github.io/pokemon-vintage-binder/) remains independent and unchanged.
+## Development
 
-## Architecture and roadmap
-
-The imported baseline is a vanilla JavaScript app with a generated `index.html`, `js/`, `css/`, `deal-finder/`, Cloudflare `ebay-worker/`, and browser and Worker tests under `tests/`. It will be migrated incrementally to React, TypeScript and Vite under [Issue #3](https://github.com/xfayne/pokefolio/issues/3), **after** establishing isolated Firebase, Worker and Pages staging under [Issue #2](https://github.com/xfayne/pokefolio/issues/2).
-
-[21 planned issues](https://github.com/xfayne/pokefolio/issues) cover infrastructure, transaction and inventory modeling, UX, analytics, localization, and safe release.
-
-## Safe local development
+Use Node 24 LTS (24.11 or newer).
 
 ```sh
-python3 -m http.server 8000
-# open http://localhost:8000
+cd frontend
+npm ci
+npm run dev
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
-The source defaults to disconnected local development. The published staging artifact enables only its validated staging Firebase configuration, including sign-in/private sync and opt-in public binder viewing. The independent API serves eBay/AI and owner-only shipment registration/queries using the approved shared provider account. No production Firebase configuration or Worker endpoint is bundled. Never point `window.PokefolioRuntimeConfig` at the original Firebase project or Worker; the runtime safety gate rejects those values.
+Open http://localhost:5173/pokefolio/. The minimal shell defaults to Dashboard, supports hash routes, and switches English/Hebrew with RTL. Routes are placeholders for future screen-specific approved designs, not completed product screens. Binder and Wishlist implementation must retain the reference behavior and ordering requirements.
 
-Deploy backend changes only to the explicit `pokefolio-api-staging` service after relevant CI passes. The staging Pages preview is published from protected main after successful main push CI (or manual dispatch); the deploy guard independently requires all four checks for the current commit. External providers use the independently deployed `pokefolio-api-staging`; shipment registration is enabled with explicit owner authorization for the shared provider account. See [Staging preview](docs/STAGING_PREVIEW.md). `ebay-worker/` is the retained legacy source-folder name; its service is the shared Pokefolio API, covering eBay, AI grading and shipments. Its config pins staging Firebase, the approved origin, disabled preview URLs and owner-authorized shipment registration.
+## Architecture
 
-Edit the HTML template, **not** generated `index.html`. Rebuild and verify:
+- React Router for hash navigation on GitHub Pages.
+- Tailwind and locally owned shadcn/ui components; add only needed components.
+- Axios for API transport and TanStack Query for remote API state.
+- Firebase SDK for Auth/Firestore, with typed services and auth subscriptions.
+- Zustand for transient UI state only; never duplicate collection data or tokens in it.
+- React Hook Form + Zod for forms/boundary validation; i18next for localization.
+- Vitest, Testing Library, Playwright and ESLint for verification.
 
-```sh
-node scripts/build-index.mjs
-node scripts/build-index.mjs --check
-node --test tests/*.test.mjs ebay-worker/*.test.mjs
-```
+Local development is disconnected unless supplied the exact validated staging configuration. The frontend rejects foreign/production Firebase projects and alternate API origins. It performs no collection migration or Firestore writes. Inventory/transaction persistence models remain separate roadmap decisions.
 
-Browser regressions run in GitHub Actions with Playwright. Existing CI does not read live Firestore, Google sign-in, eBay, or 17TRACK. See [Safe import checklist](docs/SAFE_IMPORT.md), [Project Context](PROJECT_CONTEXT.md), and [legacy README](docs/LEGACY_README.md).
+## Environments and release
 
-## Data safety
+[Staging](https://xfayne.github.io/pokefolio/) publishes from protected main after five current-main checks: staging isolation, JavaScript parity, style parity, Firestore rules and React foundation. The build uses the registered `pokefolio-staging` Web configuration and independent `pokefolio-api-staging`; only the new Vite artifact is shipped. The manifest records its exact source SHA and application. No legacy controllers or backend source are packaged.
 
-No production user data is copied, modified, deleted, or migrated by this foundation import. Preserve physical-card data, 3×3 binder ordering and reserved empty pockets, Wishlist manual ordering and pending shipments; any migration of real data requires an independently verified backup, dry-run comparison, approval, and rollback plan.
+Production Firebase/API are already provisioned with authorized provider secrets. Production frontend cutover and any approved real-data import remain #21. The independent [Vintage Binder production app](https://xfayne.github.io/pokemon-vintage-binder/) is unchanged.
 
-Pokefolio has separate Production Firebase and API resources. The public Pages URL is still a staging preview; the production frontend is not published.
+## Reference and data safety
 
-## Production provisioning update — 2026-11-19
+Reference source remains in root `index.html`, `templates/`, `js/`, `css/` and `deal-finder/`. Reference index regeneration uses `node scripts/build-index.mjs`; retained regression/security checks continue to run. There is no compatibility bridge or requirement to operate those old screens in Pokefolio.
 
-Separate Production Firebase (`pokefolio-production`) and API (`pokefolio-api-production`) are provisioned and verified. The owner-authorized five provider secrets are installed; Google sign-in, private read isolation, live eBay search, Gemini model authentication and read-only 17TRACK quota checks passed. The public Pages URL remains staging; the production frontend runtime and release are pending. See [Production setup](docs/PRODUCTION_SETUP.md) for identifiers, acceptance evidence and rollback. Real-data migration remains separate under #21.
+Never modify legacy production Firestore data. Real data transfer needs an independently verified backup, approved migration, dry-run integrity checks and rollback. Preserve binder positions, empty pockets, page ordering and manual Wishlist ordering.
+
+See [Project context](PROJECT_CONTEXT.md), [React foundation](frontend/README.md), [Production setup](docs/PRODUCTION_SETUP.md), and [safe import](docs/SAFE_IMPORT.md).
