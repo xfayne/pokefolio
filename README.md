@@ -19,7 +19,7 @@ python3 -m http.server 8000
 
 The source defaults to disconnected local development. The published staging artifact enables only its validated staging Firebase configuration, including sign-in/private sync and opt-in public binder viewing. eBay Deals, shipping tracking and AI grading remain disabled. No production Firebase configuration or Worker endpoint is bundled. Never point `window.PokefolioRuntimeConfig` at the original Firebase project or Worker; the runtime safety gate rejects those values.
 
-**Do not deploy `ebay-worker/` until provider configuration and isolation are verified.** A private-Firebase Pages preview may be published only through the manual, protected-main workflow after owner/runtime/browser isolation and required CI checks pass. External providers remain disabled. See [Staging preview](docs/STAGING_PREVIEW.md). The copied `wrangler.toml` uses a different name, a disabled public workers.dev endpoint and a nonfunctional allowed origin.
+**Do not deploy `ebay-worker/` until provider configuration and isolation are verified.** The staging Pages preview is published from protected main after successful main push CI (or manual dispatch); the deploy guard independently requires all four checks for the current commit. External providers use the independently deployed `pokefolio-api-staging`; shipment registration remains disabled for the shared provider account. See [Staging preview](docs/STAGING_PREVIEW.md). The copied `wrangler.toml` uses a different name, a disabled public workers.dev endpoint and a nonfunctional allowed origin.
 
 Edit the HTML template, **not** generated `index.html`. Rebuild and verify:
 
