@@ -47,3 +47,7 @@ Public-sharing rollback: republish the prior private-only rules from PR #31 (blo
 ## Backend activation — 2026-11-19
 
 `pokefolio-api-staging` contains the five authorized provider secrets and serves merged PR #38 source `1d55e3a3fe5e918ad59f738c6266e7942c496925` (Worker version `c191f5cb-e28a-449a-8da2-752b928f7016`). Live health and eBay search passed (24 results, no provider errors). The unchanged Gemini core produced a valid image analysis using the configured model; 17TRACK read-only quota authentication passed. No shipment registration, collection import or legacy production deployment change was made. End-to-end authenticated browser use remains part of product regression testing; signed owner authorization is covered by automated tests.
+
+## Active API and release boundary
+
+The source config now matches the activated service: workers.dev is enabled only for `pokefolio-api-staging`; preview URLs and shared-account shipment registration are disabled. The empty old staging service has been retired. No legacy production deployment or data was changed. No Pokefolio production environment exists. Provider secrets reside only in Cloudflare; the temporary encrypted local transfer checkpoint was removed.

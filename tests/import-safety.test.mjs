@@ -56,7 +56,7 @@ test('browser integrations contain no hardcoded production endpoints or producti
 test('copied Worker cannot deploy over production or accept legacy signed tokens',()=>{
  const config=read('ebay-worker/wrangler.toml');
  assert.match(config,/name\s*=\s*"pokefolio-api-staging"/);
- assert.match(config,/workers_dev\s*=\s*false/);
+ assert.match(config,/workers_dev\s*=\s*true/);
  assert.doesNotMatch(config,/name\s*=\s*"pokemon-vintage-ebay-deals"/);
  const worker=read('ebay-worker/index.js');
  assert.match(worker,/POKEFOLIO_FIREBASE_PROJECT_ID/);

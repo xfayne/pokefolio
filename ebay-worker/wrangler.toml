@@ -2,7 +2,8 @@
 name = "pokefolio-api-staging"
 main = "./index.js"
 compatibility_date = "2026-11-06"
-workers_dev = false
+workers_dev = true
+preview_urls = false
 
 [vars]
 ALLOWED_ORIGIN = "https://xfayne.github.io"
