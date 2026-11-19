@@ -906,6 +906,7 @@ try {
   try{
    const pp=publishFixture.page;
    const before=await getState(pp);
+   await pp.locator('[data-view-btn="binder"]').click();
    const popupPromise=pp.waitForEvent('popup');
    await pp.locator('#openReader').click();
    const popup=await popupPromise;
