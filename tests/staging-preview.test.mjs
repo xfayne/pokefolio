@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,rmSync} from
 import {tmpdir} from 'node:os';
 import {join,resolve,relative,isAbsolute,sep} from 'node:path';
 import vm from 'node:vm';
-import {buildPreview,validateWebConfig,APP_ID} from '../scripts/build-staging-preview.mjs';
+import {buildPreview,validateWebConfig,APP_ID,STAGING_API_URL} from '../scripts/build-staging-preview.mjs';
 import {verifySource,REQUIRED_CHECKS} from '../scripts/verify-staging-source.mjs';
 
 const config={apiKey:'AIza'+'x'.repeat(35),projectId:'pokefolio-staging',authDomain:'pokefolio-staging.firebaseapp.com',appId:APP_ID};
@@ -82,4 +82,16 @@ test('only a current main commit with all four successful Actions checks is depl
   {checks:source().checks.map(c=>({...c,status:'in_progress',conclusion:null}))},
   {checks:source().checks.map(c=>({...c,conclusion:'failure'}))}
  ])assert.throws(()=>verifySource({...source(),...override}));
+});
+
+test('API activation accepts only the independent backend URL and records it in the manifest',t=>{
+ const root=fixture(t),output=join(root,'dist','enabled');
+ buildPreview({sourceRoot:root,outputRoot:output,firebaseConfig:config,workerUrl:STAGING_API_URL,sourceSha:sha});
+ const sandbox={window:{}};
+ vm.runInNewContext(readFileSync(join(output,'pokefolio-runtime-config.js'),'utf8'),sandbox);
+ assert.equal(sandbox.window.PokefolioRuntimeConfig.workerUrl,STAGING_API_URL);
+ assert.equal(JSON.parse(readFileSync(join(output,'pokefolio-staging-manifest.json'),'utf8')).workerEnabled,true);
+ for(const invalid of ['https://pokemon-vintage-ebay-deals.xfayne.workers.dev','https://other.workers.dev',STAGING_API_URL+'/api']){
+  assert.throws(()=>buildPreview({sourceRoot:root,outputRoot:join(root,'dist','invalid'),firebaseConfig:config,workerUrl:invalid}));
+ }
 });

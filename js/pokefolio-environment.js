@@ -14,7 +14,7 @@
  let workerUrl='';
  try{
   const url=new URL(String(input.workerUrl||''));
-  if(url.origin==='https://pokefolio-ebay-deals-staging.xfayne.workers.dev'&&
+  if(url.origin==='https://pokefolio-api-staging.xfayne.workers.dev'&&
      !url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/')
    workerUrl=url.origin;
  }catch(_){}

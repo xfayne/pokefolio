@@ -419,7 +419,7 @@ function trackSummary(row){
 }
 async function shipmentsApi(request,env,corsHeaders,u){
  if(request.method==='GET'&&u.pathname==='/api/shipments/health'){
-  return reply({provider:'17TRACK',configured:Boolean(env.TRACK17_API_KEY&&env.TRACK17_OWNER_EMAIL)},200,corsHeaders);
+  return reply({provider:'17TRACK',configured:Boolean(env.TRACK17_API_KEY&&env.TRACK17_OWNER_EMAIL),registrationEnabled:env.TRACK17_MUTATIONS_ENABLED==='true'},200,corsHeaders);
  }
  if(request.method!=='POST'||!['/api/shipments/register','/api/shipments/track'].includes(u.pathname))return reply({error:'Not found'},404,corsHeaders);
  if(!env.TRACK17_API_KEY||!env.TRACK17_OWNER_EMAIL)return reply({error:'TRACKING_NOT_CONFIGURED'},503,corsHeaders);
@@ -427,6 +427,7 @@ async function shipmentsApi(request,env,corsHeaders,u){
  if(Number(request.headers.get('content-length')||0)>5000)return reply({error:'Payload too large'},413,corsHeaders);
  let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400,corsHeaders)}
  const isRegister=u.pathname.endsWith('/register');
+ if(isRegister&&env.TRACK17_MUTATIONS_ENABLED!=='true')return reply({error:'STAGING_SHIPMENT_REGISTRATION_DISABLED'},503,corsHeaders);
  const source=isRegister?[body]:body?.shipments;
  if(!Array.isArray(source)||!source.length||source.length>(isRegister?1:12))return reply({error:'Expected 1–12 shipment numbers'},400,corsHeaders);
  const list=source.map(trackItem);
@@ -448,7 +449,7 @@ export default {
   if(request.method==='POST'&&u.pathname==='/api/analyze-condition')return analyzeConditionApi(request,env,headers);
   if(request.method==='POST'&&u.pathname==='/api/analyze-upload')return analyzeUploadApi(request,env,headers,{reply,verifyFirebaseBearer});
   if(request.method==='POST'&&u.pathname==='/api/resolve-ebay-link')return resolveEbayLinkApi(request,env,headers,{reply,verifyFirebaseBearer,bearer,isEbayImage});
-  if(request.method==='GET'&&u.pathname==='/health')return reply({ready:!!(env.EBAY_CLIENT_ID&&env.EBAY_CLIENT_SECRET),provider:'eBay Browse API',shippingDestinationConfigured:/^[0-9]{5,10}$/.test(String(env.EBAY_DELIVERY_POSTAL_CODE||'').trim()),aiConfigured:Boolean(env.GEMINI_API_KEY)},200,headers);
+  if(request.method==='GET'&&u.pathname==='/health')return reply({service:'Pokefolio API',environment:'staging',ready:!!(env.EBAY_CLIENT_ID&&env.EBAY_CLIENT_SECRET),provider:'eBay Browse API',shippingDestinationConfigured:/^[0-9]{5,10}$/.test(String(env.EBAY_DELIVERY_POSTAL_CODE||'').trim()),aiConfigured:Boolean(env.GEMINI_API_KEY)},200,headers);
   if(request.method==='POST'&&u.pathname==='/api/item-images'){
    if(Number(request.headers.get('content-length')||0)>1200)return reply({error:'Payload too large'},413,headers);
    let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400,headers)}

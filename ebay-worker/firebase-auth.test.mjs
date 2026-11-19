@@ -11,6 +11,7 @@ const env = {
  ALLOWED_ORIGIN: ORIGIN,
  POKEFOLIO_FIREBASE_PROJECT_ID: PROJECT,
  TRACK17_API_KEY: 'synthetic-not-a-real-key',
+ TRACK17_MUTATIONS_ENABLED: 'true',
  TRACK17_OWNER_EMAIL: OWNER
 };
 const keys = await webcrypto.subtle.generateKey({
@@ -59,6 +60,15 @@ test('staging Worker verifies signed Firebase identity before any shipment mutat
   const response = await worker.fetch(request(await token()), env);
   assert.equal(response.status, 200);
   assert.equal(trackingCalls, before + 1);
+ });
+ await t.test('shared-account staging registration defaults to disabled even for a valid owner', async () => {
+  const before=trackingCalls;
+  for(const flag of [undefined,'false',true]){
+   const response=await worker.fetch(request(await token()),{...env,TRACK17_MUTATIONS_ENABLED:flag});
+   assert.equal(response.status,503);
+   assert.equal((await response.json()).error,'STAGING_SHIPMENT_REGISTRATION_DISABLED');
+  }
+  assert.equal(trackingCalls,before,'Staging must not mutate the shared upstream account');
  });
  const cases = [
   ['no bearer token', null, env],

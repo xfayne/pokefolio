@@ -3,6 +3,7 @@ import {resolve, join, relative, dirname, extname, sep, isAbsolute} from 'node:p
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const projectRoot=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+export const STAGING_API_URL='https://pokefolio-api-staging.xfayne.workers.dev';
 export const PROJECT='pokefolio-staging';
 export const APP_ID='1:403637067452:web:ea6738aebf38f14c637ab9';
 export function validateWebConfig(input) {
@@ -13,8 +14,9 @@ export function validateWebConfig(input) {
   throw Error('Only the registered Pokefolio staging Web configuration is accepted.');
  return {apiKey:input.apiKey,projectId:PROJECT,authDomain:PROJECT+'.firebaseapp.com',appId:APP_ID};
 }
-export function buildPreview({sourceRoot=projectRoot,outputRoot=join(projectRoot,'dist','pokefolio-staging'),firebaseConfig,sourceSha='local'}={}) {
+export function buildPreview({sourceRoot=projectRoot,outputRoot=join(projectRoot,'dist','pokefolio-staging'),firebaseConfig,workerUrl='',sourceSha='local'}={}) {
  const config=validateWebConfig(firebaseConfig);
+ if(workerUrl!==''&&workerUrl!==STAGING_API_URL)throw Error('Only the registered Pokefolio staging API URL is accepted.');
  if(sourceSha!=='local'&&!/^[a-f0-9]{40}$/.test(sourceSha))throw Error('Invalid source commit.');
  sourceRoot=resolve(sourceRoot);outputRoot=resolve(outputRoot);
  const outputRelative=relative(sourceRoot,outputRoot);
@@ -51,16 +53,16 @@ export function buildPreview({sourceRoot=projectRoot,outputRoot=join(projectRoot
  preview=preview.replace(/<title>[^<]*<\/title>/,'<title>Pokefolio — Staging</title>');
  writeFileSync(join(outputRoot,'index.html'),preview);
  writeFileSync(join(outputRoot,'pokefolio-runtime-config.js'),
-  '// Public Firebase Web configuration. No provider secrets or user data.\nwindow.PokefolioRuntimeConfig=Object.freeze('+JSON.stringify({firebase:config,workerUrl:''})+');\n');
+  '// Public Firebase Web configuration. No provider secrets or user data.\nwindow.PokefolioRuntimeConfig=Object.freeze('+JSON.stringify({firebase:config,workerUrl})+');\n');
  writeFileSync(join(outputRoot,'pokefolio-staging-manifest.json'),JSON.stringify({
-  environment:'staging',repository:'xfayne/pokefolio',sourceSha,firebaseProjectId:PROJECT,firebaseEnabled:true,workerEnabled:false
+  environment:'staging',repository:'xfayne/pokefolio',sourceSha,firebaseProjectId:PROJECT,firebaseEnabled:true,workerEnabled:Boolean(workerUrl)
  },null,2)+'\n');
  writeFileSync(join(outputRoot,'.nojekyll'),'');
- return {outputRoot,assetCount:planned.length,firebaseProjectId:PROJECT,workerEnabled:false};
+ return {outputRoot,assetCount:planned.length,firebaseProjectId:PROJECT,workerEnabled:Boolean(workerUrl)};
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url) {
  try {
-  const result=buildPreview({firebaseConfig:JSON.parse(process.env.POKEFOLIO_FIREBASE_WEB_CONFIG||'null'),sourceSha:process.env.GITHUB_SHA||'local'});
+  const result=buildPreview({workerUrl:process.env.POKEFOLIO_STAGING_API_URL||'',firebaseConfig:JSON.parse(process.env.POKEFOLIO_FIREBASE_WEB_CONFIG||'null'),sourceSha:process.env.GITHUB_SHA||'local'});
   console.log(JSON.stringify(result));
  }catch(error){console.error(error.message);process.exitCode=1;}
 }
