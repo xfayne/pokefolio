@@ -1,6 +1,6 @@
 # Issue #2 — Isolated staging infrastructure
 
-Pokefolio uses a separate Firebase project and backend service. The owner authorized reuse of existing provider keys on 2026-11-19; this does not authorize changes to Vintage Binder collection data or shared shipment state.
+Pokefolio uses a separate Firebase project and backend service. The owner authorized reuse of existing provider keys on 2026-11-19; the owner subsequently authorized staging shipment registration using the same 17TRACK account. This does not authorize edits to existing shipments or Vintage Binder Firestore data.
 
 ## Configured and verified
 
@@ -8,7 +8,7 @@ Pokefolio uses a separate Firebase project and backend service. The owner author
 - Active private/public-projection rules from PR #36 passed 24 emulator tests. Owners alone access private progress/settings/analyses; public single-link reads require opt-in, enumeration/foreign writes/private fields are denied. Public viewing passed after owner sign-out. No real collection, Wishlist, binder ordering or shipment data was imported.
 - Backend `pokefolio-api-staging` serves shared eBay, Gemini and shipment APIs. Its five secrets were imported with explicit authorization. eBay OAuth and live search (24 results, no errors), the configured Gemini model and actual image analysis, and read-only 17TRACK quota authentication passed. Legacy production deployment stayed on `75954b38-e777-4de8-aaa6-4df173b723b3`.
 - The empty old staging Worker was retired after confirming it had zero bindings, deployments and secrets. No KV binding is referenced or needed.
-- `TRACK17_MUTATIONS_ENABLED="false"` blocks staging registration even with a valid owner token; tests exercise enabled registration only against mocked upstream calls. Sharing provider keys does not isolate upstream account state. Keep this guard until an explicitly isolated test account or approved release configuration exists. Read-only tracking queries remain available.
+- `TRACK17_MUTATIONS_ENABLED="true"` enables owner-authenticated shipment registration following explicit authorization on 2026-11-19. It uses the shared 17TRACK account and quota. Registration can add tracking numbers to that provider account; it does not edit Vintage Binder Firestore or unregister/delete existing shipments. Integration tests use mocked upstream registration; do not register synthetic numbers in the real account.
 - Main ruleset `27585981` requires PRs plus four up-to-date successful Actions checks, with no bypass actors; force pushes/deletion are blocked.
 - Pages publishes from checked main through manual dispatch or a trusted successful main-push CI callback. The callback must originate in the same repository and match the current SHA; the source guard independently verifies all four checks. No PR artifacts or callback-supplied code are consumed. The registered staging Firebase and API are the only accepted runtime endpoints.
 - Currency/postal browser keys are Pokefolio-specific. No legacy browser key is read, modified or deleted.
@@ -25,4 +25,4 @@ There is no Pokefolio production environment yet. Provision it near release unde
 - Apply `firebase/firestore.rules` for staging deny-all rollback; prior private-only rules can revoke public sharing without changing private documents.
 - Never overwrite Vintage Binder to roll back Pokefolio. Legacy production remains the fallback.
 
-The two Pages paths share `https://xfayne.github.io`; CORS is not an isolation boundary. Private backend operations require staging Firebase signatures and owner identity, and shared-account mutations remain disabled.
+The two Pages paths share `https://xfayne.github.io`; CORS is not an isolation boundary. Private backend operations require staging Firebase signatures and owner identity, and shipment registration is explicitly authorized on the shared provider account. Authentication and staging Firebase identity checks remain enforced.

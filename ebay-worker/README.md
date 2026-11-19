@@ -1,10 +1,10 @@
 # Pokefolio API backend
 
-This folder retains its legacy `ebay-worker` name. The deployed staging service is **`pokefolio-api-staging`**, serving eBay search/listing adapters, Gemini condition analysis for photos/listings, and owner-only read-only 17TRACK queries. Credentials are server-side secrets. Shared-account shipment registration defaults to disabled; enable it only for an isolated account or approved release configuration, never to test legacy production shipments.
+This folder retains its legacy `ebay-worker` name. The deployed staging service is **`pokefolio-api-staging`**, serving eBay search/listing adapters, Gemini condition analysis for photos/listings, and owner-only 17TRACK registration and queries. Credentials are server-side secrets. Shared-account shipment registration is enabled with explicit owner authorization through `TRACK17_MUTATIONS_ENABLED="true"`. Keep staging identity checks and use mocked provider calls for tests; do not change existing legacy shipments.
 
 # eBay Live Search — secure Cloudflare Worker
 
-> **Pokefolio safety — historical legacy instructions only.** Do **not** run `wrangler deploy`, `wrangler secret put`, or copy any original production eBay, Gemini, Firebase or 17TRACK credentials into this repository. The copied Worker is intentionally disabled until [Issue #2](https://github.com/xfayne/pokefolio/issues/2) creates isolated staging. The deployment steps below describe Vintage Binder's legacy setup, **not** Pokefolio's current setup. See [SAFE_IMPORT.md](../docs/SAFE_IMPORT.md).
+> **Historical setup below.** Pokefolio staging is active at `pokefolio-api-staging`; current deployment, secret handling and rollback instructions are in [STAGING_PREVIEW.md](../docs/STAGING_PREVIEW.md). Target only that service. Never deploy to Vintage Binder or commit provider credentials.
 
 
 This is the backend for the existing **🔎 מציאות** tab. It fetches live auctions and Buy It Now listings via the **official eBay Browse API**, not a third-party scraper. The `Client ID` and `Client Secret` remain private in the Worker.
