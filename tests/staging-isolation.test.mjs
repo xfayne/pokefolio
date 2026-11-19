@@ -13,9 +13,9 @@ test('staging Firestore bootstrap denies all access by default',()=>{
 });
 test('copied Worker is not configured to deploy to production',()=>{
  const config=read('ebay-worker/wrangler.toml');
- assert.match(config,/^name\s*=\s*"pokefolio-ebay-deals-staging"\s*$/m);
+ assert.match(config,/^name\s*=\s*"pokefolio-api-staging"\s*$/m);
  assert.match(config,/^workers_dev\s*=\s*false\s*$/m);
- assert.match(config,/^ALLOWED_ORIGIN\s*=\s*"https:\/\/pokefolio\.invalid"\s*$/m);
+ assert.match(config,/^ALLOWED_ORIGIN\s*=\s*"https:\/\/xfayne\.github\.io"\s*$/m);
  assert.doesNotMatch(config,/^kv_namespaces\s*=/m);
  assert.doesNotMatch(config,/^route\s*=/m);
  const worker=read('ebay-worker/index.js');

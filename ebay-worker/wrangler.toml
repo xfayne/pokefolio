@@ -1,9 +1,12 @@
-# Do not expose or deploy staging before Issue #2 is configured.
-name = "pokefolio-ebay-deals-staging"
+# Pokefolio backend API: eBay, AI analysis and read-only shipment queries.
+name = "pokefolio-api-staging"
 main = "./index.js"
 compatibility_date = "2026-11-06"
 workers_dev = false
 
 [vars]
-ALLOWED_ORIGIN = "https://pokefolio.invalid"
+ALLOWED_ORIGIN = "https://xfayne.github.io"
 POKEFOLIO_FIREBASE_PROJECT_ID = "pokefolio-staging"
+
+# The authorized provider key is shared with the legacy account; do not mutate it.
+TRACK17_MUTATIONS_ENABLED = "false"
