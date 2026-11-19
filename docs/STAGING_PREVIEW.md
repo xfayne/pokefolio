@@ -10,7 +10,7 @@ Before packaging, `verify-staging-source.mjs` independently reads the current ma
 
 Repository Actions variable `POKEFOLIO_FIREBASE_WEB_CONFIG` holds the four-field **public Firebase Web configuration** for the already registered staging app: `apiKey`, `projectId`, `authDomain`, `appId`. This public browser configuration is not a Firebase Admin credential. The builder rejects every other project, app, auth domain or extra field; provider credentials must never be placed in it.
 
-The artifact enables only the independent staging Firebase. `workerUrl` is always empty: eBay, AI grading and shipment-provider calls stay disabled, and the separate Worker remains undeployed/unexposed. No private provider key is required or included. A public manifest records source SHA and enabled capabilities without the Web API key or user identity.
+The artifact enables only the independent staging Firebase (private collection plus opt-in public binder projection). `workerUrl` is always empty: eBay, AI grading and shipment-provider calls stay disabled, and the separate Worker remains undeployed/unexposed. No private provider key is required or included. A public manifest records source SHA and enabled capabilities without the Web API key or user identity.
 
 The deploy job uses environment `pokefolio-staging`, restricted to main in GitHub settings. The build token has only contents/checks/Pages read access; only the deploy job gets Pages/OIDC write access. GitHub Pages must use the Actions publishing source before the manual run.
 
@@ -34,4 +34,12 @@ To withdraw access, disable this repository's Pages site and apply the verified 
 - Live `pokefolio-staging-manifest.json` matches the source SHA, `pokefolio-staging`, `firebaseEnabled: true`, `workerEnabled: false`.
 - Catalog loaded with zero owned/Wishlist/binder cards and a visible staging marker. No collection data was imported or edited.
 - After explicit user authorization, Google sign-in from this Pages URL succeeded on 2026-11-19 and the app confirmed successful private collection loading from Firestore. No collection edits, imports or manual sync writes were performed. Earlier localhost synthetic owner/cross-user authorization checks passed, as recorded in PROJECT_CONTEXT.md.
-- External providers and public sharing remain disabled; Issue #2 is not complete.
+- External providers remain disabled; Issue #2 is not complete.
+
+## Public sharing verification — 2026-11-19
+
+PR #36 passed all four required checks, including 24 Firestore emulator tests and browser publication/viewer regression checks. Merged rules blob `4ab7d9b12274af9b631591dabb348d5504f3a03d` was published to staging only. Successful preview run: https://github.com/xfayne/pokefolio/actions/runs/44466136119 ; live manifest source `4dd48e00b60fdb21cb3c303fff5e3e78362d28b1`.
+
+The actual binder button created an empty schema-v2 public projection and owner opt-in settings; the viewer loaded successfully and still loaded after owner sign-out. Private collection progress was not created, imported or changed. Automated cases cover nonempty ordered pockets, null placeholders, all kinds, 1,252 pockets, foreign access, schema pollution, atomic opt-in and link revocation. The public projection is a bounded token string so rules validate every entry; the reader decodes it to the existing 3×3 view. This is not a private collection migration.
+
+Public-sharing rollback: republish the prior private-only rules from PR #31 (blob `0286137cee6c768ac325fbb6897fa27c0b7700f5`) to staging to deny shared reads immediately, or disable the owner's sharing settings. Deny-all remains the full staging rollback. No production environment exists for Pokefolio.
