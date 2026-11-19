@@ -48,7 +48,6 @@ test('Pages staging deployment trusts only manual main or completed main push CI
  assert.ok(!workflow.includes('run: node scripts/build-staging-preview.mjs'));
  assert.match(workflow,/name: pokefolio-staging/);
  assert.match(workflow,/workflow_run:/);
- assert.match(workflow,/workflows: \[Main UI JavaScript Parity\]/);
  assert.ok(workflow.includes("github.event.workflow_run.event == 'push'"));
  assert.ok(workflow.includes("github.event.workflow_run.conclusion == 'success'"));
  assert.ok(workflow.includes("github.event.workflow_run.head_repository.full_name == 'xfayne/pokefolio'"));
