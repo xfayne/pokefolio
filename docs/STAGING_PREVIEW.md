@@ -33,5 +33,5 @@ To withdraw access, disable this repository's Pages site and apply the verified 
 - Source SHA: `2de8294894dd40735a01610c729bf49d3ed3c271`; all four required checks passed before dispatch.
 - Live `pokefolio-staging-manifest.json` matches the source SHA, `pokefolio-staging`, `firebaseEnabled: true`, `workerEnabled: false`.
 - Catalog loaded with zero owned/Wishlist/binder cards and a visible staging marker. No collection data was imported or edited.
-- Fresh Google sign-in from this Pages URL remains unverified: automatic approval review blocked the sign-in control pending explicit authorization for the account and destination. Earlier localhost synthetic owner/cross-user authorization checks passed, as recorded in PROJECT_CONTEXT.md.
+- After explicit user authorization, Google sign-in from this Pages URL succeeded on 2026-11-19 and the app confirmed successful private collection loading from Firestore. No collection edits, imports or manual sync writes were performed. Earlier localhost synthetic owner/cross-user authorization checks passed, as recorded in PROJECT_CONTEXT.md.
 - External providers and public sharing remain disabled; Issue #2 is not complete.
