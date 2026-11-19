@@ -20,8 +20,18 @@ The deploy job uses environment `pokefolio-staging`, restricted to main in GitHu
 node --test tests/staging-preview.test.mjs
 ```
 
-The repository stays non-deploying until the workflow is deliberately dispatched after CI, Pages settings and the variable/environment have been checked. Enabling a private-Firebase preview does not complete Issue #2's external integrations or public-sharing work.
+Deployment is manual only. Pages uses the Actions publishing source; `pokefolio-staging` permits only branch `main` and no tags. The registered public Web configuration is configured in the repository Actions variable. Enabling a private-Firebase preview does not complete Issue #2's external integrations or public-sharing work.
 
 Verify the deployed manifest SHA, Firebase project, disabled Worker and visible staging marker. Test sign-in and read/write authorization against staging only; never import real collection data for a preview.
 
 To withdraw access, disable this repository's Pages site and apply the verified deny-all staging Firestore rollback if needed. No production site or document is modified. To restore a prior frontend, revert it through a tested PR and manually deploy protected main again. The workflow does not publish arbitrary SHA inputs.
+
+## Verified deployment — 2026-11-19
+
+- URL: https://xfayne.github.io/pokefolio/
+- Successful build and deploy: https://github.com/xfayne/pokefolio/actions/runs/44463075103
+- Source SHA: `2de8294894dd40735a01610c729bf49d3ed3c271`; all four required checks passed before dispatch.
+- Live `pokefolio-staging-manifest.json` matches the source SHA, `pokefolio-staging`, `firebaseEnabled: true`, `workerEnabled: false`.
+- Catalog loaded with zero owned/Wishlist/binder cards and a visible staging marker. No collection data was imported or edited.
+- Fresh Google sign-in from this Pages URL remains unverified: automatic approval review blocked the sign-in control pending explicit authorization for the account and destination. Earlier localhost synthetic owner/cross-user authorization checks passed, as recorded in PROJECT_CONTEXT.md.
+- External providers and public sharing remain disabled; Issue #2 is not complete.

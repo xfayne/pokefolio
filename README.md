@@ -2,7 +2,7 @@
 
 A mobile-first Pokémon card portfolio manager, evolving from the production [Pokémon Vintage Binder](https://github.com/xfayne/pokemon-vintage-binder).
 
-**Foundation status:** The legacy application was imported as an isolated baseline under [Issue #1](https://github.com/xfayne/pokefolio/issues/1). Separate `pokefolio-staging` Firebase Auth/Firestore now has tested, deployed private owner rules; both emulator tests and a live synthetic authorization check passed. The separate Cloudflare Worker remains undeployed, without public URLs, bindings or secrets. Main requires PRs and four passing Actions checks. The product frontend, Pages and external providers are not connected yet; [Issue #2](https://github.com/xfayne/pokefolio/issues/2) remains open. The original [Vintage Binder app](https://xfayne.github.io/pokemon-vintage-binder/) remains independent and unchanged.
+**Foundation status:** The legacy application was imported as an isolated baseline under [Issue #1](https://github.com/xfayne/pokefolio/issues/1). Separate `pokefolio-staging` Firebase Auth/Firestore now has tested, deployed private owner rules; both emulator tests and a live synthetic authorization check passed. The separate Cloudflare Worker remains undeployed, without public URLs, bindings or secrets. Main requires PRs and four passing Actions checks. The [staging frontend](https://xfayne.github.io/pokefolio/) is deployed with independent Firebase configuration; a fresh Google sign-in from that URL and external providers remain pending; [Issue #2](https://github.com/xfayne/pokefolio/issues/2) remains open. The original [Vintage Binder app](https://xfayne.github.io/pokemon-vintage-binder/) remains independent and unchanged.
 
 ## Architecture and roadmap
 
