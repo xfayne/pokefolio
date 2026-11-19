@@ -2,8 +2,10 @@
 // users/{uid}: progress (opaque legacy map, preserved without normalization),
 // revision (positive integer), updatedAt (server timestamp), clientTimestamp (integer).
 // Nested sharing/settings and conditionAnalyses retain their existing client schemas.
-// Public sharedBinders and every unknown path remain denied.
-// No transaction schema, data migration, or public-sharing policy is introduced.
+// sharedBinders/{UUID}: schemaVersion=2, immutable ownerUid, pockets (bounded
+// serialized catalog IDs + kinds, "_" keeps an empty pocket), includeWish, updatedAt.
+// Public get requires the owner's private settings to enable this exact link.
+// Public listing, private metadata and every unknown path remain denied.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -42,6 +44,40 @@ service cloud.firestore {
         && data.analyzedAt is timestamp && data.analyzedAt == request.time
         && data.clientAnalyzedAt is int && data.clientAnalyzedAt >= 0
         && data.clientAnalyzedAt <= 9007199254740991;
+    }
+    function validPublicBinder(data) {
+      return data.keys().hasAll(['schemaVersion','ownerUid','pockets','includeWish','updatedAt'])
+        && data.keys().hasOnly(['schemaVersion','ownerUid','pockets','includeWish','updatedAt'])
+        && data.schemaVersion == 2
+        && data.ownerUid is string && data.ownerUid.size() > 0 && data.ownerUid.size() <= 128
+        && data.pockets is string && data.pockets.size() <= 40000
+        && data.pockets.split(';').size() <= 1252
+        && (data.pockets == '' || data.pockets.matches('^(_|[opw]:(?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))(;(_|[opw]:(?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)))*$'))
+        && data.includeWish is bool
+        && (data.includeWish || !data.pockets.matches('.*w:.*'))
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+    function enabledShare(ownerUid, shareId, includeWish) {
+      let settings = get(/databases/$(database)/documents/users/$(ownerUid)/sharing/settings).data;
+      return settings.enabled == true && settings.shareId == shareId && settings.includeWish == includeWish;
+    }
+    function enabledShareAfter(ownerUid, shareId, includeWish) {
+      let settings = getAfter(/databases/$(database)/documents/users/$(ownerUid)/sharing/settings).data;
+      return settings.enabled == true && settings.shareId == shareId && settings.includeWish == includeWish;
+    }
+    match /sharedBinders/{shareId} {
+      allow get: if resource.data.schemaVersion == 2
+        && enabledShare(resource.data.ownerUid, shareId, resource.data.includeWish);
+      allow list: if false;
+      allow create: if shareId.matches('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$')
+        && isOwner(request.resource.data.ownerUid)
+        && validPublicBinder(request.resource.data)
+        && enabledShareAfter(request.resource.data.ownerUid, shareId, request.resource.data.includeWish);
+      allow update: if isOwner(resource.data.ownerUid)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validPublicBinder(request.resource.data)
+        && enabledShareAfter(resource.data.ownerUid, shareId, request.resource.data.includeWish);
+      allow delete: if false;
     }
     match /users/{uid} {
       allow get: if isOwner(uid);

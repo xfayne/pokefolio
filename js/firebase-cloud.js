@@ -12,15 +12,41 @@ function shareSettingsRef(){return user?sdk.doc(db,'users',user.uid,'sharing','s
 function newShareId(){if(typeof crypto.randomUUID==='function')return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);}
 function shareLink(){return shareId?location.origin+location.pathname+'?share='+encodeURIComponent(shareId):'';}
 function renderShare(){const b=$('openReader');if(b){b.disabled=!(user&&ready&&shareLoaded);b.title=b.disabled?'יש להתחבר לחשבון Google ולהמתין לטעינת האוסף':'פתח בלשונית חדשה, עם כתובת שאפשר לשלוח לחברים';}}
+// Public projection codec: only catalog references and pocket kinds cross this boundary.
+function encodePublicPockets(cards) {
+ if(!Array.isArray(cards)||cards.length>1252)throw Error('INVALID_PUBLIC_POCKETS');
+ const id=/^(?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)$/;
+ return cards.map(card=>{
+  if(card===null)return '_';
+  if(!card||!id.test(card.id)||!['owned','pending','wish'].includes(card.kind))throw Error('INVALID_PUBLIC_POCKET');
+  return ({owned:'o',pending:'p',wish:'w'})[card.kind]+':'+card.id;
+ }).join(';');
+}
+function decodePublicPockets(value) {
+ if(typeof value!=='string'||value.length>40000)throw Error('INVALID_PUBLIC_POCKETS');
+ const tokens=value===''?[]:value.split(';');
+ if(tokens.length>1252)throw Error('INVALID_PUBLIC_POCKETS');
+ const cards=tokens.map(token=>{
+  if(token==='_')return null;
+  const match=/^([opw]):((?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))$/.exec(token);
+  if(!match)throw Error('INVALID_PUBLIC_POCKET');
+  return {id:match[2],kind:({o:'owned',p:'pending',w:'wish'})[match[1]]};
+ });
+ return cards;
+}
+// End public projection codec.
 function shareSnapshot(){const p=bridge()?.getProgress?.()||{};const order=Array.isArray(p.binderOrder)?p.binderOrder:[];const cards=order.map(id=>p.owned?.[id]?{id,kind:'owned'}:p.pendingPurchase?.[id]?{id,kind:'pending'}:(shareIncludeWish&&p.wish?.[id])?{id,kind:'wish'}:null);
- return {ownerUid:user.uid,cards:cards.slice(0,1252),includeWish:shareIncludeWish,updatedAt:sdk.serverTimestamp()};}
+ return {schemaVersion:2,ownerUid:user.uid,pockets:encodePublicPockets(cards.slice(0,1252)),includeWish:shareIncludeWish,updatedAt:sdk.serverTimestamp()};}
 function queueSharePublish(){
  if(!shareEnabled||!shareId||!user||!ready||!shareLoaded)return Promise.resolve();
  const currentId=shareId,uid=user.uid;
  shareWriting=shareWriting.catch(()=>{}).then(async()=>{
   if(!shareEnabled||shareId!==currentId||user?.uid!==uid)return;
   shareIncludeWish=bridge()?.getProgress?.()?.binderIncludeWish!==false;
-  await sdk.setDoc(sdk.doc(db,'sharedBinders',currentId),shareSnapshot());
+  const batch=sdk.writeBatch(db);
+  batch.set(sdk.doc(db,'sharedBinders',currentId),shareSnapshot());
+  batch.set(shareSettingsRef(),{shareId:currentId,enabled:true,includeWish:shareIncludeWish});
+  await batch.commit();
   shareUpdateFailed=false;renderShare();
  }).catch(e=>{shareUpdateFailed=true;renderShare();console.error('Public binder update failed',e);});
  return shareWriting;
@@ -47,7 +73,6 @@ async function openPublicBinder(){
   if(!shareEnabled){shareId=newShareId();shareEnabled=true;}
   await queueSharePublish();
   if(shareUpdateFailed)throw Error('שמירת הבינדר הציבורי נכשלה. בדוק את כללי Firestore.');
-  await sdk.setDoc(shareSettingsRef(),{shareId,enabled:true,includeWish:shareIncludeWish});
   if(tab.closed){say('קישור התצוגה הוכן, אבל הלשונית נסגרה. אפשר ללחוץ שוב.');return;}
   tab.location.replace(shareLink());
  }catch(e){
@@ -254,7 +279,8 @@ if(!firebaseConfig){
    const firestore=f.getFirestore(a);
    const result=await f.getDocFromServer(f.doc(firestore,'sharedBinders',publicShareId));
    if(!result.exists()){window.VintageReader.error('הבינדר אינו משותף כרגע, או שהקישור בוטל.');return;}
-   const data=result.data();window.VintageReader.show(data.cards||[],{public:true});
+   const data=result.data();if(data.schemaVersion!==2)throw Error('UNSUPPORTED_PUBLIC_BINDER');
+   window.VintageReader.show(decodePublicPockets(data.pockets),{public:true});
   }catch(err){const reason=err?.code==='permission-denied'?'אין הרשאה לקרוא את הבינדר המשותף. צריך לפרסם את כללי השיתוף ב-Firestore.':err?.code==='unavailable'?'אין כרגע חיבור ל-Firestore. בדוק אינטרנט ונסה שוב.':'לא הצלחנו לטעון את הבינדר. נסה לרענן את הדף.';window.VintageReader.error(reason);console.error('Public binder load error',err);}
  })();
 }else{init(firebaseConfig);}

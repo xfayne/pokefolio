@@ -125,6 +125,7 @@ function installFakeFirebase(options) {
       // Firestore may echo the write through onSnapshot.
       queueMicrotask(()=>test.emit(ref.path,saved,{hasPendingWrites:true}));
     },
+    writeBatch:()=>{const writes=[];return {set:(ref,value)=>writes.push([ref,value]),commit:async()=>{for(const [ref,value] of writes)await window.__mockFirebase.setDoc(ref,value);}};},
     deleteDoc:async ref=>{delete docs[ref.path];}
   };
   localStorage.setItem('pokemon-vintage-binder-progress-v1-old','legacy-cache-must-not-win');
@@ -900,6 +901,25 @@ try {
     console.log('PASS cloud failure keeps editing locked and user data untouched');
   } finally { await failure.context.close(); }
 
+  // Publishing never mutates the private progress document and retains empty pockets.
+  const publishFixture=await openFixture();
+  try{
+   const pp=publishFixture.page;
+   const before=await getState(pp);
+   await pp.locator('[data-view-btn="binder"]').click();
+   const popupPromise=pp.waitForEvent('popup');
+   await pp.locator('#openReader').click();
+   const popup=await popupPromise;
+   await popup.waitForURL(/share=/);
+   const publicWrites=await pp.evaluate(()=>window.__cloudTest.writes.filter(x=>x.path.startsWith('sharedBinders/')));
+   assert.equal(publicWrites.length,1);
+   assert.equal(publicWrites[0].value.pockets,'o:base1-1;w:base2-3');
+   assert.deepEqual(Object.keys(publicWrites[0].value).sort(),['includeWish','ownerUid','pockets','schemaVersion','updatedAt'].sort());
+   assert.deepEqual(await getState(pp),before,'Sharing must not alter private collection data');
+   assert.deepEqual(publishFixture.errors,[]);
+   console.log('PASS atomic public publication and unchanged private progress');
+  }finally{await publishFixture.context.close();}
+
   // The public ?share= reader must read only the shared sanitized document,
   // render ordered pockets, and allow paging without signing in.
   const shareId='12345678-1234-4234-8234-123456789abc';
@@ -910,7 +930,7 @@ try {
     viewport:{width:390,height:844},serviceWorkers:'block'
   });
   await publicContext.addInitScript(installFakeFirebase,{
-    docs:{['sharedBinders/'+shareId]:{cards:publicCards,includeWish:true,updatedAt:42}},
+    docs:{['sharedBinders/'+shareId]:{schemaVersion:2,pockets:publicCards.map(c=>(c.kind==='wish'?'w':'o')+':'+c.id).join(';'),includeWish:true,updatedAt:42}},
     user:null
   });
   await publicContext.route('**/*',route=>route.request().url().startsWith(origin)
