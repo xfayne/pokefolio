@@ -7,7 +7,7 @@ on:
         type: boolean
         default: false
   workflow_run:
-    workflows: [Main UI JavaScript Parity]
+    workflows: [React Foundation]
     types: [completed]
     branches: [main]
 permissions:
@@ -34,14 +34,15 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
       - name: Verify current main and required checks
         run: node scripts/verify-staging-source.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: node scripts/build-index.mjs --check
+      - run: npm ci --prefix frontend
+      - run: npm --prefix frontend run typecheck
       - name: Package staging frontend only
-        run: node scripts/build-staging-preview.mjs
+        run: node scripts/package-react-staging.mjs
         env:
           POKEFOLIO_STAGING_API_URL: ${{ (github.event_name == 'workflow_run' || inputs.enable_api) && 'https://pokefolio-api-staging.xfayne.workers.dev' || '' }}
           POKEFOLIO_FIREBASE_WEB_CONFIG: ${{ vars.POKEFOLIO_FIREBASE_WEB_CONFIG }}

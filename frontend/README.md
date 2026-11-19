@@ -18,4 +18,6 @@ Vite serves `/pokefolio/`. Strict TypeScript, Tailwind and a locally owned shadc
 
 Approved foundations: Axios for HTTP transport, TanStack Query for remote API state, Firebase SDK for auth/Firestore, Zustand for temporary UI state, React Hook Form/Zod for forms and boundary validation, i18next for English/Hebrew, React Router hash routes for Pages. No automatic collection migration or Firestore writes are part of this foundation. Screen designs and binder implementation belong to later roadmap tasks.
 
-The first toolchain PR leaves Pages deployment on its existing build. Subsequent focused PRs introduce routing/service boundaries and switch the staging artifact to this app after validation. Production release remains #21.
+The app has Dashboard-first hash routes and English/Hebrew RTL. All product routes are placeholders until their screen designs are approved. The staging pipeline packages only the Vite output; legacy files are never included. Its manifest identifies `react-foundation` and the source SHA. Production release remains #21.
+
+Run browser tests with `npx playwright install chromium` then `npm run test:e2e`. For a local installed Chrome, `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` can specify its executable. CI always uses the exact Playwright-managed Chromium revision.
