@@ -41,7 +41,11 @@ test('Pages staging deployment trusts only manual main or completed main push CI
  assert.match(workflow,/on:\s*\n\s+workflow_dispatch:/);
  assert.doesNotMatch(workflow,/^\s+(push|pull_request|pull_request_target|schedule):/m);
  assert.match(workflow,/github\.repository == 'xfayne\/pokefolio' && github\.ref == 'refs\/heads\/main'/);
- assert.ok(workflow.indexOf('node scripts/verify-staging-source.mjs')<workflow.indexOf('node scripts/build-staging-preview.mjs'));
+ const verify=workflow.indexOf('node scripts/verify-staging-source.mjs');
+ const build=workflow.indexOf('node scripts/package-react-staging.mjs');
+ assert.ok(verify>=0&&build>verify);
+ assert.match(workflow,/workflows: \[React Foundation\]/);
+ assert.ok(!workflow.includes('run: node scripts/build-staging-preview.mjs'));
  assert.match(workflow,/name: pokefolio-staging/);
  assert.match(workflow,/workflow_run:/);
  assert.match(workflow,/workflows: \[Main UI JavaScript Parity\]/);
