@@ -331,7 +331,7 @@ async function analyzeConditionApi(request,env,headers){
    and restrict the account email so public sign-ups cannot exhaust credits. */
 const TRACK_BASE='https://api.17track.net/track/v2.4';
 // A missing or legacy Firebase project always rejects authenticated write routes.
-const firebaseProject=env=>{const id=String(env.POKEFOLIO_FIREBASE_PROJECT_ID||'').trim();return id==='pokefolio-staging'?id:'';};
+const firebaseProject=env=>{const id=String(env.POKEFOLIO_FIREBASE_PROJECT_ID||'').trim();return id==='pokefolio-staging'||id==='pokefolio-production'?id:'';};
 const FIREBASE_JWKS='https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 let firebaseKeys=null, firebaseKeysUntil=0;
 function base64urlBytes(str){
@@ -449,7 +449,7 @@ export default {
   if(request.method==='POST'&&u.pathname==='/api/analyze-condition')return analyzeConditionApi(request,env,headers);
   if(request.method==='POST'&&u.pathname==='/api/analyze-upload')return analyzeUploadApi(request,env,headers,{reply,verifyFirebaseBearer});
   if(request.method==='POST'&&u.pathname==='/api/resolve-ebay-link')return resolveEbayLinkApi(request,env,headers,{reply,verifyFirebaseBearer,bearer,isEbayImage});
-  if(request.method==='GET'&&u.pathname==='/health')return reply({service:'Pokefolio API',environment:'staging',ready:!!(env.EBAY_CLIENT_ID&&env.EBAY_CLIENT_SECRET),provider:'eBay Browse API',shippingDestinationConfigured:/^[0-9]{5,10}$/.test(String(env.EBAY_DELIVERY_POSTAL_CODE||'').trim()),aiConfigured:Boolean(env.GEMINI_API_KEY)},200,headers);
+  if(request.method==='GET'&&u.pathname==='/health')return reply({service:'Pokefolio API',environment:firebaseProject(env)==='pokefolio-production'?'production':'staging',ready:!!(env.EBAY_CLIENT_ID&&env.EBAY_CLIENT_SECRET),provider:'eBay Browse API',shippingDestinationConfigured:/^[0-9]{5,10}$/.test(String(env.EBAY_DELIVERY_POSTAL_CODE||'').trim()),aiConfigured:Boolean(env.GEMINI_API_KEY)},200,headers);
   if(request.method==='POST'&&u.pathname==='/api/item-images'){
    if(Number(request.headers.get('content-length')||0)>1200)return reply({error:'Payload too large'},413,headers);
    let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400,headers)}
