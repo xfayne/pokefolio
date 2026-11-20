@@ -38,7 +38,8 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await expect(page.locator('header')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered', 'true');
+  await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();

@@ -69,8 +69,23 @@ it('opens explicit copy details and enlarges artwork without losing the card', a
 it('opens per-copy Details directly from the compact expanded Cards row', async () => {
   render(<CollectionCards data={data()} onSave={vi.fn()} />);
   await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
-  expect(screen.getByText('Copy / condition')).toBeInTheDocument();
+  expect(screen.getAllByText('Copy / condition')).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: /^Details charizard-b/ }));
   const dialog = screen.getByRole('dialog', { name: 'Details' });
   expect(within(dialog).getAllByText('$150.00')).toHaveLength(2);
+});
+
+
+it('opens a singleton by default, keeps duplicates closed and remembers toggles', async () => {
+  render(<CollectionCards data={data()} onSave={vi.fn()} />);
+  const singleton = screen.getByRole('button', { name: '1 copy: Snorlax' });
+  const duplicate = screen.getByRole('button', { name: '2 copies: Charizard' });
+  expect(singleton).toHaveAttribute('aria-expanded', 'true');
+  expect(duplicate).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.click(singleton);
+  expect(singleton).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.type(screen.getByRole('searchbox'), 'Snorlax');
+  expect(singleton).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.click(singleton);
+  expect(singleton).toHaveAttribute('aria-expanded', 'true');
 });

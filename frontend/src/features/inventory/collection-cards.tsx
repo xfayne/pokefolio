@@ -15,8 +15,8 @@ const selectClass = 'min-h-11 min-w-0 rounded-lg border border-blue-200 surface-
 
 function Art({ card, large = false }: { card: InventoryCatalogCard | null; large?: boolean }) {
   const [failed, setFailed] = useState(false);
-  return <div className={`${large ? 'card-art-large mx-auto w-[min(58vw,15rem)] aspect-square' : 'size-13 shrink-0'} overflow-hidden rounded-lg bg-blue-100`}>
-    {card && !failed ? <img src={card.imageUrl} alt={card.name} loading={large ? 'eager' : 'lazy'} width="245" height="342" className="h-full w-full object-cover object-center" onError={() => setFailed(true)} /> : <span aria-hidden className="flex h-full items-center justify-center text-blue-700">?</span>}
+  return <div className={`${large ? 'card-art-large mx-auto w-[min(58vw,15rem)] aspect-square' : 'size-13 shrink-0'} pokemon-art ${large ? 'pokemon-art-large' : ''}`}>
+    <span className="pokemon-art-window">{card && !failed ? <img src={card.imageUrl} alt={card.name} loading={large ? 'eager' : 'lazy'} width="245" height="342" className="h-full w-full object-cover" onError={() => setFailed(true)} /> : <span aria-hidden className="flex h-full items-center justify-center text-blue-700">?</span>}</span>
   </div>;
 }
 export function CollectionCards({ data, onSave }: { data: InventoryData; onSave: SaveCopy }) {
@@ -25,7 +25,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [sort, setSort] = useState('value');
   const [filter, setFilter] = useState('all');
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
   const [initialInspection, setInitialInspection] = useState<string | null>(null);
   const [initialCopy, setInitialCopy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -40,7 +40,8 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
   const groups = inventory.groups.filter(g => `${title(g)} ${g.card?.setName ?? ''} ${g.card?.number ?? ''}`.toLocaleLowerCase(i18n.language).includes(needle) && (filter === 'all' || g.copies.some(v => v.copy.possession === filter)));
   groups.sort((a, b) => sort === 'value' ? Number(b.market.pricedCount > 0) - Number(a.market.pricedCount > 0) || b.market.minor - a.market.minor || title(a).localeCompare(title(b)) : sort === 'copies' ? b.copies.length - a.copies.length || title(a).localeCompare(title(b)) : title(a).localeCompare(title(b), i18n.language));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
-  const toggle = (key: string) => setExpanded(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next; });
+  const isExpanded = (group: InventoryGroup) => expansionOverrides.get(group.key) ?? group.copies.length === 1;
+  const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !isExpanded(group)); return next; });
   return <section aria-label={t('inventory.title')} className="flex flex-col gap-2">
     <div className="collection-toolbar">
       <div className="relative">
@@ -49,7 +50,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
         <input id={`${id}-search`} type="search" placeholder={t('inventory.search')} value={search} onChange={e => setSearch(e.target.value)} className="collection-search min-h-11 w-full min-w-0 rounded-xl border border-blue-200 bg-white/80 pe-3 ps-10 text-base" />
       </div>
       <div className="collection-list-controls flex min-w-0 items-center gap-2 py-2">
-        <p className="min-w-0 flex-1 text-sm font-semibold text-slate-600">{t('inventory.listCounts', { cards: groups.length, copies: groups.reduce((count, group) => count + group.copies.length, 0) })}</p>
+        <p className="min-w-0 flex-1 text-sm font-extrabold text-slate-600">{t('inventory.listCounts', { cards: groups.length, copies: groups.reduce((count, group) => count + group.copies.length, 0) })}</p>
         <label className="min-w-0 border-s border-blue-200 ps-2"><span className="sr-only">{t('inventory.sort')}</span><select aria-label={t('inventory.sort')} className={`${selectClass} max-w-32 font-semibold text-blue-700`} value={sort} onChange={e => setSort(e.target.value)}><option value="value">{t('inventory.value')} ↓</option><option value="name">{t('inventory.name')}</option><option value="copies">{t('inventory.quantity')}</option></select></label>
         <button type="button" onClick={() => setOptionsOpen(v => !v)} aria-label={t('inventory.options')} aria-expanded={optionsOpen} aria-controls={`${id}-options`} className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-blue-300 bg-white/80 text-blue-700 shadow-sm"><LuFilter aria-hidden className="size-5" /></button>
       </div>
@@ -59,18 +60,18 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
     </div>
     <p role="status" className="sr-only">{notice}</p>
     {!groups.length && <EmptyState title={t('inventory.empty')} description={t('inventory.emptyDetail')} />}
-    <ul className="space-y-1.5">{groups.map(g => <li key={g.key} className="inventory-card overflow-hidden rounded-xl border border-blue-200 bg-white/80 shadow-sm">
+    <ul className="space-y-1.5">{groups.map(g => <li key={g.key} className="inventory-card overflow-hidden rounded-xl">
       <div className="flex items-stretch">
         <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 ps-2 text-start">
           <span className="sr-only">{t('inventory.details')}: </span><Art card={g.card} />
-          <span className="min-w-0 flex-1"><span className="block break-words text-base font-black leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span><span className="mt-0.5 inline-block rounded-full bg-blue-100 px-2 text-xs leading-[0.875rem] font-semibold text-slate-600">{t('inventory.copies', { count: g.copies.length })}</span></span>
-          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-black tracking-tight ${g.market.pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{g.market.pricedCount ? money(g.market) : t('inventory.unpriced')}</span></span>
+          <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span><span className="mt-0.5 inline-block rounded-full bg-blue-100 px-2 text-xs leading-[0.875rem] font-semibold text-slate-600">{t('inventory.copies', { count: g.copies.length })}</span></span>
+          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${g.market.pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{g.market.pricedCount ? money(g.market) : t('inventory.unpriced')}</span></span>
         </button>
-        <button type="button" aria-label={`${t('inventory.copies', { count: g.copies.length })}: ${title(g)}`} aria-expanded={expanded.has(g.key)} aria-controls={`${id}-${g.key}`} onClick={() => toggle(g.key)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950">
-          <LuChevronDown aria-hidden className={`size-5 transition-transform ${expanded.has(g.key) ? 'rotate-180' : ''}`} />
+        <button type="button" aria-label={`${t('inventory.copies', { count: g.copies.length })}: ${title(g)}`} aria-expanded={isExpanded(g)} aria-controls={`${id}-${g.key}`} onClick={() => toggle(g)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950">
+          <LuChevronDown aria-hidden className={`size-5 transition-transform ${isExpanded(g) ? 'rotate-180' : ''}`} />
         </button>
       </div>
-      {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
+      {isExpanded(g) && <div id={`${id}-${g.key}`} className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span className="me-11">{t('inventory.marketValue')}</span></div>
         {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-t border-blue-200">
           <button type="button" className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
