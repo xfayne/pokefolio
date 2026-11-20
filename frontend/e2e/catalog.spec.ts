@@ -5,9 +5,9 @@ test('shared catalog picks duplicate copies and global search opens details', as
  for (let i=0;i<2;i++) {
   await page.getByRole('button',{name:'Add card',exact:true}).click();
   await page.getByRole('searchbox').fill('shining gyarados');
-  await expect(page.getByRole('listitem').filter({hasText:'Shining Gyarados'})).toHaveCount(1);
+  await expect(page.getByRole('dialog').getByRole('listitem').filter({hasText:'Shining Gyarados'})).toHaveCount(1);
   if (i===0) { await page.screenshot({path:test.info().outputPath('catalog-picker.png')}); expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]); }
-  await page.getByRole('button',{name:/Shining Gyarados/}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/Shining Gyarados/}).click();
  }
  await expect(page.locator('.new-purchase-copy')).toHaveCount(5);
  await page.goto('./#/search');
