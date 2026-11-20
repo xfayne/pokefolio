@@ -24,7 +24,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   const toolbarBottom = await toolbar.evaluate(el => el.getBoundingClientRect().bottom);
   expect(listTop - toolbarBottom).toBeLessThanOrEqual(8);
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
-  await test.info().attach('cards', { body: await page.screenshot(), contentType: 'image/png' });
+  await test.info().attach('cards', { body: await page.screenshot({ path: test.info().outputPath('cards.png') }), contentType: 'image/png' });
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toHaveAttribute('data-entered', 'true');
@@ -43,7 +43,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 22%');
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();
-  await test.info().attach('card-details', { body: await dialog.screenshot(), contentType: 'image/png' });
+  await test.info().attach('card-details', { body: await dialog.screenshot({ path: test.info().outputPath('card-details.png') }), contentType: 'image/png' });
   await dialog.getByLabel('Price condition', { exact: true }).selectOption('LP');
   await expect(dialog.getByText('$220.00', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
