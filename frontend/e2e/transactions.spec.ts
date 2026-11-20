@@ -14,7 +14,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await expect(page.getByText('Demo', { exact: true })).toBeVisible();
   await expect(page.getByRole('listitem')).toHaveCount(4);
   await expect(page.getByText('4 copies', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'New transaction', exact: true })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('button', { name: 'New transaction', exact: true })).toBeEnabled();
   await expect(page.getByText('−$227.00', { exact: true })).toBeVisible();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });

@@ -1,0 +1,26 @@
+export const newPurchaseTranslations = {
+  en: {
+    title: 'New transaction', purchase: 'Purchase', sale: 'Sale', date: 'Date', source: 'Source', seller: 'Seller', currency: 'Currency',
+    cards: 'Cards', perCopy: 'Per-card costs', lot: 'Total / lot', lotTotal: 'Card / lot total', add: 'Add card', remove: 'Remove copy', condition: 'Condition', cost: 'Card cost', shipping: 'Shipping cost',
+    split: 'Split equally: {{amount}} per copy', splitRounded: 'Split equally: {{min}}–{{max}} per copy (rounded)', splitEmpty: 'Add cards to calculate shipping', total: 'Total',
+    shipment: 'Shipment details', optional: '(optional)', carrier: 'Carrier', tracking: 'Tracking number', save: 'Save purchase', saving: 'Saving…',
+    unknown: 'Unknown', unallocated: 'Unallocated', lotNote: 'Individual card costs remain unallocated.',
+    pickerSoon: 'Card selection is the next screen being built.', saleSoon: 'Sale recording is coming in a separate update.',
+    currencyChanged: 'Currency changed. Re-enter the amounts; no conversion was applied.', undo: 'Undo',
+    invalid: 'Check the highlighted fields.', dateError: 'Enter a valid purchase date.', sellerError: 'Enter a seller for a manual purchase.', cardsError: 'Add at least one card.', amountError: 'Enter a nonnegative amount with up to two decimal places.', duplicateError: 'Each physical copy must be separate.',
+    failed: 'Could not save. Your draft is still here; try again.', unavailable: 'Account saving is not connected yet. You can try the sample purchase.',
+    demoSaved: 'Demo purchase saved for this session.',
+  },
+  he: {
+    title: 'עסקה חדשה', purchase: 'רכישה', sale: 'מכירה', date: 'תאריך', source: 'מקור', seller: 'מוכר', currency: 'מטבע',
+    cards: 'קלפים', perCopy: 'מחיר לכל קלף', lot: 'סכום כולל / לוט', lotTotal: 'סכום הקלפים / הלוט', add: 'הוספת קלף', remove: 'הסרת עותק', condition: 'מצב', cost: 'מחיר הקלף', shipping: 'עלות משלוח',
+    split: 'חלוקה שווה: {{amount}} לעותק', splitRounded: 'חלוקה שווה: {{min}}–{{max}} לעותק (לאחר עיגול)', splitEmpty: 'יש להוסיף קלפים לחישוב המשלוח', total: 'סך הכול',
+    shipment: 'פרטי משלוח', optional: '(לא חובה)', carrier: 'חברת שילוח', tracking: 'מספר מעקב', save: 'שמירת רכישה', saving: 'שומרת…',
+    unknown: 'לא ידוע', unallocated: 'טרם חולק', lotNote: 'המחירים האישיים של הקלפים נשארים ללא חלוקה.',
+    pickerSoon: 'בחירת הקלפים היא המסך הבא שייבנה.', saleSoon: 'תיעוד מכירה יתווסף בעדכון נפרד.',
+    currencyChanged: 'המטבע השתנה. יש להזין מחדש את הסכומים; לא בוצעה המרה.', undo: 'ביטול השינוי',
+    invalid: 'יש לבדוק את השדות המסומנים.', dateError: 'יש להזין תאריך רכישה תקין.', sellerError: 'יש להזין מוכר ברכישה ידנית.', cardsError: 'יש להוסיף קלף אחד לפחות.', amountError: 'יש להזין סכום שאינו שלילי, עם עד שתי ספרות אחרי הנקודה.', duplicateError: 'כל עותק פיזי צריך להופיע בנפרד.',
+    failed: 'השמירה נכשלה. הטיוטה נשמרה כאן; אפשר לנסות שוב.', unavailable: 'השמירה לחשבון עדיין אינה מחוברת. אפשר להתנסות ברכישה לדוגמה.',
+    demoSaved: 'רכישת ההדגמה נשמרה להפעלה הנוכחית.',
+  },
+};

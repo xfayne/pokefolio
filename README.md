@@ -78,7 +78,7 @@ identify missing amounts; they are not cash flow or profit.
 
 The [sample history](https://xfayne.github.io/pokefolio/#/transactions/history?transactions=sample)
 is explicitly opt-in and synthetic. The ordinary route reports that account
-storage is not connected. New transaction and sale-detail actions remain unavailable until their separately
+storage is not connected. Sale recording and sale details remain unavailable until their separately
 approved screens are implemented. Purchase rows open the approved Purchase Details screen. Overview remains a placeholder until its screen is
 implemented; the former Transactions Shipments URL redirects to Overview. This step does not finish #8 or write to Firestore.
 
@@ -89,3 +89,18 @@ read-only shipment timeline. The sample purchase reconciles 52 + 46 + 32 + 12 =
 through the existing card sheet; tracking copy uses the full sample number.
 Shipment snapshots are synthetic; live tracking and persistence remain pending.
 The shared bold weight is 700 throughout the UI, matching Collection card names.
+
+New Purchase follows the approved creation mock at `#/transactions/new`. The
+explicit [sample form](https://xfayne.github.io/pokefolio/#/transactions/new?transactions=sample)
+starts with the three example copies and can save a new pending demo purchase,
+then open it in Purchase Details and History. Demo records live only for this
+app session; ordinary routes never load them or save account records.
+
+Unsaved form drafts are transient UI state, separated by sample/account mode.
+Per-copy prices are required; lot totals leave individual costs unallocated.
+Shipping uses deterministic integer-cent allocation. Changing currency clears
+amounts with immediate undo, without pretending to convert. Shipment fields
+default closed and create no tracking registrations or invented events.
+Payment is unknown until explicitly confirmed; this form does not invent a cash
+movement. Account persistence remains pending. Add card awaits the separately
+approved card-picker mock; Sale remains #9.

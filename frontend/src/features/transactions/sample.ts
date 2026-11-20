@@ -1,9 +1,10 @@
 import { cardCopySchema, purchaseSchema, saleLineSchema, saleSchema, type Money } from '@/domain/schema';
 import { purchaseShipmentSchema } from '@/domain/purchase-details';
+import { demoTransactionOwner } from './demo-context';
 import type { HistoryData } from '@/domain/transaction-history';
 
 // Synthetic records only. Opt-in URL preview, never stored or mixed with an account.
-const ownerUid = 'sample-transactions';
+const ownerUid = demoTransactionOwner;
 const at = '2026-11-20T10:00:00Z';
 const metadata = { schemaVersion: 1, ownerUid, revision: 1, createdAt: at, updatedAt: at };
 const known = <T,>(value: T) => ({ status: 'known' as const, value, source: 'user' as const });
