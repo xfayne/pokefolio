@@ -1,4 +1,4 @@
-import { costSchema, currencySchema, fxEvidenceSchema, moneySchema, type Cost, type FxEvidence, type Money, type Sale, saleSchema } from './schema';
+import { costSchema, currencySchema, fxEvidenceSchema, idSchema, moneySchema, type Cost, type FxEvidence, type Money, type Sale, saleSchema } from './schema';
 
 export function safeInteger(value: bigint): number {
   if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) throw new Error('Money exceeds safe integer range');
@@ -23,6 +23,7 @@ export function sumMoney(amounts: readonly Money[], currency: Money['currency'])
 export function splitMoney(raw: Money, orderedIds: readonly string[]): ReadonlyMap<string, Money> {
   const total = moneySchema.parse(raw);
   if (!orderedIds.length || new Set(orderedIds).size !== orderedIds.length) throw new Error('Allocation needs distinct physical copies');
+  orderedIds.forEach((id) => idSchema.parse(id));
   const count = BigInt(orderedIds.length);
   const base = BigInt(total.minor) / count, remainder = BigInt(total.minor) % count;
   return new Map(orderedIds.map((id, i) => [id, { currency: total.currency, minor: Number(base + (BigInt(i) < remainder ? 1n : 0n)) }]));
@@ -51,6 +52,8 @@ export function netSaleProceeds(input: Sale): Metric {
 export function realizedProfit(proceeds: Metric, basis: Metric): Metric {
   if (proceeds.status === 'unavailable') return proceeds;
   if (basis.status === 'unavailable') return basis;
+  if (!Number.isSafeInteger(proceeds.minor) || !Number.isSafeInteger(basis.minor)) throw new Error('Metric must use safe integer minor units');
+  currencySchema.parse(proceeds.currency); currencySchema.parse(basis.currency);
   if (proceeds.currency !== basis.currency) return { status: 'unavailable', reason: 'Historical FX required' };
   return { status: proceeds.status === 'estimated' || basis.status === 'estimated' ? 'estimated' : 'exact', currency: proceeds.currency,
     minor: safeInteger(BigInt(proceeds.minor) - BigInt(basis.minor)) };

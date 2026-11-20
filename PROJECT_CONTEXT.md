@@ -57,22 +57,21 @@ Adventure Blue tokens, local Inter/ Hebrew fonts, shared surfaces/fields/states 
 
 User requested react-icons in the same PR. Shared navigation/actions use named Lucide-set imports from react-icons/lu; unused lucide-react was removed. Do not mix icon families without a design reason. Fonts are self-hosted Latin/Hebrew subsets.
 
-## Issue #5 domain planning — 2026-11-20
+## Issue #5 — approved domain implementation, 2026-11-20
 
-[Transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md) records the
-proposed copy/transaction/lot identities, money and allocation semantics, sale/refund
-lifecycle, owner-scoped persistence boundaries, synthetic scenarios and read-only
-legacy mapping. **Owner approved the proposal on 2026-11-20, including sales restricted to held, received copies initially.**
-The proposal adds no runtime types, Firestore writes/rules, migrations or screen behavior.
-Issue #5 remains open; implementation proceeds through focused PRs.
+Owner approved [the domain model](docs/DOMAIN_MODEL_PROPOSAL.md), including the
+initial restriction that only held, received physical copies can be sold. PR #52
+records approval; #53 adds strict private schemas and #54 adds money/purchase plans.
 
-First implementation: `frontend/src/domain/schema.ts` adds strict private DTO schemas
-and inferred types for copies, purchases/lines, sales, lots, cash, refunds, acquisitions,
-shipments, revisions and historical FX evidence. Boundary tests use synthetic data.
-Runtime adapters, allocation/lifecycle commands and migration are separate work; no
-live writes or rules changes are enabled by these contracts.
+`frontend/src/domain/` contains typed records, explicit evidence/cost coverage, integer
+shipping and lot allocation, historical-only FX, copy receipt/sale/reversal commands,
+shipping-refund corrections, cash-month grouping and owner-scoped commit contracts.
+Synthetic tests cover identities, rounding, missing costs/dates/FX, sales, refunds,
+Binder/Wishlist isolation, idempotent replay and competing optimistic revisions.
+See the [domain implementation guide](frontend/src/domain/README.md).
 
-Pure money/purchase modules add safe integer parsing, deterministic equal-share
-shipping, explicit lot/tax/fee allocations, per-copy purchase plans and initial payment
-reconciliation. FX conversion requires historical evidence; missing/estimated costs
-retain coverage labels. No UI or live persistence is wired to these primitives.
+This is a domain foundation, not a completed transaction UI or live database adapter.
+No Firestore schema/rules deployment, live collection write or real-data migration is
+performed. Future persistence must independently verify atomicity, auth, references,
+complete write sets and idempotency as described in the guide. #6 handles safe import;
+#7–#11 implement inventory/transaction/shipment workflows; #18–#19 extend analytics.

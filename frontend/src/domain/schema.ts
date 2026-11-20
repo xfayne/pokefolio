@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const idSchema = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 export const minorSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 export const currencySchema = z.enum(['ILS', 'USD', 'EUR', 'GBP']);
+export type Currency = z.infer<typeof currencySchema>;
+export const conditionSchema = z.enum(['NM', 'LP', 'MP', 'HP', 'DAMAGED']);
+export type Condition = z.infer<typeof conditionSchema>;
 export const moneySchema = z.strictObject({ currency: currencySchema, minor: minorSchema });
 export type Money = z.infer<typeof moneySchema>;
 export const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
@@ -47,7 +50,7 @@ const metadata = {
 };
 export const cardCopySchema = z.strictObject({
   ...metadata, catalog: catalogRefSchema,
-  condition: evidenceSchema(z.enum(['NM', 'LP', 'MP', 'HP', 'DAMAGED'])),
+  condition: evidenceSchema(conditionSchema),
   acquisition: acquisitionSchema, acquiredOn: evidenceSchema(dateSchema),
   possession: z.enum(['pending', 'received', 'unknown']),
   disposition: z.enum(['held', 'sold', 'returned', 'gifted', 'lost']),
@@ -114,14 +117,14 @@ export type SaleLine = z.infer<typeof saleLineSchema>;
 export const cashMovementSchema = z.strictObject({
   ...metadata, transactionId: idSchema,
   direction: z.enum(['in', 'out']),
-  purpose: z.enum(['purchase', 'sale', 'purchase-refund', 'sale-refund', 'expense']),
+  purpose: z.enum(['purchase', 'sale', 'purchase-refund', 'sale-refund', 'purchase-expense', 'sale-expense', 'expense']),
   money: moneySchema, effectiveOn: evidenceSchema(dateSchema), idempotencyKey: idSchema,
   relatedRecordId: idSchema.nullable(),
 }).refine((movement) => (movement.purpose !== 'purchase' || movement.direction === 'out') &&
   (movement.purpose !== 'sale' || movement.direction === 'in') &&
   (movement.purpose !== 'purchase-refund' || movement.direction === 'in') &&
   (movement.purpose !== 'sale-refund' || movement.direction === 'out') &&
-  (movement.purpose !== 'expense' || movement.direction === 'out'), 'Invalid cash direction');
+  (!['expense', 'purchase-expense', 'sale-expense'].includes(movement.purpose) || movement.direction === 'out'), 'Invalid cash direction');
 export type CashMovement = z.infer<typeof cashMovementSchema>;
 export const acquisitionRecordSchema = z.strictObject({
   ...metadata, kind: z.enum(['opening-inventory', 'gift', 'adjustment']),
