@@ -12,7 +12,7 @@ test('new purchase follows the mock and saves only pending demo copies with reco
   await expect(page.getByText('Split equally: $4.00 per copy')).toBeVisible();
   const shipment = page.getByRole('button', { name: 'Shipment details (optional)' });
   await expect(shipment).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByRole('button', { name: 'Add card', exact: true })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('button', { name: 'Add card', exact: true })).toBeEnabled();
   await page.evaluate(() => document.fonts.ready);
   await page.locator('.pokemon-art img').evaluateAll(imgs => Promise.all(imgs.map(img => (img as HTMLImageElement).decode().catch(() => undefined))));
   await page.screenshot({ path: test.info().outputPath('new-purchase-en.png') });
