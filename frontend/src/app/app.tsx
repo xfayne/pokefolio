@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LuArrowLeftRight, LuHeart, LuLayers, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { EmptyState, Field, LoadingState } from '@/components/ui/surfaces';
-import { UtilitySheet } from '@/components/layout/utility-sheet';
+import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { useUIStore } from '@/state/ui';
 import { createQueryClient } from './query-client';
 import { ErrorBoundary } from './error-boundary';
