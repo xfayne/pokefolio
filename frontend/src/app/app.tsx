@@ -63,8 +63,8 @@ function Shell() {
       </Routes>
     </main>
     <nav aria-label={t('navigation')} hidden={!!utility} className="bottom-bar fixed inset-x-0 bottom-0 z-30 mx-auto max-w-3xl border-t border-slate-700 bg-slate-900 text-white">
-      <div className="grid grid-cols-5 px-1">{destinations.map(({ name, icon: Icon }) => <NavLink key={name} to={`/${name}`} className={({ isActive }) => `relative flex min-h-20 min-w-0 flex-col items-center justify-center gap-1 px-1 pb-2 text-center text-xs leading-4 transition-colors duration-150 focus-visible:outline-white ${isActive ? 'font-semibold text-sky-400' : 'text-slate-100 hover:bg-slate-800'}`}>
-        {({ isActive }) => <>{Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-7 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-12" /></span>}<span className="break-words">{t(name)}</span>{isActive && <span aria-hidden className="absolute inset-x-4 bottom-1 h-1 rounded-full bg-sky-400" />}</>}
+      <div className="grid grid-cols-5 px-1">{destinations.map(({ name, icon: Icon }) => <NavLink key={name} to={`/${name}`} className={({ isActive }) => `flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1 pb-1 text-center text-xs leading-4 transition-colors duration-150 focus-visible:outline-white ${isActive ? 'font-semibold text-sky-400' : 'text-slate-100 hover:bg-slate-800'}`}>
+        {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-7 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-12" /></span>}<span className="break-words">{t(name)}</span>
       </NavLink>)}</div>
     </nav>
     {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
