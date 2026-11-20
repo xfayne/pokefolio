@@ -5,7 +5,7 @@ import { canonical, cloneJson, digest, readVerifiedBackup } from './legacy-backu
 import { previewLegacy } from './legacy-preview.mjs';
 
 // Offline filesystem storage only. No Firebase, provider or legacy source writes.
-// Payload must come from materializeLegacyDraft; approval binds its exact digest.
+// Payload must come from materializeLegacyImport; approval binds its exact digest.
 export async function prepareOfflineImport({ backupPath, expectedBackup, scope, payload, ownerUid }) {
   if (!expectedBackup) throw Error('INDEPENDENT_CAPTURE_REQUIRED');
   const backup = await readVerifiedBackup(backupPath, expectedBackup);

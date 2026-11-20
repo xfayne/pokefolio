@@ -17,6 +17,6 @@ copy. No payment cash movement is inferred solely from a parcel purchase date.
 Exact Binder/Wishlist order and raw parcel metadata remain preserved.
 
 Schemas: importedPurchaseSchema/importedPurchaseLineSchema. Materialization:
-materializeLegacyDraft (offline planning name retained). These records and commit
+materializeLegacyImport. These records and commit
 contracts grant no database permissions. Real-data apply still needs verified backup,
 exact preview approval and a tested authenticated destination adapter.
