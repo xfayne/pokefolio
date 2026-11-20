@@ -72,8 +72,8 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
       {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="border-t border-blue-100 bg-blue-50/70 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span>{t('inventory.marketValue')}</span></div>
         {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-t border-blue-100 py-1">
-          <button type="button" className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" aria-label={`${t('inventory.copyDetails')} ${v.copy.id}: ${t('inventory.copy', { number: n + 1 })} ${v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')} ${t('inventory.paid')}: ${cost(v.paid)} ${t('inventory.copyDetails')}`} onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
-            <span className="font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
+          <button type="button" className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
+            <span className="sr-only">{t('inventory.copyDetails')} {v.copy.id}: </span><span className="font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
             <span className="rounded bg-blue-100 px-1.5 py-0.5 font-medium text-blue-800">{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
             <span className="text-slate-600">{t('inventory.paid')}: <b>{cost(v.paid)}</b></span>
             <span className="text-blue-700">{t('inventory.copyDetails')}</span>
