@@ -40,3 +40,8 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .collection-toolbar { position: sticky; top: calc(4rem + env(safe-area-inset-top)); z-index: 10; background: var(--color-blue-50); padding-block: 0.25rem; }
 .collection-options { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 180ms ease, opacity 180ms ease, visibility 0s 180ms; }
 .collection-options[data-open="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+
+.app-shell { border-radius: 1.5rem; }
+.app-shell > header { border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; }
+.app-shell > .bottom-bar { border-bottom-left-radius: 1.5rem; border-bottom-right-radius: 1.5rem; }
+.utility-dialog { border-radius: 1.5rem; }

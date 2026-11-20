@@ -43,7 +43,7 @@ function Shell() {
   const current = destinations.find(d => contentLocation.pathname.startsWith(`/${d.name}`))?.name ?? 'dashboard';
   const openUtility = (name: 'search' | 'settings') => navigate(`/${name}`, { state: { backgroundLocation: location } });
   const closeUtility = () => { if (background) void navigate(-1); else void navigate('/dashboard', { replace: true }); };
-  return <div className="mx-auto min-h-dvh max-w-3xl bg-blue-50">
+  return <div className="app-shell mx-auto min-h-dvh max-w-3xl bg-blue-50">
     <a href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }} className="skip-link rounded-xl bg-white p-3 text-blue-700">{t('skip')}</a>
     <header className="top-bar sticky top-0 z-20 border-b border-slate-700 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
