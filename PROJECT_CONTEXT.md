@@ -71,3 +71,8 @@ and inferred types for copies, purchases/lines, sales, lots, cash, refunds, acqu
 shipments, revisions and historical FX evidence. Boundary tests use synthetic data.
 Runtime adapters, allocation/lifecycle commands and migration are separate work; no
 live writes or rules changes are enabled by these contracts.
+
+Pure money/purchase modules add safe integer parsing, deterministic equal-share
+shipping, explicit lot/tax/fee allocations, per-copy purchase plans and initial payment
+reconciliation. FX conversion requires historical evidence; missing/estimated costs
+retain coverage labels. No UI or live persistence is wired to these primitives.
