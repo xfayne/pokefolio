@@ -59,7 +59,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
     </div>
     <p role="status" className="sr-only">{notice}</p>
     {!groups.length && <EmptyState title={t('inventory.empty')} description={t('inventory.emptyDetail')} />}
-    <ul className="space-y-2">{groups.map(g => <li key={g.key} className="inventory-card overflow-hidden rounded-xl border border-blue-200 bg-white/80 shadow-sm">
+    <ul className="space-y-1.5">{groups.map(g => <li key={g.key} className="inventory-card overflow-hidden rounded-xl border border-blue-200 bg-white/80 shadow-sm">
       <div className="flex items-stretch">
         <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 ps-2 text-start">
           <span className="sr-only">{t('inventory.details')}: </span><Art card={g.card} />
@@ -72,14 +72,14 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
       </div>
       {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span className="me-11">{t('inventory.marketValue')}</span></div>
-        {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-t border-blue-200 py-0.5">
-          <button type="button" className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
+        {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-t border-blue-200">
+          <button type="button" className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
             <span className="sr-only">{t('inventory.copyDetails')} {v.copy.id}: </span><span className="font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
             <span className={`condition-badge rounded-full px-2 py-0.5 font-medium ${v.copy.condition.status === 'known' && v.copy.condition.value === 'NM' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}`}>{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
             <span className="border-s border-blue-200 ps-2 text-slate-600">{t('inventory.cost')}: {cost(v.paid)}</span>
           </button>
           <span className={`text-sm font-bold tabular-nums ${v.market.status === 'unavailable' ? 'text-amber-800' : ''}`}>{metric(v.market)}</span>
-          <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-11 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
+          <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-8 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
         </div>)}
       </div>}
     </li>)}</ul>
