@@ -35,7 +35,7 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await expect(page.locator('header > div')).toHaveCSS('min-height', '64px');
   await page.evaluate(() => document.fonts.ready);
   await expect.soft(page).toHaveScreenshot('shell-en.png', { fullPage: true, scale: 'device' });
-  await expect(page.locator('header')).toHaveCSS('background-color', 'oklch(0.208 0.042 265.755)');
+  await expect(page.locator('header')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));

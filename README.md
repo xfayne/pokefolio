@@ -62,6 +62,6 @@ Real-data transfer remains a separately approved release step under #21.
 
 Physical-copy inventory (#7) is available under Collection → Cards. The explicitly
 labelled [sample collection](https://xfayne.github.io/pokefolio/#/collection/cards?inventory=sample)
-lets you expand duplicates and edit one copy in memory; it contains no real holdings.
+uses the approved compact Cards/Card Details layout and lets you expand copies and edit one copy in memory; it contains no real holdings.
 Live account persistence and full purchase navigation follow in #8/#21.
 See [physical-copy rules](docs/COPY_INVENTORY.md).

@@ -127,18 +127,21 @@ PR #62 adds strict copy grouping, one-copy metadata edit plans and exact Binder-
 `CollectionCards` accepts owner-scoped inventory and an asynchronous save adapter. `#/collection/cards?inventory=sample` explicitly opts into synthetic data; demo edits and audit snapshots stay in memory and reset on leaving the screen/reload. The ordinary route reports that account storage is not connected. Never present demo copies as authenticated holdings. No real Firestore read/write or new pricing provider is added; real storage/atomic revision checks and full transaction navigation remain #8/#21, sale UI #9 and the existing Binder adapter/UI #13. Domain and UI regressions cover distinct copy edits/sales, unchanged siblings and Binder holes/indexes, coverage, retry/cancel, purchase references and mobile English/Hebrew accessibility.
 
 
-## Owner collection refinements — 2026-11-20
+## Approved mock alignment — 2026-11-20
 
-The owner requested a dense Cards list without aggregate metrics or a sample banner. Keep search sticky below the navy header, with sort/delivery filters in an animated disclosure. The full card row opens reusable details; a separate trailing copy-count control expands physical copies. Overview owns collection-wide summaries. Fix font control resets inside Tailwind's base layer so approved Inter/Noto Hebrew weights/sizes remain effective.
+The owner explicitly clarified that the approved Collection Cards and Card Details
+mocks are authoritative. Earlier density, summary-removal, trailing-count and
+hidden-sort comments addressed the previous divergent implementation and are
+superseded; do not reapply them. Cards uses a visible card/copy count and value
+sort/filter row, square thumbnails, a copy badge beneath the catalog identity,
+a separated dark Market value column and expandable condition/cost/value rows.
+Card Details uses Holo/edition chips, a single-condition price panel and an
+integrated Your copies panel with an owned count and compact paid/purchase rows.
+The navy bars frame a rounded light content surface; do not round the exterior
+header as if the website were a phone bezel. A small Demo badge identifies the
+synthetic sample route. Search remains sticky and all financial/copy identities
+remain unchanged. Explicit copy inspection/editing stays available.
 
-Card details show one card's market price for the selected condition, defaulting to the best known held-copy condition, otherwise LP. Changing the market selector never edits a copy. The price panel accepts an explicit catalog variant and supports no owned copies; do not sum owned holdings or mix editions/language/finish/currencies. Missing quotes remain unavailable. The sample route remains synthetic/in-memory without its former intrusive banner, at the owner's explicit request. Live storage/pricing integration remains later roadmap work.
-
-
-## Cards density follow-up — 2026-11-20
-
-Owner requested smaller gaps above/below local search and no copy-count badge for a singleton. Cards now uses 8px section/list gaps plus 4px toolbar padding; duplicate expansion remains available for 2+ copies, singletons open their existing details through the entire row. Singleton detail titles omit Copy 1. Latin/Hebrew families remain Inter/Noto Sans Hebrew; the generated mock does not embed an identifiable font file. Row names now use compact bold/tight type and values use bold 16px type to more closely follow the visual reference; do not claim exact font identification from generated pixels.
-
-
-## Card Details visual completion follow-up — 2026-11-20
-
-The earlier #7 screen was a partial implementation, not full mock parity. The owner requested completion of missing Details. Compact copy rows now expose explicit per-copy Details, separate edit and purchase actions; detailed cost/date/note information belongs in the copy subview. General card details includes image enlargement with back navigation and variant chips. A back control preserves card context across nested views. The mock's Wishlist/Deals/Record Purchase actions are shown honestly disabled with a coming-soon label until their dedicated workflows are connected; do not claim these actions or Firestore persistence are functional. Preserve the owner's later list-density/search/condition-price decisions.
+Wishlist/Deals/Record Purchase controls remain disabled and identified as coming
+soon until their workflows are connected. No live collection migration/storage
+or provider integration is added by this presentation work.
