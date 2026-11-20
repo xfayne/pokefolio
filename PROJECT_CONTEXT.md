@@ -207,8 +207,11 @@ redesign or real-data behavior is part of this refactor.
 
 Owner approved the supplied Transactions/History mock, with one explicit change:
 the monthly net amount (sample −$227) stays on the SAME LINE as the month. The
-Transactions tabs are now History / Shipments, with History as the default and
-the old /transactions/overview URL redirecting to it. Shipments is still #11.
+Transactions tabs are Overview / History, with Overview first and the default,
+following the owner correction after reviewing History. This supersedes the
+History / Shipments tabs in the supplied mock. Overview remains a placeholder;
+the former /transactions/shipments URL redirects to Overview. Shipment work
+remains #11.
 
 `features/transactions/` reuses the approved shared UI/palette/fonts and adds the
 compact history rows, up to three distinct art previews with physical-copy counts,

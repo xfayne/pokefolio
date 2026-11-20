@@ -21,7 +21,7 @@ const destinations = [
   { name: 'transactions', icon: LuArrowLeftRight },
 ] as const;
 const sections = {
-  collection: ['overview', 'cards', 'binder'], wishlist: ['cards', 'deals'], transactions: ['history', 'shipments'],
+  collection: ['overview', 'cards', 'binder'], wishlist: ['cards', 'deals'], transactions: ['overview', 'history'],
 } as const;
 type Destination = (typeof destinations)[number]['name'];
 function SectionPage({ name }: { name: Destination }) {
@@ -63,7 +63,7 @@ function Shell() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={{ pathname: `/${name}/${sections[name as keyof typeof sections][0]}`, search: contentLocation.search }} replace /> : <SectionPage name={name} />} />)}
         {Object.entries(sections).flatMap(([name, tabs]) => tabs.map(tab => <Route key={`${name}/${tab}`} path={`/${name}/${tab}`} element={<SectionPage name={name as Destination} />} />))}
-        <Route path="/transactions/overview" element={<Navigate to={{ pathname: "/transactions/history", search: contentLocation.search }} replace />} />
+        <Route path="/transactions/shipments" element={<Navigate to={{ pathname: "/transactions/overview", search: contentLocation.search }} replace />} />
         <Route path="/deals" element={<Navigate to="/wishlist/deals" replace />} />
         <Route path="*" element={<EmptyState title={t('missing')} description={t('missingDescription')} />} />
       </Routes>
