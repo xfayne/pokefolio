@@ -301,3 +301,16 @@ new, separately priced physical copy to the retained draft. Close/Escape cancels
 selection without discarding the transaction. Account persistence, safe audited
 transaction edits, copy/dashboard links and confirmation design remain #8 work;
 this search increment alone does not close #8.
+
+## Catalog density, prices and detail motion — 2026-11-21
+
+Catalog result art/rows now match Collection Cards proportions; toolbar buttons
+are compact. Only catalog-to-detail entry uses the optional subtle UtilitySheet
+transition. Default slide entry remains unchanged for Collection and Transactions.
+Catalog Details previously passed empty quotes. It now queries TCGTracking's
+existing public set/cards/SKU endpoints with cancellation, bounded timeouts and
+TanStack caching. Match exact name/printed number (or established promo IDs),
+English, edition, finish and condition; ambiguous/missing matches remain unpriced.
+USD catalog display defaults to Unlimited (Machamp deck exception); draft copy
+edition/finish remain unknown. Loading/error/retry are explicit, and no quote is
+converted or inferred. Tests stub public responses; no private data is sent.

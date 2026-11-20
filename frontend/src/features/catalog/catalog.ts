@@ -12,3 +12,13 @@ export function searchCatalog(query: string, setName = '') {
   const terms = query.toLocaleLowerCase().normalize('NFKC').trim().split(/\s+/).filter(Boolean);
   return catalogCards.filter(card => (!setName || card.setName === setName) && terms.every(term => `${card.name} ${card.setName} ${card.number} ${card.id}`.toLocaleLowerCase().includes(term.replace(/^#/, ''))));
 }
+
+/** Catalog display defaults, never used as evidence for a purchased copy. */
+export function catalogMarketReference(cardId: string): CatalogRef {
+ const ref = catalogReference(cardId); if (ref.kind !== 'identified') return ref;
+ const [setId, rawNumber] = cardId.split('-');
+ const specs = String(packs[setId ?? '']?.[1] ?? '').split(';');
+ const type = specs.find(spec => Number(rawNumber) <= Number(spec.split(':')[0]))?.split(':')[1];
+ const holo = cardId === 'movie2000-ancient-mew' || type === 'H' || type === 'S' || (setId === 'si1' && [1,4,7,11,14,17].includes(Number(rawNumber)));
+ return {...ref,edition:cardId === 'base1-8' ? 'first-edition' : 'unlimited',finish:{status:'known',value:holo ? 'holo' : 'normal',source:'provider'}};
+}
