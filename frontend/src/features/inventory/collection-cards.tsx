@@ -15,7 +15,7 @@ const selectClass = 'min-h-11 min-w-0 rounded-xl border border-blue-200 bg-white
 
 function Art({ card, large = false }: { card: InventoryCatalogCard | null; large?: boolean }) {
   const [failed, setFailed] = useState(false);
-  return <div className={`${large ? 'mx-auto w-48 sm:w-56' : 'w-12 shrink-0'} aspect-[245/342] overflow-hidden rounded-md bg-blue-100`}>
+  return <div className={`${large ? 'mx-auto w-48 sm:w-56' : 'w-9 shrink-0'} aspect-[245/342] overflow-hidden rounded-md bg-blue-100`}>
     {card && !failed ? <img src={card.imageUrl} alt={card.name} loading={large ? 'eager' : 'lazy'} width="245" height="342" className="h-full w-full object-contain" onError={() => setFailed(true)} /> : <span aria-hidden className="flex h-full items-center justify-center text-blue-700">?</span>}
   </div>;
 }
@@ -26,6 +26,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
   const [sort, setSort] = useState('name');
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [initialInspection, setInitialInspection] = useState<string | null>(null);
   const [initialCopy, setInitialCopy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
@@ -59,7 +60,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
     {!groups.length && <EmptyState title={t('inventory.empty')} description={t('inventory.emptyDetail')} />}
     <ul className="space-y-2">{groups.map(g => <li key={g.key} className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
       <div className="relative">
-        <button type="button" onClick={() => { setInitialCopy(null); setSelected(g.key); }} className="flex min-h-24 w-full items-center gap-3 rounded-2xl p-3 text-start">
+        <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 w-full items-center gap-3 rounded-2xl p-2 text-start">
           <span className="sr-only">{t('inventory.details')}: </span><Art card={g.card} />
           <span className="min-w-0 flex-1"><span className="block break-words text-sm font-bold leading-5 tracking-tight text-slate-900">{title(g)}</span><span className="mt-1 block truncate text-xs text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span></span>
           <span className={`shrink-0 text-end text-base font-bold tracking-tight text-blue-700 ${g.copies.length > 1 ? 'pb-7' : ''}`}>{g.market.pricedCount ? money(g.market) : t('inventory.unpriced')}</span>
@@ -68,16 +69,27 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
           <span className="rounded-md bg-blue-50 px-2 py-0.5">{t('inventory.copies', { count: g.copies.length })}</span>{expanded.has(g.key) ? <LuChevronDown aria-hidden /> : <LuChevronRight aria-hidden className="rtl:rotate-180" />}
         </button>}
       </div>
-      {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="border-t border-blue-100 bg-blue-50/70 px-3">{g.copies.map((v, n) => <div key={v.copy.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-blue-100 py-2 last:border-0"><div><span className="text-xs font-semibold">{g.copies.length > 1 && `${t('inventory.copy', { number: n + 1 })} · `}{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span><p className="text-xs text-slate-600">{t(`inventory.${v.copy.possession}`)} · {v.copy.catalog.kind === 'identified' ? t(`inventory.${v.copy.catalog.edition}`) : t('inventory.unidentified')}</p></div><div className="text-xs"><p>{t('inventory.paid')}: <b>{cost(v.paid)}</b></p><p className="text-slate-600">{t('inventory.market')}: {metric(v.market)}</p></div><button type="button" onClick={() => { setInitialCopy(v.copy.id); setSelected(g.key); }} aria-label={`${t('inventory.edit')} ${v.copy.id}`} className="flex size-11 items-center justify-center rounded-xl text-blue-700"><LuPencil aria-hidden /></button></div>)}</div>}
+      {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="border-t border-blue-100 bg-blue-50/70 px-2">
+        <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span>{t('inventory.marketValue')}</span></div>
+        {g.copies.map((v, n) => <div key={v.copy.id} className="flex flex-wrap items-center gap-x-2 border-t border-blue-100 py-1">
+          <span className="text-xs font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
+          <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
+          <span className="min-w-0 flex-1 text-xs text-slate-600">{t('inventory.paid')}: {cost(v.paid)}</span>
+          <span className="text-sm font-bold tabular-nums">{metric(v.market)}</span>
+          <button type="button" className="min-h-11 rounded-lg px-1 text-xs font-semibold text-blue-700" aria-label={`${t('inventory.copyDetails')} ${v.copy.id}`} onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>{t('inventory.copyDetails')}</button>
+          <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-11 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
+        </div>)}
+      </div>}
+
     </li>)}</ul>
-    {selectedGroup && <CardDetailsSheet key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} onClose={() => setSelected(null)} onSave={async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); }} money={money} cost={cost} metric={metric} />}
+    {selectedGroup && <CardDetailsSheet key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); }} money={money} cost={cost} metric={metric} />}
   </section>;
 }
 
-export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, onClose, onSave, money, cost, metric }: { group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; onClose: () => void; onSave: SaveCopy; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
+export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, initialInspection = null, onClose, onSave, money, cost, metric }: { group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; initialInspection?: string | null; onClose: () => void; onSave: SaveCopy; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<string | null>(initialCopy);
-  const [inspecting, setInspecting] = useState<string | null>(null);
+  const [inspecting, setInspecting] = useState<string | null>(initialInspection);
   const [zoomed, setZoomed] = useState(false);
   const [purchase, setPurchase] = useState<string | null>(null);
   const selected = group.copies.find(v => v.copy.id === editing);

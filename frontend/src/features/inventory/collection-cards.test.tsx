@@ -63,3 +63,12 @@ it('opens explicit copy details and enlarges artwork without losing the card', a
   await userEvent.click(within(dialog).getByRole('button', { name: 'Back to card' }));
   expect(within(dialog).getByRole('button', { name: 'Details 2' })).toBeInTheDocument();
 });
+
+it('opens per-copy Details directly from the compact expanded Cards row', async () => {
+  render(<CollectionCards data={data()} onSave={vi.fn()} />);
+  await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
+  expect(screen.getByText('Copy / condition')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Details charizard-b' }));
+  const dialog = screen.getByRole('dialog', { name: 'Details' });
+  expect(within(dialog).getAllByText('$150.00')).toHaveLength(2);
+});
