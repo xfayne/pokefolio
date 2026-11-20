@@ -18,12 +18,13 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Open http://localhost:5173/pokefolio/. The minimal shell defaults to Dashboard, supports hash routes, and switches English/Hebrew with RTL. Routes are placeholders for future screen-specific approved designs, not completed product screens. Binder and Wishlist implementation must retain the reference behavior and ordering requirements.
+Open http://localhost:5173/pokefolio/. The Adventure Blue shell defaults to Dashboard, supports hash routes and nested section navigation, and switches English/Hebrew with RTL through Settings. Search opens a full-screen catalog shell, preserving its background route; catalog results remain future work. Routes are placeholders for future screen-specific approved designs, not completed product screens. Binder and Wishlist implementation must retain the reference behavior and ordering requirements.
 
 ## Architecture
 
 - React Router for hash navigation on GitHub Pages.
 - Tailwind and locally owned shadcn/ui components; add only needed components.
+- Named `react-icons/lu` imports for shared icons, with self-hosted Inter and Noto Sans Hebrew.
 - Axios for API transport and TanStack Query for remote API state.
 - Firebase SDK for Auth/Firestore, with typed services and auth subscriptions.
 - Zustand for transient UI state only; never duplicate collection data or tokens in it.

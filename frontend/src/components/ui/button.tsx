@@ -4,8 +4,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 // shadcn/ui button pattern; owned locally for application-specific styling.
-const variants = cva('inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50', {
-  variants: { variant: { default: 'bg-primary text-primary-foreground hover:opacity-90', outline: 'border border-border bg-background hover:bg-muted' } },
+const variants = cva('inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50', {
+  variants: { variant: { default: 'bg-primary text-primary-foreground hover:opacity-90', outline: 'border border-slate-500 bg-white text-slate-950 hover:bg-slate-50' } },
   defaultVariants: { variant: 'default' },
 });
 type Props = React.ComponentProps<'button'> & VariantProps<typeof variants> & { asChild?: boolean };
