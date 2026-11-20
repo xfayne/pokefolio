@@ -84,7 +84,7 @@ explicit coverage, exclusive creation and independent read-back verification.
 reconstruction drafts from legacy parcels and pure synthetic replay/rollback contracts.
 #59 adds schema-validated opening/copy/shipment draft materialization. These are
 local/synthetic tools, not live adapters or production migration. Check each PR for
-current merge/CI status; #6 remains open.
+current merge/CI status; #6 offline tooling is complete; live-data acceptance remains #21.
 
 Owner clarified and authorized shipment-to-purchase conversion: recorded per-copy
 prices 20 + 30 produce transaction total 50; no unrecorded shipping amount is added.
@@ -108,3 +108,13 @@ See [the runbook](docs/LEGACY_IMPORT_RUNBOOK.md) for scope and release gates. No
 live Firestore adapter/rules deployment, real export/migration or import UI is
 claimed. Real capture completeness, destination auth/rules/atomicity, user preview
 approval and cutover remain prerequisites for #21 and dependent persistence work.
+
+## Issue #6 completion receipt — 2026-11-20
+
+#56–#60 are merged. Offline conversion and synthetic isolated filesystem rehearsal
+are complete; Issue #6 is closed. All five required checks passed on #60 head
+ad536d211aa15facacea8e2d9318d123373b538e before merge to
+6dcb042f31d8a2cca8c99019f82793f549f82a0c. The runbook details verification and
+limitations. #21 explicitly retains real source capture/backup, exact owner approval,
+authenticated Firestore adapter/rules/atomicity and live release acceptance. No real
+export/migration, provider mutation or new product screen was performed.
