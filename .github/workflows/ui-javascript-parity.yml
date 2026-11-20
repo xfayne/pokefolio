@@ -40,7 +40,7 @@ jobs:
           node --check js/market-prices.js
           node --check js/public-reader.js
           node --check js/firebase-cloud.js
-      - run: node --test tests/legacy-backup.test.mjs tests/legacy-preview.test.mjs tests/legacy-import-state.test.mjs tests/currency.test.mjs tests/binder-ordering.test.mjs tests/collection-analytics.test.mjs tests/import-safety.test.mjs
+      - run: node --test tests/legacy-backup.test.mjs tests/legacy-preview.test.mjs tests/legacy-import-state.test.mjs tests/legacy-import-files.test.mjs tests/currency.test.mjs tests/binder-ordering.test.mjs tests/collection-analytics.test.mjs tests/import-safety.test.mjs
       - run: node --check tests/cloud-data-regression.mjs
       - run: node scripts/build-index.mjs --check
       - run: node tests/js-extraction-parity.mjs

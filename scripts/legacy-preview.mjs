@@ -17,7 +17,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
   const maps = {};
   for (const key of ['owned', 'pendingPurchase', 'purchasePrices', 'conditions', 'firstEdition', 'notes', 'wish', 'removedWish', 'ownedAddedAt', 'binderExcluded']) {
     if (own(p, key) && !object(p[key])) issue(key, 'EXPECTED_MAP', p[key]);
-    maps[key] = object(p[key]) ? p[key] : {};
+    maps[key] = Object.assign(Object.create(null), object(p[key]) ? p[key] : {});
   }
   for (const key of ['binderOrder', 'wishOrder', 'shipments', 'analyticsSnapshots']) if (own(p, key) && !Array.isArray(p[key])) issue(key, 'EXPECTED_ARRAY', p[key]);
   const parcels = Array.isArray(p.shipments) ? p.shipments : [];
@@ -39,7 +39,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     if (!received && !pending) continue;
     if (received && pending) { issue(`owned.${cardId}`, 'OWNED_PENDING_CONFLICT', { owned: maps.owned[cardId], pending: maps.pendingPurchase[cardId] }); continue; }
     if (!catalogIds.includes(cardId)) issue(`inventory.${cardId}`, 'UNKNOWN_CATALOG_ID', cardId);
-    const copyId = 'legacy-' + digest({ source: backup.sha256, cardId, mapping: 1 });
+    const copyId = 'legacy-' + digest({ source: backup.sha256, cardId, mapping: 2 });
     const linked = parcels.filter(s => object(s) && Array.isArray(s.cardIds) && s.cardIds.includes(cardId));
     if (linked.length > 1) issue(`shipments.${cardId}`, 'AMBIGUOUS_COPY_MEMBERSHIP', linked);
     const dates = [...new Set(linked.map(s => s.purchaseDate).filter(v => v !== undefined))];
@@ -93,7 +93,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     const completeCardPrices = prices.length > 0 && prices.every(c => c.status === 'exact') && currencies.length === 1;
     const subtotal = completeCardPrices ? prices.reduce((sum, c) => sum + c.value.minor, 0) : null;
     return {
-      id: 'legacy-purchase-' + digest({ source: backup.sha256, parcelIndex, mapping: 1 }),
+      id: 'legacy-purchase-' + digest({ source: backup.sha256, parcelIndex, mapping: 2 }),
       kind: 'purchase', origin: 'legacy-import', sourceParcelIndex: parcelIndex, sourceParcelId: parcel.id ?? null,
       currency: currencies.length === 1 ? { status: 'known', value: currencies[0], source: 'legacy' } : unknown('No single evidenced currency'),
       transactionOn: validDate(parcel.purchaseDate) ? { status: 'known', value: parcel.purchaseDate, source: 'legacy' } : unknown('No valid original purchase date'),
@@ -111,7 +111,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     amounts[currency] = (amounts[currency] ?? 0) + minor;
     if (!Number.isSafeInteger(amounts[currency])) issue('totals', 'UNSAFE_TOTAL', currency);
   }
-  const result = { mappingVersion: 1, backupDigest: backup.sha256, source: backup.payload.source,
+  const result = { mappingVersion: 2, backupDigest: backup.sha256, source: backup.payload.source,
     status: exceptions.length || missingCoverage.length ? 'BLOCKED' : 'PASS', missingCoverage, exceptions,
     copies, memberships, binderReferences, preservedProgress: p, transactions, cashMovements: [],
     counts: { received: copies.filter(c => c.possession === 'received').length, pending: copies.filter(c => c.possession === 'pending').length, unknownCardCost: copies.filter(c => c.cardCost.status === 'unknown').length },

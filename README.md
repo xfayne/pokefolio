@@ -50,3 +50,11 @@ See [Project context](PROJECT_CONTEXT.md), [React foundation](frontend/README.md
 Issue #5 starts with the [transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md).
 Its schema and financial policies were owner-approved on 2026-11-20. Typed records,
 allocation/lifecycle primitives and persistence contracts live in the [domain module](frontend/src/domain/README.md); live database adapters and screen workflows remain separate roadmap work.
+
+## Safe legacy import tooling
+
+Offline backup, read-only mapping, schema-validated purchase/copy conversion and
+isolated filesystem apply/replay/rollback are described in the
+[import runbook](docs/LEGACY_IMPORT_RUNBOOK.md). These tools use supplied JSON and
+synthetic tests; they do not migrate live Firestore data or expose a new app screen.
+Real-data transfer remains a separately approved release step under #21.
