@@ -169,3 +169,14 @@ closed, and explicit toggles persist while filtering. The condition selector is
 800-weight. Sheet entry animates its inner frame after two animation frames, so
 native dialog display promotion cannot consume the entry animation before paint.
 Reduced motion remains respected. Accepted main-screen corners are unchanged.
+
+
+## Accordion/header correction — 2026-11-20
+
+The requested expansion animation belongs to the Cards list accordion. Keep its
+content mounted in an animated 0fr/1fr grid, with inert/aria-hidden when closed;
+singletons default open and duplicates default closed in Cards only. Card Details
+keeps a static copy list. Remove the dialog focus outline responsible for blue
+corner artifacts and square its exterior header corners. Keep keyboard outlines
+on interactive controls. Rows use a lighter #edf5ff surface. Reduce artwork
+magnification to 1.1 so the full width inside the original yellow edges is visible.

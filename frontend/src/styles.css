@@ -69,12 +69,12 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .collection-list-controls { border-bottom: 1px solid #bbd4f3; }
 .collection-list-controls select { appearance: none; padding-inline-end: 1.5rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2337466d' stroke-width='1.8'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-size: 1rem; background-position: right 0.4rem center; }
 [dir="rtl"] .collection-list-controls select { background-position: left 0.4rem center; }
-.inventory-card { background: #e5effc; border: 1px solid #dce9fa; border-radius: 0.75rem; }
+.inventory-card { background: #edf5ff; border: 1px solid #e6effc; border-radius: 0.75rem; }
 .inventory-card { box-shadow: 0 1px 3px #216dc20d; }
 .copies-panel { box-shadow: 0 2px 4px #216dc21a; }
 .card-art-large { box-shadow: 0 6px 12px #07345330; }
 .app-shell > .bottom-bar { border-radius: 1.25rem 1.25rem 0 0; }
-.utility-dialog { border-radius: 1.5rem 1.5rem 0 0; background: #eaf3ff; }
+.utility-dialog { outline: none; border-radius: 0; background: #eaf3ff; }
 .sheet-header::before { content: ''; position: absolute; top: 0.5rem; left: calc(50% - 1.25rem); width: 2.5rem; height: 0.25rem; border-radius: 1rem; background: #b5c9df; }
 .sheet-frame { background: var(--adventure-navy); }
 .sheet-content { flex: 1; border-radius: 1rem 1rem 0 0; background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); }
@@ -94,5 +94,9 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .pokemon-art { position: relative; overflow: hidden; border: 2px solid #f4ca27; border-radius: 0.375rem; background: #f4ca27; }
 .pokemon-art-large { border-width: 6px; border-radius: 0.875rem; }
 .pokemon-art-window { display: block; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; }
-.pokemon-art img { display: block; object-position: 50% 22%; transform: scale(2); transform-origin: 50% 22%; }
+.pokemon-art img { display: block; object-position: 50% 22%; transform: scale(1.1); transform-origin: 50% 22%; }
 .card-details select { font-weight: 800; }
+
+.copy-accordion { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 240ms ease, opacity 180ms ease; }
+.copy-accordion[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.copy-accordion > div { min-height: 0; overflow: hidden; }

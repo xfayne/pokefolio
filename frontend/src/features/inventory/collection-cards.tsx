@@ -41,7 +41,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
   groups.sort((a, b) => sort === 'value' ? Number(b.market.pricedCount > 0) - Number(a.market.pricedCount > 0) || b.market.minor - a.market.minor || title(a).localeCompare(title(b)) : sort === 'copies' ? b.copies.length - a.copies.length || title(a).localeCompare(title(b)) : title(a).localeCompare(title(b), i18n.language));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
   const isExpanded = (group: InventoryGroup) => expansionOverrides.get(group.key) ?? group.copies.length === 1;
-  const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !isExpanded(group)); return next; });
+  const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !(previous.get(group.key) ?? group.copies.length === 1)); return next; });
   return <section aria-label={t('inventory.title')} className="flex flex-col gap-2">
     <div className="collection-toolbar">
       <div className="relative">
@@ -71,7 +71,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
           <LuChevronDown aria-hidden className={`size-5 transition-transform ${isExpanded(g) ? 'rotate-180' : ''}`} />
         </button>
       </div>
-      {isExpanded(g) && <div id={`${id}-${g.key}`} className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
+      <div id={`${id}-${g.key}`} className="copy-accordion" data-open={isExpanded(g)} aria-hidden={!isExpanded(g)} inert={!isExpanded(g)}><div><div className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span className="me-11">{t('inventory.marketValue')}</span></div>
         {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-t border-blue-200">
           <button type="button" className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
@@ -82,7 +82,7 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
           <span className={`text-sm font-bold tabular-nums ${v.market.status === 'unavailable' ? 'text-amber-800' : ''}`}>{metric(v.market)}</span>
           <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-8 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
         </div>)}
-      </div>}
+      </div></div></div>
     </li>)}</ul>
     {selectedGroup && <CardDetailsSheet key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); }} money={money} cost={cost} metric={metric} />}
   </section>;

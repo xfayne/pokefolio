@@ -13,7 +13,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('button', { name: '2 copies: Charizard' })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('searchbox')).toHaveCSS('font-style', 'normal');
-  await expect(page.locator('.inventory-card').first()).toHaveCSS('background-color', 'rgb(229, 239, 252)');
+  await expect(page.locator('.inventory-card').first()).toHaveCSS('background-color', 'rgb(237, 245, 255)');
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toHaveCSS('font-weight', '800');
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toBeVisible();
   const toolbar = page.locator('.collection-toolbar');
@@ -24,6 +24,10 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   const toolbarBottom = await toolbar.evaluate(el => el.getBoundingClientRect().bottom);
   expect(listTop - toolbarBottom).toBeLessThanOrEqual(8);
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
+  const expanded = page.locator('.inventory-card').first().locator('.copy-accordion');
+  await expect(expanded).toHaveAttribute('data-open', 'true');
+  await expect(expanded).toHaveCSS('transition-duration', '0.24s, 0.18s');
+  await expanded.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
   await page.locator('.pokemon-art img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode().catch(() => undefined))));
   await test.info().attach('cards', { body: await page.screenshot({ path: test.info().outputPath('cards.png') }), contentType: 'image/png' });
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
@@ -31,7 +35,8 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog).toHaveAttribute('data-entered', 'true');
   await expect(dialog.locator('.sheet-frame')).toHaveCSS('animation-name', 'card-sheet-enter');
   await expect(dialog).toHaveCSS('border-bottom-left-radius', '0px');
-  await expect(dialog).toHaveCSS('border-top-left-radius', '24px');
+  await expect(dialog).toHaveCSS('outline-style', 'none');
+  await expect(dialog).toHaveCSS('border-top-left-radius', '0px');
   await dialog.getByLabel('Condition', { exact: true }).selectOption('MP');
   await dialog.getByLabel('Notes', { exact: true }).fill('Second copy only');
   await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));

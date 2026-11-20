@@ -69,7 +69,7 @@ it('opens explicit copy details and enlarges artwork without losing the card', a
 it('opens per-copy Details directly from the compact expanded Cards row', async () => {
   render(<CollectionCards data={data()} onSave={vi.fn()} />);
   await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
-  expect(screen.getAllByText('Copy / condition')).toHaveLength(2);
+  expect(screen.getByRole('button', { name: '2 copies: Charizard' })).toHaveAttribute('aria-expanded', 'true');
   await userEvent.click(screen.getByRole('button', { name: /^Details charizard-b/ }));
   const dialog = screen.getByRole('dialog', { name: 'Details' });
   expect(within(dialog).getAllByText('$150.00')).toHaveLength(2);
