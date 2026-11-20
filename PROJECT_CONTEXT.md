@@ -132,3 +132,8 @@ PR #62 adds strict copy grouping, one-copy metadata edit plans and exact Binder-
 The owner requested a dense Cards list without aggregate metrics or a sample banner. Keep search sticky below the navy header, with sort/delivery filters in an animated disclosure. The full card row opens reusable details; a separate trailing copy-count control expands physical copies. Overview owns collection-wide summaries. Fix font control resets inside Tailwind's base layer so approved Inter/Noto Hebrew weights/sizes remain effective.
 
 Card details show one card's market price for the selected condition, defaulting to the best known held-copy condition, otherwise LP. Changing the market selector never edits a copy. The price panel accepts an explicit catalog variant and supports no owned copies; do not sum owned holdings or mix editions/language/finish/currencies. Missing quotes remain unavailable. The sample route remains synthetic/in-memory without its former intrusive banner, at the owner's explicit request. Live storage/pricing integration remains later roadmap work.
+
+
+## Cards density follow-up — 2026-11-20
+
+Owner requested smaller gaps above/below local search and no copy-count badge for a singleton. Cards now uses 8px section/list gaps plus 4px toolbar padding; duplicate expansion remains available for 2+ copies, singletons open their existing details through the entire row. Singleton detail titles omit Copy 1. Latin/Hebrew families remain Inter/Noto Sans Hebrew; the generated mock does not embed an identifiable font file. Row names now use compact bold/tight type and values use bold 16px type to more closely follow the visual reference; do not claim exact font identification from generated pixels.
