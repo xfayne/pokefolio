@@ -56,3 +56,12 @@ The React staging pipeline replaces the legacy artifact packaging. The prior fro
 Adventure Blue tokens, local Inter/ Hebrew fonts, shared surfaces/fields/states and five-destination fixed navigation replace the technical shell styling. Collection has Overview/Cards/Binder, Wishlist Cards/Deals and Transactions Overview/History. Utility search is a native full-screen dialog with background-route preservation, focus containment, Escape/back support and hidden primary navigation. Settings currently contains only the existing language switch; its full product design is deferred. Catalog results, analyzer behavior and financial screens remain their dedicated roadmap work. No live-data operations were added.
 
 User requested react-icons in the same PR. Shared navigation/actions use named Lucide-set imports from react-icons/lu; unused lucide-react was removed. Do not mix icon families without a design reason. Fonts are self-hosted Latin/Hebrew subsets.
+
+## Issue #5 domain planning — 2026-11-20
+
+[Transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md) records the
+proposed copy/transaction/lot identities, money and allocation semantics, sale/refund
+lifecycle, owner-scoped persistence boundaries, synthetic scenarios and read-only
+legacy mapping. **Owner approved the proposal on 2026-11-20, including sales restricted to held, received copies initially.**
+The proposal adds no runtime types, Firestore writes/rules, migrations or screen behavior.
+Issue #5 remains open; implementation proceeds through focused PRs.
