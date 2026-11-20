@@ -13,13 +13,14 @@ export async function prepareOfflineImport({ backupPath, expectedBackup, scope, 
   const report = previewLegacy(backup, scope);
   if (report.status !== 'PASS') throw Error('BLOCKED_PREVIEW');
   if (canonical(payload.preservedProgress) !== canonical(report.preservedProgress) || payload.copies.length !== report.copies.length || payload.transactions.length !== report.transactions.length) throw Error('PAYLOAD_COVERAGE_MISMATCH');
-  const body = cloneJson({ formatVersion: 1, ownerUid, backupDigest: backup.sha256, previewDigest: report.previewDigest, payload });
+  const body = cloneJson({ formatVersion: 1, ownerUid, backupDigest: backup.sha256, previewDigest: report.previewDigest, mappingVersion: report.mappingVersion, scope, sourceArchive: backup.payload, payload });
   return { ...body, planDigest: digest(body) };
 }
 
 function validatePlan(plan) {
   const { planDigest, ...body } = plan;
   if (body.formatVersion !== 1 || !/^[a-f0-9]{64}$/.test(planDigest) || digest(body) !== planDigest) throw Error('PLAN_MISMATCH');
+  if (digest(body.sourceArchive) !== body.backupDigest || body.sourceArchive.source.ownerUid !== body.ownerUid) throw Error('SOURCE_ARCHIVE_MISMATCH');
 }
 async function loadState(destination, ownerUid) {
   try {
@@ -56,6 +57,8 @@ export async function applyOfflineImport({ destination, backupPath, expectedBack
   independentBackup(target, backupPath);
   const backup = await readVerifiedBackup(backupPath, expectedBackup);
   if (backup.sha256 !== plan.backupDigest || backup.payload.source.ownerUid !== plan.ownerUid) throw Error('BACKUP_PLAN_MISMATCH');
+  const currentPreview = previewLegacy(backup, plan.scope);
+  if (currentPreview.status !== 'PASS' || currentPreview.previewDigest !== plan.previewDigest || currentPreview.mappingVersion !== plan.mappingVersion) throw Error('PREVIEW_CHANGED');
   if (approval?.planDigest !== plan.planDigest || approval?.ownerUid !== plan.ownerUid || approval?.destination !== target || approval?.environment !== 'offline-isolated') throw Error('APPROVAL_MISMATCH');
   return withLock(target, async () => {
     const state = await loadState(target, plan.ownerUid);

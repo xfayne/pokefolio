@@ -45,7 +45,10 @@ when it appears in the required scope.
 
 prepareOfflineImport({ backupPath, expectedBackup, scope, payload, ownerUid })
 reopens the independent backup, recomputes the preview and binds the approved
-schema-validated payload into a content-addressed plan. expectedBackup is the
+schema-validated payload into a content-addressed plan. The plan also archives every
+supplied original document and its inventory, including related settings/analyses,
+not only progress. Apply recomputes the scoped preview and rejects a changed mapping
+version or result before activating anything. expectedBackup is the
 independent captured value, not a digest inferred from the same reopened file.
 This storage layer relies on the caller to run materializeLegacyImport first.
 

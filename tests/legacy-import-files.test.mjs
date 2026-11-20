@@ -11,10 +11,11 @@ test('durable isolated apply, replay, conflicts and rollback retain exact source
   try {
     const backupPath = join(dir, 'source.json'), destination = join(dir, 'target');
     const progress = { owned: {}, binderOrder: ['__binder_empty__:1'], wishOrder: [] };
-    const backup = createBackup({ source: { projectId: 'synthetic', ownerUid: 'test', revision: '1', capturedAt: '2026-11-20T00:00:00Z' }, documents: { root: { progress } }, inventory: [{ path: 'root', status: 'present' }] });
+    const backup = createBackup({ source: { projectId: 'synthetic', ownerUid: 'test', revision: '1', capturedAt: '2026-11-20T00:00:00Z' }, documents: { root: { progress }, settings: { enabled: false, shareId: 'synthetic-only' } }, inventory: [{ path: 'root', status: 'present' }, { path: 'settings', status: 'present' }, { path: 'analyses', status: 'absent' }] });
     await saveAndVerifyBackup(backupPath, backup);
     const before = await readFile(backupPath, 'utf8');
-    const plan = await prepareOfflineImport({ backupPath, expectedBackup: backup, scope: { rootPath: 'root', requiredPaths: ['root'], catalogIds: [] }, ownerUid: 'test', payload: { copies: [], transactions: [], preservedProgress: progress } });
+    const plan = await prepareOfflineImport({ backupPath, expectedBackup: backup, scope: { rootPath: 'root', requiredPaths: ['root', 'settings', 'analyses'], catalogIds: [] }, ownerUid: 'test', payload: { copies: [], transactions: [], preservedProgress: progress } });
+    assert.deepEqual(plan.sourceArchive, backup.payload);
     const approval = { planDigest: plan.planDigest, ownerUid: 'test', destination: resolve(destination), environment: 'offline-isolated' };
     const args = { destination, backupPath, expectedBackup: backup, plan, approval, expectedRevision: 0 };
     await assert.rejects(prepareOfflineImport({ backupPath, ownerUid: 'test' }), /INDEPENDENT_CAPTURE/);
