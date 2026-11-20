@@ -1,3 +1,4 @@
+import { useDemoTransactionData } from './demo-data';
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { catalogCards, catalogReference } from '@/features/catalog/catalog';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
@@ -23,6 +24,9 @@ export function NewPurchasePage() {
   const [initial] = useState(() => createPurchaseDraft(preview));
   const draft = stored ?? initial;
   const demo = useDemoPortfolio();
+  const data = useDemoTransactionData();
+  const owned: Record<string, number> = {};
+  if (preview) for (const copy of data.history.copies) { if (copy.catalog.kind === 'identified' && copy.disposition === 'held' && copy.possession === 'received') owned[copy.catalog.cardId] = (owned[copy.catalog.cardId] ?? 0) + 1; }
   const navigate = useNavigate();
   const prepared = useRef<{ key: string; value: PreparedPurchaseDraft } | null>(null);
   useEffect(() => { document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }, []);
@@ -35,5 +39,5 @@ export function NewPurchasePage() {
     setDraft(mode, createPurchaseDraft(preview));
     await navigate({ pathname: `/transactions/purchases/${draft.id}`, search: params.toString() }, { replace: true, state: { demoSaved: true } });
   }
-  return <><NewPurchaseForm key={mode} draft={draft} catalog={catalogCards} onAddCard={() => setPicking(true)} onChange={next => setDraft(mode, next)} {...(preview ? { onSave: save } : {})} />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)}><CatalogSearch query={query} onQuery={setQuery} onSelect={card => { setDraft(mode, { ...draft, cards: [...draft.cards, { id: `demo-copy-${crypto.randomUUID()}`, catalog: catalogReference(card.id), condition: 'unknown', amount: '' }] }); setPicking(false); }} /></UtilitySheet>}</>;
+  return <><NewPurchaseForm key={mode} draft={draft} catalog={catalogCards} onAddCard={() => setPicking(true)} onChange={next => setDraft(mode, next)} {...(preview ? { onSave: save } : {})} />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)}><CatalogSearch owned={owned} query={query} onQuery={setQuery} onSelect={card => { setDraft(mode, { ...draft, cards: [...draft.cards, { id: `demo-copy-${crypto.randomUUID()}`, catalog: catalogReference(card.id), condition: 'unknown', amount: '' }] }); setPicking(false); }} /></UtilitySheet>}</>;
 }
