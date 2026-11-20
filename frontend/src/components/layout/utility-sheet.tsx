@@ -19,8 +19,8 @@ export function UtilitySheet({ title, onClose, onBack, children }: { title: stri
   }, []);
   return <dialog ref={ref} aria-modal="true" aria-labelledby="sheet-title" className="utility-dialog sheet-enter" onCancel={(event) => { event.preventDefault(); onClose(); }}>
     <div className="flex h-full flex-col">
-      <div className="top-bar flex shrink-0 items-center justify-between gap-3 bg-slate-900 px-4 text-white">
-        {onBack && <button type="button" onClick={onBack} aria-label={t('inventory.back')} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button>}<h1 id="sheet-title" className="flex-1 py-5 text-2xl font-bold">{title}</h1>
+      <div className="top-bar flex min-h-16 shrink-0 items-center justify-between gap-3 bg-slate-900 px-4 text-white">
+        {onBack && <button type="button" onClick={onBack} aria-label={t('inventory.back')} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button>}<h1 id="sheet-title" className={`flex-1 font-bold ${onBack ? 'py-3 text-xl' : 'py-5 text-2xl'}`}>{title}</h1>
         <button autoFocus type="button" aria-label={t('close')} onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuX aria-hidden className="size-6" /></button>
       </div>
       <div className="overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>

@@ -23,6 +23,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Condition', { exact: true }).selectOption('MP');
   await dialog.getByLabel('Notes', { exact: true }).fill('Second copy only');
+  await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole('button', { name: 'Save copy' }).click();
   await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
