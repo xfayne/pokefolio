@@ -1,7 +1,6 @@
 import { CatalogSearch } from '@/features/catalog/catalog-search';
-import { catalogReference } from '@/features/catalog/catalog';
+import { CatalogDetails } from '@/features/catalog/catalog-details';
 import type { InventoryCatalogCard } from '@/domain/inventory';
-import { CardDetailsSheet } from '@/features/inventory/collection-cards';
 import { lazy, useState, Suspense } from 'react';
 import { HashRouter, matchPath, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -92,7 +91,7 @@ function Shell() {
         {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-5 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-10" /></span>}<span className="break-words">{t(name)}</span>
       </NavLink>)}</div>
     </nav>
-    {utility === 'search' && catalogCard ? <CardDetailsSheet group={{key: catalogCard.id, card: catalogCard, copies: [], receivedCount: 0, pendingCount: 0, unknownPossessionCount: 0, market: {currency: 'USD', minor: 0, pricedCount: 0, missingCount: 0}}} catalog={catalogReference(catalogCard.id)} quotes={[]} currency="USD" initialCopy={null} onClose={() => setCatalogCard(null)} money={m => new Intl.NumberFormat(i18n.language, {style: 'currency', currency: m.currency}).format(m.minor / 100)} cost={() => t('inventory.unavailable')} metric={() => t('inventory.unavailable')} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
+    {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
       {utility === 'search' ? <CatalogSearch query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;

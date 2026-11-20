@@ -17,3 +17,23 @@ test('shared catalog picks duplicate copies and global search opens details', as
  await page.keyboard.press('Escape');
  await expect(page.getByRole('searchbox')).toHaveValue('ancient mew');
 });
+
+test('catalog density, subtle detail entry and condition prices', async ({page}) => {
+ await page.route('https://openapi.tcgtracking.com/**',async route => {
+ const url=route.request().url();
+ const data=url.endsWith('/sets') ? {sets:[{id:630,name:'Fossil'}]} : url.endsWith('/cards') ? {products:[{id:1,name:'Gengar (5)',number:'05/62'}]} : {updated:'2026-11-20T12:00:00Z',products:{1:{a:{lng:'EN',cnd:'LP',var:'Unlimited Holofoil',mkt:25.42},b:{lng:'EN',cnd:'NM',var:'Unlimited Holofoil',mkt:40}}}};
+ await route.fulfill({json:data});
+ });
+ await page.goto('./#/search');await page.getByRole('searchbox').fill('gengar #5/62');
+ expect((await page.locator('.catalog-result').boundingBox())!.height).toBeLessThanOrEqual(72);
+ expect((await page.getByRole('button',{name:'Filters'}).boundingBox())!.height).toBeLessThanOrEqual(32);
+ await page.getByRole('button',{name:/Gengar/}).click();
+ await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','subtle');
+ await expect(page.getByText('$25.42',{exact:true})).toBeVisible();
+ await page.getByLabel('Price condition').selectOption('NM');
+ await expect(page.getByText('$40.00',{exact:true})).toBeVisible();
+ await page.screenshot({path:test.info().outputPath('catalog-price-detail.png')});
+ await page.goto('./#/collection/cards?inventory=sample');
+ await page.getByRole('button',{name:/Card details: Gengar/}).click();
+ await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','slide');
+});

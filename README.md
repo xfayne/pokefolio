@@ -112,3 +112,8 @@ price; selecting the same card again adds another copy. Catalog data is local
 and includes the retained vintage sets, secret numbering and Ancient Mew. New
 selection edition/finish stay unknown until explicitly chosen. This increment
 does not enable account persistence or finish Issue #8.
+
+Catalog Card Details loads condition-specific USD market quotes through the
+existing TCGTracking source with exact printing matching, loading/error/retry and
+no invented prices. Catalog entry alone uses a subtle transition; other Card
+Details entry points retain the original slide animation.
