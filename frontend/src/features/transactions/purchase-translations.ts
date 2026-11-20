@@ -1,0 +1,22 @@
+export const purchaseTranslations = {
+  en: {
+    title: 'Purchase details', cards: 'Cards', cardCost: 'Card cost', breakdown: 'Cost breakdown', shipping: 'Shipping', taxes: 'Taxes', fees: 'Fees', totalPaid: 'Total paid',
+    perCopy: 'Shipping: {{amount}} per copy', roundedShipping: 'Shipping: {{min}}–{{max}} per copy (rounded)', allocationUnknown: 'Per-copy shipping allocation is unavailable.',
+    shipment: 'Shipment', noShipment: 'No shipment linked', noEvents: 'No tracking updates yet', tracking: 'Tracking number', copyTracking: 'Copy tracking number', copied: 'Tracking number copied', copyFailed: 'Could not copy. Select the full tracking number to copy it.',
+    departed: 'Departed origin country', accepted: 'Accepted by carrier', registered: 'Tracking number received', unknownTime: 'Time unknown',
+    unknownCost: 'Unknown', estimated: 'Estimated', unallocated: 'Unallocated', costMismatch: 'Recorded copy prices do not reconcile with the card subtotal.',
+    notFound: 'Purchase unavailable', notFoundDetail: 'This purchase is not available in the current collection.', back: 'Back to History',
+    more: 'Transaction actions (coming soon)', moreDetail: 'Editing will be available with the purchase form.', settlementUnknown: 'Payment status unknown', unpaid: 'Unpaid', partialPayment: 'Partially paid',
+    recordedTotal: 'Recorded total', legacyImport: 'Imported purchase',
+  },
+  he: {
+    title: 'פרטי רכישה', cards: 'קלפים', cardCost: 'מחיר הקלף', breakdown: 'פירוט עלויות', shipping: 'משלוח', taxes: 'מיסים', fees: 'עמלות', totalPaid: 'סך הכול שולם',
+    perCopy: 'משלוח: {{amount}} לעותק', roundedShipping: 'משלוח: {{min}}–{{max}} לעותק (לאחר עיגול)', allocationUnknown: 'חלוקת עלות המשלוח לעותקים אינה זמינה.',
+    shipment: 'משלוח', noShipment: 'לא קושר משלוח', noEvents: 'אין עדיין עדכוני מעקב', tracking: 'מספר מעקב', copyTracking: 'העתקת מספר מעקב', copied: 'מספר המעקב הועתק', copyFailed: 'ההעתקה נכשלה. אפשר לסמן ולהעתיק את מספר המעקב המלא.',
+    departed: 'יצא ממדינת המקור', accepted: 'התקבל בחברת השילוח', registered: 'התקבל מספר מעקב', unknownTime: 'השעה אינה ידועה',
+    unknownCost: 'לא ידוע', estimated: 'משוער', unallocated: 'טרם חולק', costMismatch: 'מחירי העותקים המתועדים אינם תואמים לסכום הקלפים בעסקה.',
+    notFound: 'הרכישה אינה זמינה', notFoundDetail: 'הרכישה אינה זמינה באוסף הנוכחי.', back: 'חזרה להיסטוריה',
+    more: 'פעולות עסקה (בקרוב)', moreDetail: 'עריכת העסקה תהיה זמינה עם טופס הרכישה.', settlementUnknown: 'סטטוס התשלום אינו ידוע', unpaid: 'טרם שולם', partialPayment: 'שולם חלקית',
+    recordedTotal: 'סכום מתועד', legacyImport: 'רכישה שיובאה',
+  },
+};

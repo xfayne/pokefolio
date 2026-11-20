@@ -1,6 +1,7 @@
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuCheck, LuCircleCheck, LuChevronRight, LuFilter, LuPlus, LuShoppingCart, LuTag, LuTruck } from 'react-icons/lu';
+import { LuChevronRight, LuFilter, LuPlus, LuShoppingCart, LuTag } from 'react-icons/lu';
+import { TransactionStatus } from './transaction-status';
 import { Button } from '@/components/ui/button';
 import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure';
 import { ListCard } from '@/components/ui/list-card';
@@ -13,8 +14,8 @@ import { groupHistory, selectHistory, type HistoryData, type HistoryFilters, typ
 
 const initialFilters: HistoryFilters = { query: '', kind: 'all', currency: 'all', status: 'all' };
 const statuses = ['inTransit', 'received', 'pending', 'partial', 'unknown', 'completed'] as const;
-export function TransactionHistory({ data, empty, onCreate, onOpen }: {
-  data: HistoryData; empty?: ReactNode; onCreate?: () => void; onOpen?: (id: string) => void;
+export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
+  data: HistoryData; empty?: ReactNode; onCreate?: () => void; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [filters, setFilters] = useState(initialFilters);
@@ -70,12 +71,12 @@ export function TransactionHistory({ data, empty, onCreate, onOpen }: {
         </div>
       </div>
       <ul className="history-rows">{month.rows.map(row => <ListCard key={row.id} className="history-row" aria-label={`${t(`transactionHistory.${row.kind}`)} · ${row.source || t(`transactionHistory.${row.sourceKind}`)} · ${row.date ?? t('transactionHistory.undated')}`}>
-        <button type="button" className="history-row-content" aria-disabled={!onOpen} onClick={() => onOpen ? onOpen(row.id) : setNotice(t('transactionHistory.detailSoon'))}>
+        <button type="button" className="history-row-content" aria-disabled={!onOpen || (canOpen && !canOpen(row))} onClick={() => onOpen && (!canOpen || canOpen(row)) ? onOpen(row.id) : setNotice(t('transactionHistory.detailSoon'))}>
           <span className="sr-only">{t('transactionHistory.open')}: {row.id}. </span>
           <span className={`history-identity ${row.kind === 'sale' ? 'history-sale' : ''}`}>
             <span className="history-kind-icon">{row.kind === 'sale' ? <LuTag aria-hidden /> : <LuShoppingCart aria-hidden />}</span>
             <span className="min-w-0"><span className="history-kind-label">{t(`transactionHistory.${row.kind}`)}</span><span className="history-source" title={row.source}>
-              <span className="history-source-name">{row.source || t(`transactionHistory.${row.sourceKind}`)}</span><span className="history-source-date"> · {row.date ? date(row.date) : t('transactionHistory.undated')}</span>
+              <span className="history-source-name">{row.sourceKind === 'ebay' ? t('transactionHistory.ebay') : row.source || t(`transactionHistory.${row.sourceKind}`)}</span><span className="history-source-date"> · {row.date ? date(row.date) : t('transactionHistory.undated')}</span>
             </span></span>
           </span>
           <span className="history-cards">
@@ -85,10 +86,7 @@ export function TransactionHistory({ data, empty, onCreate, onOpen }: {
           <span className={`history-amount ${row.kind === 'sale' ? 'history-sale' : ''}`}>
             <span className="history-total-label">{t('transactionHistory.total')}</span>
             <bdi className="history-total">{row.minor !== null && row.currency ? money(row.minor, row.currency) : t('transactionHistory.unavailable')}</bdi>
-            <span className={`history-status history-status-${row.status}`}>
-              {row.status === 'inTransit' ? <LuTruck aria-hidden /> : row.status === 'received' || row.status === 'completed' ? <LuCircleCheck aria-hidden /> : row.status === 'partial' ? <LuCheck aria-hidden /> : null}
-              {t(`transactionHistory.${row.status}`)}
-            </span>
+            <TransactionStatus status={row.status} />
           </span>
           <LuChevronRight aria-hidden className="history-chevron rtl:rotate-180" />
         </button>
