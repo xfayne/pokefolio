@@ -15,7 +15,10 @@
 }
 :root { color-scheme: light; font-family: var(--font-sans); background: var(--color-blue-50); color: var(--color-slate-950); }
 body { margin: 0; min-width: 320px; }
-button, input, select, textarea { font: inherit; }
+@layer base {
+  button, input, select, textarea { font: inherit; }
+  body { -webkit-font-smoothing: antialiased; }
+}
 input, select, textarea { font-size: max(1rem, 16px); }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--color-blue-600); outline-offset: 3px; }
@@ -33,3 +36,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+.collection-toolbar { position: sticky; top: calc(4rem + env(safe-area-inset-top)); z-index: 10; background: var(--color-blue-50); padding-block: 0.5rem; }
+.collection-options { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 180ms ease, opacity 180ms ease, visibility 0s 180ms; }
+.collection-options[data-open="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }

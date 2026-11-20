@@ -1,5 +1,6 @@
 export const inventoryTranslations = {
   en: {
+    options: 'Sort and filter', marketPrice: 'Market price', perCard: 'For one card', marketCondition: 'Price condition', copies_one: '{{count}} copy', copies_other: '{{count}} copies',
     delivery: 'Delivery status',
     title: 'Your cards', sample: 'Sample collection', sampleNotice: 'Demo data. Edits last until you leave this screen or reload.', explore: 'Explore sample collection', disconnected: 'Your collection connection is coming next', connectionDetail: 'Purchase and account storage are being connected. You can explore the new copy view with sample cards.',
     search: 'Search your cards', sort: 'Sort cards', name: 'Name', value: 'Value', quantity: 'Copies', all: 'All current copies', received: 'Received', pending: 'On the way', unknown: 'Unknown', sold: 'Sold',
@@ -11,6 +12,7 @@ export const inventoryTranslations = {
     samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Original purchase currency; shipping shown in total cost.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
   },
   he: {
+    options: 'מיון וסינון', marketPrice: 'מחיר שוק', perCard: 'לקלף יחיד', marketCondition: 'מצב למחירון', copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_many: '{{count}} עותקים', copies_other: '{{count}} עותקים',
     delivery: 'סטטוס הגעה',
     title: 'הקלפים שלך', sample: 'אוסף לדוגמה', sampleNotice: 'נתוני הדגמה. העריכות נשמרות עד יציאה מהמסך או רענון.', explore: 'פתיחת אוסף לדוגמה', disconnected: 'חיבור האוסף שלך מגיע בשלב הבא', connectionDetail: 'אנחנו מחברים את הרכישות והשמירה בחשבון. בינתיים אפשר להתרשם מתצוגת העותקים עם קלפים לדוגמה.',
     search: 'חיפוש באוסף', sort: 'מיון קלפים', name: 'שם', value: 'שווי', quantity: 'עותקים', all: 'כל העותקים הנוכחיים', received: 'התקבל', pending: 'בדרך', unknown: 'לא ידוע', sold: 'נמכר',
