@@ -41,7 +41,30 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .collection-options { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows 180ms ease, opacity 180ms ease, visibility 0s 180ms; }
 .collection-options[data-open="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
 
-.app-shell { border-radius: 1.5rem; }
-.app-shell > header { border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; }
-.app-shell > .bottom-bar { border-bottom-left-radius: 1.5rem; border-bottom-right-radius: 1.5rem; }
-.utility-dialog { border-radius: 1.5rem; }
+/* Adventure Blue surfaces follow the approved mobile mock proportions. */
+:root { --adventure-blue: #0064ff; --adventure-navy: #03233e; background: #d9eafa; }
+@theme inline { --color-primary: var(--adventure-blue); }
+.app-shell { background: var(--adventure-navy); }
+.app-shell > header, .bottom-bar, .sheet-header {
+  background-color: var(--adventure-navy);
+  background-image: radial-gradient(ellipse at 20% 0%, #0d395780, transparent 70%), linear-gradient(120deg, #03283f, #061b39);
+}
+.app-shell > header { border-radius: 0; }
+.brand-title { position: relative; border-inline-start: 2px solid #1683f8; padding-inline-start: 0.75rem; }
+.app-content { position: relative; min-height: calc(100dvh - 4rem - env(safe-area-inset-top)); background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); border-radius: 1.25rem; }
+.section-tabs { box-shadow: inset 0 1px 4px #3b82f60a; }
+.section-tabs a[aria-current="page"] { background: var(--adventure-blue); box-shadow: 0 2px 5px #0064ff25; }
+.collection-toolbar { background: #edf5ff; }
+.collection-search { box-shadow: 0 2px 4px #1d6cbd12; }
+.collection-search::placeholder { color: #71758d; font-style: italic; }
+.collection-list-controls { border-bottom: 1px solid #bbd4f3; }
+.collection-list-controls select { appearance: none; padding-inline-end: 1.5rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2337466d' stroke-width='1.8'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-size: 1rem; background-position: right 0.4rem center; }
+[dir="rtl"] .collection-list-controls select { background-position: left 0.4rem center; }
+.inventory-card, .copies-panel { box-shadow: 0 2px 4px #216dc21a; }
+.card-art-large { box-shadow: 0 6px 12px #07345330; }
+.app-shell > .bottom-bar { border-radius: 1.25rem 1.25rem 0 0; }
+.utility-dialog { border-radius: 1.5rem; background: #eaf3ff; }
+.sheet-header::before { content: ''; position: absolute; top: 0.5rem; left: calc(50% - 1.25rem); width: 2.5rem; height: 0.25rem; border-radius: 1rem; background: #b5c9df; }
+.sheet-content { border-radius: 1rem 1rem 0 0; background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); }
+.card-detail-actions button { font-weight: 600; border-color: #2361dd; }
+.card-detail-actions button:disabled { opacity: 0.65; }

@@ -8,9 +8,10 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await page.getByRole('button', { name: 'Explore sample collection' }).click();
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
-  await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
+  await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '700');
-  await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toBeVisible();
+  await expect(page.getByText('3 cards · 5 copies', { exact: true })).toBeVisible();
   const toolbar = page.locator('.collection-toolbar');
   const tabsBottom = await page.getByRole('navigation', { name: 'Section navigation' }).evaluate(el => el.getBoundingClientRect().bottom);
   const inputTop = await page.getByRole('searchbox').evaluate(el => el.getBoundingClientRect().top);
@@ -42,9 +43,9 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   await page.getByRole('button', { name: 'Sort and filter' }).click();
-  await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Delivery status', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sort and filter' }).click();
-  await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
+  await expect(page.getByLabel('Delivery status', { exact: true })).toBeHidden();
   await page.setViewportSize({ width: 320, height: 400 });
   await page.evaluate(() => window.scrollTo(0, 200));
   await expect(page.getByRole('searchbox')).toBeInViewport();

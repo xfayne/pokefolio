@@ -1,11 +1,11 @@
 export const inventoryTranslations = {
   en: {
-    copyCondition: 'Copy / condition', marketValue: 'Market value',
+    demo: 'Demo', listCounts: '{{cards}} cards · {{copies}} copies', owned: '{{count}} owned', cost: 'Cost', paidShort: 'Paid', holo: 'Holo', copyCondition: 'Copy / condition', marketValue: 'Market value',
     copyDetails: 'Details', enlarge: 'Enlarge card image', image: 'Card image', imageHint: 'Scroll to inspect the full image.', actionsSoon: 'Wishlist, deals and purchase actions are coming soon.', addWishlist: 'Add to Wishlist', findDeals: 'Find deals', recordPurchase: 'Record purchase',
-    options: 'Sort and filter', marketPrice: 'Market price', perCard: 'For one card', marketCondition: 'Price condition', copies_one: '{{count}} copy', copies_other: '{{count}} copies',
+    options: 'Sort and filter', marketPrice: 'Market price', perCard: 'Per copy', marketCondition: 'Price condition', copies_one: '{{count}} copy', copies_other: '{{count}} copies',
     delivery: 'Delivery status',
     title: 'Your cards', sample: 'Sample collection', sampleNotice: 'Demo data. Edits last until you leave this screen or reload.', explore: 'Explore sample collection', disconnected: 'Your collection connection is coming next', connectionDetail: 'Purchase and account storage are being connected. You can explore the new copy view with sample cards.',
-    search: 'Search your cards', sort: 'Sort cards', name: 'Name', value: 'Value', quantity: 'Copies', all: 'All current copies', received: 'Received', pending: 'On the way', unknown: 'Unknown', sold: 'Sold',
+    search: 'Search your collection', sort: 'Sort cards', name: 'Name', value: 'Value', quantity: 'Copies', all: 'All current copies', received: 'Received', pending: 'On the way', unknown: 'Unknown', sold: 'Sold',
     totals: '{{cards}} cards · {{copies}} received copies', pendingTotal: '{{count}} on the way', unknownTotal: '{{count}} with unknown delivery', soldTotal: '{{count}} sold',
     pricedValue: 'Priced holdings', coverage: '{{priced}} priced · {{missing}} unpriced', empty: 'No matching cards', emptyDetail: 'Try another search or delivery filter.', copies: '{{count}} copies', details: 'Card details',
     copy: 'Copy {{number}}', edit: 'Edit copy', condition: 'Condition', edition: 'Edition', unlimited: 'Unlimited', 'first-edition': '1st Edition', notes: 'Notes', paid: 'Card price', basis: 'Total cost', market: 'Market', unpriced: 'Unpriced', estimated: 'Estimated', unallocated: 'Unallocated lot cost',
@@ -14,7 +14,7 @@ export const inventoryTranslations = {
     samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Original purchase currency; shipping shown in total cost.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
   },
   he: {
-    copyCondition: 'עותק / מצב', marketValue: 'שווי שוק',
+    demo: 'הדגמה', listCounts: '{{cards}} קלפים · {{copies}} עותקים', owned: '{{count}} באוסף', cost: 'עלות', paidShort: 'שולם', holo: 'הולו', copyCondition: 'עותק / מצב', marketValue: 'שווי שוק',
     copyDetails: 'פרטים', enlarge: 'הגדלת תמונת הקלף', image: 'תמונת הקלף', imageHint: 'אפשר לגלול כדי לבחון את התמונה המלאה.', actionsSoon: 'פעולות רשימת המשאלות, המציאות והרכישה יהיו זמינות בהמשך.', addWishlist: 'הוספה למשאלות', findDeals: 'חיפוש מציאות', recordPurchase: 'תיעוד רכישה',
     options: 'מיון וסינון', marketPrice: 'מחיר שוק', perCard: 'לקלף יחיד', marketCondition: 'מצב למחירון', copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_many: '{{count}} עותקים', copies_other: '{{count}} עותקים',
     delivery: 'סטטוס הגעה',
