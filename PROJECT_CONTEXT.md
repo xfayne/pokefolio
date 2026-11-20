@@ -145,3 +145,15 @@ remain unchanged. Explicit copy inspection/editing stays available.
 Wishlist/Deals/Record Purchase controls remain disabled and identified as coming
 soon until their workflows are connected. No live collection migration/storage
 or provider integration is added by this presentation work.
+
+
+## Mock proportion follow-up — 2026-11-20
+
+Use tinted blue-gray surfaces rather than white panels. The approved compact
+control/row proportions and rounded typography are implemented with self-hosted
+Nunito Sans and Noto Sans Hebrew; the generated reference does not identify its
+original font. Keep the accepted main-screen boundary geometry unchanged. Card
+Details rounds the top of the sheet and the light content boundary, without
+rounding the exterior bottom. Native dialog entry animation starts on `[open]`,
+with reduced-motion support. Artwork uses centered cover cropping without
+distortion; image enlargement still exposes the full original card.

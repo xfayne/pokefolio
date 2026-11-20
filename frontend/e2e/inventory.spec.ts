@@ -9,7 +9,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '700');
+  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '900');
   await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toBeVisible();
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toBeVisible();
   const toolbar = page.locator('.collection-toolbar');
@@ -22,6 +22,9 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveCSS('animation-name', 'card-sheet-enter');
+  await expect(dialog).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(dialog).toHaveCSS('border-top-left-radius', '24px');
   await dialog.getByLabel('Condition', { exact: true }).selectOption('MP');
   await dialog.getByLabel('Notes', { exact: true }).fill('Second copy only');
   await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
@@ -30,6 +33,8 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
   await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 50%');
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();
   await dialog.getByLabel('Price condition', { exact: true }).selectOption('LP');
   await expect(dialog.getByText('$220.00', { exact: true })).toBeVisible();
