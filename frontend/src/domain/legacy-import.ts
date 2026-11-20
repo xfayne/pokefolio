@@ -4,7 +4,7 @@ import { acquisitionRecordSchema, cardCopySchema, shipmentSchema, shipmentMember
 // Offline draft materialization only: recordedAt is a planning timestamp.
 // A future adapter must supply authoritative server timestamps on commit.
 const reportSchema = z.object({
-  mappingVersion: z.literal(1), status: z.literal('PASS'),
+  mappingVersion: z.literal(2), status: z.literal('PASS'),
   source: z.object({ ownerUid: idSchema }),
   copies: z.array(z.object({
     id: idSchema, cardId: idSchema, possession: z.enum(['pending', 'received']),
@@ -22,7 +22,7 @@ const reportSchema = z.object({
 });
 const unknown = (reason: string) => ({ status: 'unknown' as const, reason });
 
-export function materializeLegacyDraft(report: unknown, ownerUid: string, recordedAt: string) {
+export function materializeLegacyImport(report: unknown, ownerUid: string, recordedAt: string) {
   const input = reportSchema.parse(report);
   if (ownerUid !== input.source.ownerUid) throw Error('OWNER_MISMATCH');
   const meta = (id: string) => ({ schemaVersion: 1 as const, id, ownerUid, revision: 1, createdAt: recordedAt, updatedAt: recordedAt });

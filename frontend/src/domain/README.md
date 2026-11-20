@@ -64,3 +64,6 @@ progress. The returned payload creates no invented payment cash movements.
 `importedPurchaseSchema`/`importedPurchaseLineSchema` are accepted by private commit
 and audit contracts, but ordinary new purchases remain strict. Materialization is
 not an authenticated write adapter and planning timestamps are not server timestamps.
+
+The mapper uses version 2. The [offline runbook](../../../docs/LEGACY_IMPORT_RUNBOOK.md)
+describes backup verification, scope limitations and the isolated filesystem adapter.

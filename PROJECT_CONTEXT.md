@@ -93,3 +93,18 @@ Parcel-linked copies use purchase acquisition links; cards without parcel eviden
 remain opening inventory. No payment cash is inferred from a purchase date alone.
 See [conversion policy](docs/IMPORTED_PURCHASE_PROPOSAL.md). No real-data migration
 or Firestore adapter/rules deployment is performed by these offline tools.
+
+## Issue #6 offline rehearsal pipeline — 2026-11-20
+
+PR #59 merged purchase/line/copy/shipment conversion after all five required checks
+passed. Prices 20 + 30 become total 50 with exact per-copy links; missing extra
+charges add no amount and retain unknown coverage. Mapping v2 and
+materializeLegacyImport are the current offline contracts. The filesystem rehearsal
+adapter creates/read-verifies an inactive dataset before pointer publication,
+checks content-bound approvals, supports exact replay and guarded rollback, and
+never edits the source. Integration tests use synthetic JSON only.
+
+See [the runbook](docs/LEGACY_IMPORT_RUNBOOK.md) for scope and release gates. No
+live Firestore adapter/rules deployment, real export/migration or import UI is
+claimed. Real capture completeness, destination auth/rules/atomicity, user preview
+approval and cutover remain prerequisites for #21 and dependent persistence work.
