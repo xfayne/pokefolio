@@ -287,3 +287,17 @@ the separate card-picker mock. Do not invent that screen, a confirmation screen,
 a sale form or an edit flow. Continue #8 by requesting the next mock; authenticated
 persistence, explicit payment confirmation, catalog selection/editions, optional
 listing references and remaining acquisition/dashboard links are still pending.
+
+## Shared catalog search and picker — 2026-11-21
+
+The owner approved the full-screen search mock for Add card and requested the
+same search for the global catalog. `features/catalog/` shares local catalog
+search, set filter, result count, List/Grid, pagination, framed artwork and
+selection callbacks. Catalog metadata is extracted from the retained offline
+packs, including secret-card printed totals and the Ancient Mew asset. No legacy
+controller is loaded. Unknown edition/finish stay explicit on new selections.
+Global selection opens the existing read-only Card Details; Add card returns a
+new, separately priced physical copy to the retained draft. Close/Escape cancels
+selection without discarding the transaction. Account persistence, safe audited
+transaction edits, copy/dashboard links and confirmation design remain #8 work;
+this search increment alone does not close #8.

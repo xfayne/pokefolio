@@ -104,3 +104,11 @@ default closed and create no tracking registrations or invented events.
 Payment is unknown until explicitly confirmed; this form does not invent a cash
 movement. Account persistence remains pending. Add card awaits the separately
 approved card-picker mock; Sale remains #9.
+
+The global Search and New Purchase → Add card share the approved full-screen
+catalog search: text/set search, List/Grid, bounded result rendering and existing
+Card Details. Each picker selection adds one independent copy with a required
+price; selecting the same card again adds another copy. Catalog data is local
+and includes the retained vintage sets, secret numbering and Ancient Mew. New
+selection edition/finish stay unknown until explicitly chosen. This increment
+does not enable account persistence or finish Issue #8.

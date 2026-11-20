@@ -1,10 +1,14 @@
-import { lazy, Suspense } from 'react';
+import { CatalogSearch } from '@/features/catalog/catalog-search';
+import { catalogReference } from '@/features/catalog/catalog';
+import type { InventoryCatalogCard } from '@/domain/inventory';
+import { CardDetailsSheet } from '@/features/inventory/collection-cards';
+import { lazy, useState, Suspense } from 'react';
 import { HashRouter, matchPath, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LuArrowLeft, LuEllipsis, LuArrowLeftRight, LuHeart, LuLayers, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
-import { EmptyState, Field, LoadingState } from '@/components/ui/surfaces';
+import { EmptyState, LoadingState } from '@/components/ui/surfaces';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { useUIStore } from '@/state/ui';
 import { createQueryClient } from './query-client';
@@ -42,6 +46,7 @@ function Shell() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const [catalogCard, setCatalogCard] = useState<InventoryCatalogCard | null>(null);
   const query = useUIStore(s => s.searchQuery);
   const setQuery = useUIStore(s => s.setSearchQuery);
   const utility = location.pathname === '/search' ? 'search' : location.pathname === '/settings' ? 'settings' : null;
@@ -87,8 +92,8 @@ function Shell() {
         {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-5 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-10" /></span>}<span className="break-words">{t(name)}</span>
       </NavLink>)}</div>
     </nav>
-    {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
-      {utility === 'search' ? <div className="space-y-6"><Field id="catalog-search" label={t('searchCards')} placeholder={t('searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} type="search" /><EmptyState title={t('catalogPending')} description={t('catalogDescription')} /></div> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+    {utility === 'search' && catalogCard ? <CardDetailsSheet group={{key: catalogCard.id, card: catalogCard, copies: [], receivedCount: 0, pendingCount: 0, unknownPossessionCount: 0, market: {currency: 'USD', minor: 0, pricedCount: 0, missingCount: 0}}} catalog={catalogReference(catalogCard.id)} quotes={[]} currency="USD" initialCopy={null} onClose={() => setCatalogCard(null)} money={m => new Intl.NumberFormat(i18n.language, {style: 'currency', currency: m.currency}).format(m.minor / 100)} cost={() => t('inventory.unavailable')} metric={() => t('inventory.unavailable')} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
+      {utility === 'search' ? <CatalogSearch query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }

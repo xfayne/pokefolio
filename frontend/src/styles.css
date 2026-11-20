@@ -273,3 +273,15 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   .new-purchase-cards-heading h2, .new-purchase-cards-heading h2 > span { font-size: 0.8125rem; }
   .new-purchase-shipment-fields { grid-template-columns: minmax(0,1fr); }
 }
+
+/* Shared catalog search and transaction picker. */
+.catalog-results { display: grid; gap: 0.5rem; }
+.catalog-result { display: flex; gap: 0.75rem; align-items: center; width: 100%; min-width: 0; padding: 0.5rem; border: 1px solid var(--surface-border); border-radius: 0.875rem; background: var(--surface-panel); text-align: start; }
+.catalog-result .pokemon-art { width: 4.25rem; height: 4.75rem; }
+.catalog-result span { overflow-wrap: anywhere; }
+.catalog-view { display: flex; border: 1px solid var(--surface-border); border-radius: 0.625rem; }
+.catalog-view button { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem; border-radius: inherit; font-size: 0.875rem; font-weight: var(--font-weight-bold); }
+.catalog-view [aria-pressed="true"] { color: white; background: var(--adventure-blue); }
+.catalog-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.catalog-grid .catalog-result { flex-direction: column; height: 100%; }
+.catalog-grid .catalog-result > svg { display: none; }
