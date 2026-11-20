@@ -9,7 +9,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
-  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).locator('span.font-semibold')).toHaveCSS('font-weight', '600');
+  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '600');
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
