@@ -30,7 +30,7 @@ it('keeps failed edits available for retry and cancellation never saves', async 
   render(<CollectionCards data={data()} onSave={onSave} />);
   await userEvent.click(screen.getByRole('button', { name: /^Card details: Gengar/ }));
   const dialog = screen.getByRole('dialog');
-  await userEvent.click(within(dialog).getAllByRole('button', { name: 'Edit copy' })[1]!);
+  await userEvent.click(within(dialog).getAllByRole('button', { name: /^Edit copy/ })[1]!);
   await userEvent.type(within(dialog).getByLabelText('Notes'), 'Keep me');
   await userEvent.click(within(dialog).getByRole('button', { name: 'Save copy' }));
   expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not save');
@@ -49,4 +49,17 @@ it('filters pending catalog rows, searches and shows unpriced coverage without z
   expect(screen.queryByRole('button', { name: /^Card details: Charizard/ })).not.toBeInTheDocument();
   await userEvent.type(screen.getByRole('searchbox'), 'Missing');
   expect(screen.getByText('No matching cards')).toBeInTheDocument();
+});
+
+it('opens explicit copy details and enlarges artwork without losing the card', async () => {
+  render(<CollectionCards data={data()} onSave={vi.fn()} />);
+  await userEvent.click(screen.getByRole('button', { name: /^Card details: Charizard/ }));
+  const dialog = screen.getByRole('dialog');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Details 2' }));
+  expect(within(dialog).getAllByText('$150.00')).toHaveLength(2);
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Back to card' }));
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Enlarge card image' }));
+  expect(screen.getByRole('dialog', { name: 'Card image' })).toBeInTheDocument();
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Back to card' }));
+  expect(within(dialog).getByRole('button', { name: 'Details 2' })).toBeInTheDocument();
 });

@@ -25,13 +25,13 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await dialog.getByLabel('Notes', { exact: true }).fill('Second copy only');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole('button', { name: 'Save copy' }).click();
-  await expect(dialog.getByText('Copy 1 · NM', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Copy 2 · MP', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();
   await dialog.getByLabel('Price condition', { exact: true }).selectOption('LP');
   await expect(dialog.getByText('$220.00', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Copy 1 · NM', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'View purchase' }).nth(1).click();
   await expect(dialog.getByText('purchase-charizard-b', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');

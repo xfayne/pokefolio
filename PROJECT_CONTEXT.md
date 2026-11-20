@@ -137,3 +137,8 @@ Card details show one card's market price for the selected condition, defaulting
 ## Cards density follow-up — 2026-11-20
 
 Owner requested smaller gaps above/below local search and no copy-count badge for a singleton. Cards now uses 8px section/list gaps plus 4px toolbar padding; duplicate expansion remains available for 2+ copies, singletons open their existing details through the entire row. Singleton detail titles omit Copy 1. Latin/Hebrew families remain Inter/Noto Sans Hebrew; the generated mock does not embed an identifiable font file. Row names now use compact bold/tight type and values use bold 16px type to more closely follow the visual reference; do not claim exact font identification from generated pixels.
+
+
+## Card Details visual completion follow-up — 2026-11-20
+
+The earlier #7 screen was a partial implementation, not full mock parity. The owner requested completion of missing Details. Compact copy rows now expose explicit per-copy Details, separate edit and purchase actions; detailed cost/date/note information belongs in the copy subview. General card details includes image enlargement with back navigation and variant chips. A back control preserves card context across nested views. The mock's Wishlist/Deals/Record Purchase actions are shown honestly disabled with a coming-soon label until their dedicated workflows are connected; do not claim these actions or Firestore persistence are functional. Preserve the owner's later list-density/search/condition-price decisions.
