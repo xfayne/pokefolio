@@ -32,3 +32,10 @@ jobs:
           POKEFOLIO_STAGING_API_URL: https://pokefolio-api-staging.xfayne.workers.dev
           POKEFOLIO_FIREBASE_WEB_CONFIG: '{"apiKey":"AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","appId":"1:403637067452:web:ea6738aebf38f14c637ab9","authDomain":"pokefolio-staging.firebaseapp.com","projectId":"pokefolio-staging"}'
       - run: npm run test:e2e
+      - name: Upload mobile visual checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-navigation-checks
+          path: frontend/test-results/
+          retention-days: 7

@@ -9,7 +9,9 @@ test('Pages subpath, reload, RTL and isolated new app', async ({ page }) => {
   await page.getByRole('link', { name: 'Wishlist' }).click();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Wishlist' })).toBeVisible();
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'עברית' }).click();
+  await page.getByRole('button', { name: 'סגירה' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.getByRole('heading', { name: 'רשימת משאלות' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

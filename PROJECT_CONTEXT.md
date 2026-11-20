@@ -29,7 +29,7 @@ The safe legacy baseline was imported in PRs #22–#23. The owner approved a fre
 - Transactions are the primary purchase/sale record; physical copies and eBay lots are distinct, with unknown cost represented explicitly, not invented.
 - Preserve all existing binder pocket positions, reserved empty pockets, 3×3 page grouping, page relocation and shared read-only view.
 - Preserve manual Wishlist drag ordering, including its behavior when sorted by price.
-- Dashboard is the default home. Bottom nav: Collection, Wishlist, Dashboard, Deals and Transactions; top nav: Search, Analyze and Settings.
+- Dashboard is the default home. Bottom nav: Collection, Wishlist, Dashboard, Analyze and Transactions; top nav: Search and Settings. Deals is an internal Wishlist tab.
 - Collection includes Overview, Cards and Binder. Mobile-first, compact lists and premium investment-like analytics.
 - English default and full Hebrew RTL support.
 - No migrations of real data or changes to the legacy production app without an independently verified backup, explicit approval and tested rollback.
@@ -50,3 +50,9 @@ Separate Production Firebase (`pokefolio-production`) and API (`pokefolio-api-pr
 Owner approved replacing the old staging UI with a fresh minimal React shell. Toolchain/dependencies are locked under `frontend/`; navigation is hash-based with Dashboard home. English/Hebrew RTL, Tailwind/shadcn Button, transient Zustand UI state, Query defaults, typed catalog/price contracts, isolated Axios transport and Firebase auth boundaries are included. Routes remain placeholders; screen designs require separate mocks and approval. The foundation defines no transaction/physical-copy persistence schema and performs no Firestore writes.
 
 The React staging pipeline replaces the legacy artifact packaging. The prior frontend, runtime injection and build descriptions above are historical infrastructure receipts. The current publisher compiles only `frontend/`, validates registered staging config, preserves `/pokefolio/`, excludes all legacy/backend files, and emits a source manifest. Five successful current-main checks are required, including `react-foundation`. Synthetic-config packaging and mobile Playwright checks cover route reload, RTL and absence of legacy controller/Firestore requests. Real production cutover remains #21. For rollback, revert the staging activation PR through protected main after checks; the retained legacy source/build remains available. Never restore or modify user data as part of a frontend rollback.
+
+## Issue #4 design/navigation implementation — 2026-11-20
+
+Adventure Blue tokens, local Inter/ Hebrew fonts, shared surfaces/fields/states and five-destination fixed navigation replace the technical shell styling. Collection has Overview/Cards/Binder, Wishlist Cards/Deals and Transactions Overview/History. Utility search is a native full-screen dialog with background-route preservation, focus containment, Escape/back support and hidden primary navigation. Settings currently contains only the existing language switch; its full product design is deferred. Catalog results, analyzer behavior and financial screens remain their dedicated roadmap work. No live-data operations were added.
+
+User requested react-icons in the same PR. Shared navigation/actions use named Lucide-set imports from react-icons/lu; unused lucide-react was removed. Do not mix icon families without a design reason. Fonts are self-hosted Latin/Hebrew subsets.

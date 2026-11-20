@@ -91,7 +91,7 @@ This Month: `p-6 space-y-6`; distinct header, metrics and footer. Metrics use `g
 | Keyboard focus | `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600` |
 | Disabled | `disabled:cursor-not-allowed disabled:opacity-50` with actual disabled semantics |
 
-Use existing local shadcn/ui approach and lucide-react icons, normally `size-5` with consistent stroke width. Do not add another UI library. Follow semantic component variants where already present; map those roles to palette tokens once during approved implementation. Keep static class variants discoverable by Tailwind, rather than constructing class names dynamically.
+Use existing local shadcn/ui approach and named Lucide-family imports from react-icons/lu (owner-requested 2026-11-20), normally `size-5` with consistent stroke width. Do not add another UI library. Follow semantic component variants where already present; map those roles to palette tokens once during approved implementation. Keep static class variants discoverable by Tailwind, rather than constructing class names dynamically.
 
 ## 6. Navigation and approved Dashboard rules
 
