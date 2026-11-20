@@ -46,3 +46,6 @@ Reference source remains in root `index.html`, `templates/`, `js/`, `css/` and `
 Never modify legacy production Firestore data. Real data transfer needs an independently verified backup, approved migration, dry-run integrity checks and rollback. Preserve binder positions, empty pockets, page ordering and manual Wishlist ordering.
 
 See [Project context](PROJECT_CONTEXT.md), [React foundation](frontend/README.md), [Production setup](docs/PRODUCTION_SETUP.md), and [safe import](docs/SAFE_IMPORT.md).
+
+Issue #5 starts with the [transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md).
+Its schema and financial policies are proposed for owner approval, not implemented.
