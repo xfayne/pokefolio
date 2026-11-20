@@ -5,7 +5,10 @@ test('History follows the approved mock, keeps month and total inline, and isola
   const writes: string[] = [];
   page.on('request', r => { if (/firestore|workers\.dev/.test(r.url())) writes.push(r.url()); });
   await page.goto('./#/transactions');
-  await expect(page).toHaveURL(/transactions\/history$/);
+  await expect(page).toHaveURL(/transactions\/overview$/);
+  const tabs = page.getByRole('navigation', { name: 'Section navigation' }).getByRole('link');
+  await expect(tabs).toHaveText(['Overview', 'History']);
+  await page.getByRole('link', { name: 'History', exact: true }).click();
   await expect(page.getByRole('listitem')).toHaveCount(0);
   await page.getByRole('button', { name: 'Explore sample history' }).click();
   await expect(page.getByText('Demo', { exact: true })).toBeVisible();
@@ -44,7 +47,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await expect(page.getByRole('listitem')).toHaveCount(2);
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await filter.click();
-  await page.getByRole('link', { name: 'Shipments', exact: true }).click();
+  await page.getByRole('link', { name: 'Overview', exact: true }).click();
   await page.getByRole('link', { name: 'History', exact: true }).click();
   await expect(page.getByRole('listitem')).toHaveCount(4);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
