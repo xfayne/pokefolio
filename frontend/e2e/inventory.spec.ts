@@ -24,6 +24,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   const toolbarBottom = await toolbar.evaluate(el => el.getBoundingClientRect().bottom);
   expect(listTop - toolbarBottom).toBeLessThanOrEqual(8);
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
+  await page.locator('.pokemon-art img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode().catch(() => undefined))));
   await test.info().attach('cards', { body: await page.screenshot({ path: test.info().outputPath('cards.png') }), contentType: 'image/png' });
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
