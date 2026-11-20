@@ -86,9 +86,10 @@ reconstruction drafts from legacy parcels and pure synthetic replay/rollback con
 local/synthetic tools, not live adapters or production migration. Check each PR for
 current merge/CI status; #6 remains open.
 
-Owner clarified that legacy shipments must become purchase transactions. Current
-strict finalized purchase DTOs require known date/payable total, which legacy data
-may lack. The proposed imported-purchase variant in
-[IMPORTED_PURCHASE_PROPOSAL.md](docs/IMPORTED_PURCHASE_PROPOSAL.md) awaits approval:
-retain unknown components, link copies/shipments, and create no invented payment
-cash. Current preview transaction drafts are intermediate, not completed history UI.
+Owner clarified and authorized shipment-to-purchase conversion: recorded per-copy
+prices 20 + 30 produce transaction total 50; no unrecorded shipping amount is added.
+Imported purchase records preserve unknown dates/costs and coverage explicitly.
+Parcel-linked copies use purchase acquisition links; cards without parcel evidence
+remain opening inventory. No payment cash is inferred from a purchase date alone.
+See [conversion policy](docs/IMPORTED_PURCHASE_PROPOSAL.md). No real-data migration
+or Firestore adapter/rules deployment is performed by these offline tools.

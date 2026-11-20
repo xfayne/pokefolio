@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { acquisitionRecordSchema, cardCopySchema, cashMovementSchema, idSchema, lotSchema, purchaseLineSchema, purchaseSchema, refundSchema, revisionSchema, saleLineSchema, saleSchema, shipmentMembershipSchema, shipmentSchema } from './schema';
+import { importedPurchaseSchema, importedPurchaseLineSchema, acquisitionRecordSchema, cardCopySchema, cashMovementSchema, idSchema, lotSchema, purchaseLineSchema, purchaseSchema, refundSchema, revisionSchema, saleLineSchema, saleSchema, shipmentMembershipSchema, shipmentSchema } from './schema';
 
 export const portfolioRecordSchema = z.discriminatedUnion('collection', [
   z.strictObject({ collection: z.literal('copies'), record: cardCopySchema }),
-  z.strictObject({ collection: z.literal('transactions'), record: z.union([purchaseSchema, saleSchema]) }),
-  z.strictObject({ collection: z.literal('lines'), record: z.union([purchaseLineSchema, saleLineSchema]) }),
+  z.strictObject({ collection: z.literal('transactions'), record: z.union([purchaseSchema, importedPurchaseSchema, saleSchema]) }),
+  z.strictObject({ collection: z.literal('lines'), record: z.union([purchaseLineSchema, importedPurchaseLineSchema, saleLineSchema]) }),
   z.strictObject({ collection: z.literal('lots'), record: lotSchema }),
   z.strictObject({ collection: z.literal('cashMovements'), record: cashMovementSchema }),
   z.strictObject({ collection: z.literal('acquisitions'), record: acquisitionRecordSchema }),

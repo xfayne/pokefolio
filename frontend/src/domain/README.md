@@ -50,3 +50,17 @@ reversals, expected versions and idempotent retries before any write is enabled.
 
 Tests use synthetic fixtures only. No domain function should read or normalize the
 legacy `progress` map. Binder/Wishlist order stays outside financial command payloads.
+
+## Legacy import (#6)
+
+`legacy-import.ts` materializes a verified offline report into schema-validated copies,
+imported purchases/lines and shipments/memberships. A 20 + 30 recorded card-price
+purchase has total 50, with the original two prices retained. Missing dates/prices
+stay unknown; absent extra charges add no amount and retain unknown coverage.
+Parcel-linked copies reference purchase lines, while unrelated existing cards remain
+opening inventory. Original organization and provider metadata are preserved as raw
+progress. The returned payload creates no invented payment cash movements.
+
+`importedPurchaseSchema`/`importedPurchaseLineSchema` are accepted by private commit
+and audit contracts, but ordinary new purchases remain strict. Materialization is
+not an authenticated write adapter and planning timestamps are not server timestamps.

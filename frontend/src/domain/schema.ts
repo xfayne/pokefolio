@@ -96,6 +96,35 @@ export const purchaseLineSchema = z.strictObject({
   ]),
 });
 export type PurchaseLine = z.infer<typeof purchaseLineSchema>;
+// Imported history records may lack dates/prices. Ordinary purchase confirmation
+// remains strict. The imported total is the recorded card-price sum, not evidence
+// that shipping/tax/fees were separately recorded or zero.
+export const importedPurchaseSchema = z.strictObject({
+  ...metadata, kind: z.literal('purchase'), origin: z.literal('legacy-import'),
+  transactionOn: evidenceSchema(dateSchema), currency: evidenceSchema(currencySchema),
+  sourceParcelId: z.string().min(1).max(128), notes: z.string().max(2000),
+  subtotal: amountEvidenceSchema, payable: amountEvidenceSchema,
+  totalBasis: z.literal('recorded-card-prices'),
+  shipping: amountEvidenceSchema, taxes: amountEvidenceSchema, fees: amountEvidenceSchema,
+  settlement: z.literal('unknown'),
+}).superRefine((record, ctx) => {
+  if (record.subtotal.status !== record.payable.status ||
+      (record.subtotal.status === 'known' && record.payable.status === 'known' &&
+       (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
+    ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+  }
+  const amounts = [record.subtotal, record.payable, record.shipping, record.taxes, record.fees];
+  if (amounts.some(a => a.status === 'known' && (record.currency.status !== 'known' || a.value.currency !== record.currency.value))) {
+    ctx.addIssue({ code: 'custom', message: 'Imported amount currency mismatch' });
+  }
+});
+export type ImportedPurchase = z.infer<typeof importedPurchaseSchema>;
+export const importedPurchaseLineSchema = z.strictObject({
+  ...metadata, origin: z.literal('legacy-import'), transactionId: idSchema,
+  ordinal: minorSchema, quantity: z.literal(1), catalog: catalogRefSchema,
+  pricing: z.strictObject({ mode: z.literal('per-copy'), unitPrice: amountEvidenceSchema }),
+});
+export type ImportedPurchaseLine = z.infer<typeof importedPurchaseLineSchema>;
 export const lotSchema = z.strictObject({
   ...metadata, transactionId: idSchema, subtotal: amountEvidenceSchema,
   totalCopyCount: evidenceSchema(z.number().int().positive().max(Number.MAX_SAFE_INTEGER)),
@@ -159,6 +188,7 @@ export type FxEvidence = z.infer<typeof fxEvidenceSchema>;
 // Immutable audit snapshots are bounded at the adapter boundary; never an expanding
 // array on the portfolio root. A typed snapshot prevents unchecked arbitrary maps.
 export const revisionSnapshotSchema = z.union([
+  importedPurchaseSchema, importedPurchaseLineSchema,
   cardCopySchema, purchaseSchema, purchaseLineSchema, saleSchema, saleLineSchema,
   cashMovementSchema, lotSchema, acquisitionRecordSchema, refundSchema, shipmentSchema, shipmentMembershipSchema,
 ]);
