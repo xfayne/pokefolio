@@ -1,6 +1,6 @@
 # Issue #6 — Legacy import plan and synthetic preview
 
-Status: Proposed for owner approval. No migration implementation or live writes.
+Status: Owner approved on 2026-11-20. Offline implementation in progress; no live writes.
 Prepared 2026-11-20 from current main, the approved #5 domain proposal,
 domain implementation guide and retained legacy cloud/card/shipment modules.
 Related: #6; final real-data cutover remains #21.
@@ -42,9 +42,12 @@ Unknown fields and invalid values remain intact in the archived source.
 
 A known card price does not prove shipping, taxes or fees were zero.
 A parcel is not automatically a transaction: combined and split shipments exist.
-The initial converter produces opening inventory and retained purchase evidence.
-Historical transactions require a separately reviewed explicit evidence mapping;
-no automatic reconstruction from price plus shipment date alone.
+Owner clarification on 2026-11-20: legacy shipments must seed reconstructed purchase
+transactions. The offline report creates linked purchase drafts preserving known
+membership, prices and purchase dates. Missing charges, payable totals and payment
+evidence remain unknown; partial drafts are not finalized purchase DTOs and do not
+invent cash movements. Copies retain opening acquisition provenance until a complete,
+validated purchase reconstruction can link them without double counting.
 
 Opening records retain received/pending possession and known acquisition-date
 evidence without creating cash movements. Monthly spending remains incomplete
