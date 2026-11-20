@@ -18,6 +18,11 @@ test('opening inventory retains costs, dates, holes, pending positions and all r
   assert.deepEqual(result.preservedProgress, input);
   assert.deepEqual(input, before);
   assert.equal(result.transactions.length + result.cashMovements.length, 0);
+  assert.equal(result.transactionDrafts.length, 1);
+  assert.equal(result.transactionDrafts[0].kind, 'purchase');
+  assert.equal(result.transactionDrafts[0].transactionOn.value, '2026-11-12');
+  assert.equal(result.transactionDrafts[0].lines[0].copyId, result.copies.find(c => c.cardId === 'b').id);
+  assert.equal(result.transactionDrafts[0].shipping.status, 'unknown');
   assert.deepEqual(result.binderReferences.map(r => r.token), input.binderOrder);
   assert.deepEqual(preview(input), result);
 });
