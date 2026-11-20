@@ -12,6 +12,8 @@ import { ErrorBoundary } from './error-boundary';
 import '@/lib/i18n';
 const InventoryPage = lazy(async () => { const module = await import('@/features/inventory/inventory-page'); return { default: module.InventoryPage }; });
 
+const HistoryPage = lazy(async () => { const module = await import('@/features/transactions/history-page'); return { default: module.HistoryPage }; });
+
 const queryClient = createQueryClient();
 const destinations = [
   { name: 'collection', icon: LuLayers }, { name: 'wishlist', icon: LuHeart },
@@ -19,16 +21,16 @@ const destinations = [
   { name: 'transactions', icon: LuArrowLeftRight },
 ] as const;
 const sections = {
-  collection: ['overview', 'cards', 'binder'], wishlist: ['cards', 'deals'], transactions: ['overview', 'history'],
+  collection: ['overview', 'cards', 'binder'], wishlist: ['cards', 'deals'], transactions: ['history', 'shipments'],
 } as const;
 type Destination = (typeof destinations)[number]['name'];
 function SectionPage({ name }: { name: Destination }) {
   const { t } = useTranslation();
   const location = useLocation();
   const tabs = name in sections ? sections[name as keyof typeof sections] : null;
-  return <div className={location.pathname === '/collection/cards' ? 'space-y-2' : 'space-y-6'}>
-    {tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex gap-1 rounded-full bg-blue-100/80 p-1">{tabs.map(tab => <NavLink key={tab} to={`/${name}/${tab}`} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
-    {location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+  return <div className={['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
+    {tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex gap-1 rounded-full bg-blue-100/80 p-1">{tabs.map(tab => <NavLink key={tab} to={{ pathname: `/${name}/${tab}`, search: name === 'transactions' ? location.search : '' }} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
+    {location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -49,7 +51,7 @@ function Shell() {
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />
         <h1 className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(current)}</h1>
-        {contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample' && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
+        {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
         <div className="flex shrink-0 gap-1">
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
@@ -59,8 +61,9 @@ function Shell() {
     <main id="main-content" tabIndex={-1} className="app-content space-y-6 px-3 pt-3 sm:px-6">
       <Routes location={contentLocation}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={`/${name}/${sections[name as keyof typeof sections][0]}`} replace /> : <SectionPage name={name} />} />)}
+        {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={{ pathname: `/${name}/${sections[name as keyof typeof sections][0]}`, search: contentLocation.search }} replace /> : <SectionPage name={name} />} />)}
         {Object.entries(sections).flatMap(([name, tabs]) => tabs.map(tab => <Route key={`${name}/${tab}`} path={`/${name}/${tab}`} element={<SectionPage name={name as Destination} />} />))}
+        <Route path="/transactions/overview" element={<Navigate to={{ pathname: "/transactions/history", search: contentLocation.search }} replace />} />
         <Route path="/deals" element={<Navigate to="/wishlist/deals" replace />} />
         <Route path="*" element={<EmptyState title={t('missing')} description={t('missingDescription')} />} />
       </Routes>

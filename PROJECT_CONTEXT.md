@@ -201,3 +201,27 @@ RTL, focus and form sizing contracts. UI components have no inventory/domain or
 persistence dependencies and no copy-count defaults. Cards list defaults closed;
 Your copies defaults open only for exactly one copy, in feature code. No visual
 redesign or real-data behavior is part of this refactor.
+
+
+## Issue #8 — approved History screen, 2026-11-20
+
+Owner approved the supplied Transactions/History mock, with one explicit change:
+the monthly net amount (sample −$227) stays on the SAME LINE as the month. The
+Transactions tabs are now History / Shipments, with History as the default and
+the old /transactions/overview URL redirecting to it. Shipments is still #11.
+
+`features/transactions/` reuses the approved shared UI/palette/fonts and adds the
+compact history rows, up to three distinct art previews with physical-copy counts,
+source/date, transaction total and evidenced delivery status. Search/type filters
+and initially closed currency/status filters combine; totals reflect visible rows.
+`domain/transaction-history.ts` validates owner identity/uniqueness, preserves
+missing imported dates/amounts, separates original currencies and computes signed
+transaction totals (sale gross buyer amount minus purchase payable), NOT cash flow
+or profit. Pending copies require explicit tracking evidence for In transit.
+
+Only `?transactions=sample` exposes synthetic fixtures; ordinary history contains
+no fake account holdings. Creation/detail callback contracts are ready but not
+wired; those buttons are aria-disabled with an explanatory status until their
+individual mocks/screens are approved. No new transaction forms, detail design,
+Firestore persistence, migration or provider mutation is included. Continue #8
+screen by screen; ask the owner for the next screen's mock before implementing it.
