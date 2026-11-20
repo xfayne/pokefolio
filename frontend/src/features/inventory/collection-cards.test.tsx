@@ -56,7 +56,7 @@ it('opens explicit copy details and enlarges artwork without losing the card', a
   await userEvent.click(screen.getByRole('button', { name: /^Card details: Charizard/ }));
   const dialog = screen.getByRole('dialog');
   await userEvent.click(within(dialog).getByRole('button', { name: 'Details 2' }));
-  expect(within(dialog).getByText('$150.00')).toBeInTheDocument();
+  expect(within(dialog).getAllByText('$150.00')).toHaveLength(2);
   await userEvent.click(within(dialog).getByRole('button', { name: 'Back to card' }));
   await userEvent.click(within(dialog).getByRole('button', { name: 'Enlarge card image' }));
   expect(screen.getByRole('dialog', { name: 'Card image' })).toBeInTheDocument();
