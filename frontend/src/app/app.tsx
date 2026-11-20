@@ -10,6 +10,7 @@ import { useUIStore } from '@/state/ui';
 import { createQueryClient } from './query-client';
 import { ErrorBoundary } from './error-boundary';
 import '@/lib/i18n';
+import { InventoryPage } from '@/features/inventory/inventory-page';
 
 const queryClient = createQueryClient();
 const destinations = [
@@ -23,10 +24,11 @@ const sections = {
 type Destination = (typeof destinations)[number]['name'];
 function SectionPage({ name }: { name: Destination }) {
   const { t } = useTranslation();
+  const location = useLocation();
   const tabs = name in sections ? sections[name as keyof typeof sections] : null;
   return <div className="space-y-6">
     {tabs && <nav aria-label={t('sectionNavigation')} className="flex gap-1 rounded-2xl border border-blue-100 bg-blue-100/70 p-1">{tabs.map(tab => <NavLink key={tab} to={`/${name}/${tab}`} className={({ isActive }) => `flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
-    <EmptyState title={t('comingTitle')} description={t('description')} />
+    {location.pathname === '/collection/cards' ? <InventoryPage /> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {

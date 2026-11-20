@@ -58,3 +58,10 @@ isolated filesystem apply/replay/rollback are described in the
 [import runbook](docs/LEGACY_IMPORT_RUNBOOK.md). These tools use supplied JSON and
 synthetic tests; they do not migrate live Firestore data or expose a new app screen.
 Real-data transfer remains a separately approved release step under #21.
+
+
+Physical-copy inventory (#7) is available under Collection → Cards. The explicitly
+labelled [sample collection](https://xfayne.github.io/pokefolio/#/collection/cards?inventory=sample)
+lets you expand duplicates and edit one copy in memory; it contains no real holdings.
+Live account persistence and full purchase navigation follow in #8/#21.
+See [physical-copy rules](docs/COPY_INVENTORY.md).

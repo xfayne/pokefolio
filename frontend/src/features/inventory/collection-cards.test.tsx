@@ -1,0 +1,52 @@
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, it, vi } from 'vitest';
+import '@/lib/i18n';
+import { CollectionCards, type InventoryData } from './collection-cards';
+import { createSampleCopies, sampleCatalog, sampleOwner, sampleQuotes } from './sample';
+
+const data = (): InventoryData => ({ ownerUid: sampleOwner, copies: createSampleCopies(), catalog: sampleCatalog, quotes: sampleQuotes, currency: 'USD' });
+it('expands duplicates with separate grades/prices and edits the exact chosen copy', async () => {
+  const onSave = vi.fn().mockResolvedValue(undefined);
+  const original = data();
+  render(<CollectionCards data={original} onSave={onSave} />);
+  expect(screen.getByText('3 cards · 4 received copies')).toBeInTheDocument();
+  expect(screen.getByText('1 on the way')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Charizard: Copies' }));
+  expect(screen.getByText('$180.00')).toBeInTheDocument();
+  expect(screen.getByText('$150.00')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Edit copy charizard-b' }));
+  const dialog = screen.getByRole('dialog');
+  expect(within(dialog).getByText('charizard-b')).toBeInTheDocument();
+  expect(within(dialog).getByLabelText('Condition')).toHaveValue('LP');
+  await userEvent.selectOptions(within(dialog).getByLabelText('Condition'), 'MP');
+  await userEvent.type(within(dialog).getByLabelText('Notes'), 'Small corner mark');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Save copy' }));
+  expect(onSave).toHaveBeenCalledWith(original.copies[1], expect.objectContaining({ condition: { status: 'known', value: 'MP', source: 'user' }, notes: 'Small corner mark' }));
+  expect(original.copies[0]!.condition).toMatchObject({ value: 'NM' });
+});
+it('keeps failed edits available for retry and cancellation never saves', async () => {
+  const onSave = vi.fn().mockRejectedValue(Error('Conflict'));
+  render(<CollectionCards data={data()} onSave={onSave} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Card details: Gengar' }));
+  const dialog = screen.getByRole('dialog');
+  await userEvent.click(within(dialog).getAllByRole('button', { name: 'Edit copy' })[1]!);
+  await userEvent.type(within(dialog).getByLabelText('Notes'), 'Keep me');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Save copy' }));
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not save');
+  expect(within(dialog).getByLabelText('Notes')).toHaveValue('Keep me');
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+  expect(onSave).toHaveBeenCalledTimes(1);
+  await userEvent.click(within(dialog).getAllByRole('button', { name: 'View purchase' })[1]!);
+  expect(within(dialog).getByText('purchase-gengar-pending')).toBeInTheDocument();
+  expect(within(dialog).getByText('line-gengar-pending')).toBeInTheDocument();
+});
+it('filters pending catalog rows, searches and shows unpriced coverage without zero substitution', async () => {
+  render(<CollectionCards data={data()} onSave={vi.fn()} />);
+  expect(screen.getByText('3 priced · 1 unpriced')).toBeInTheDocument();
+  await userEvent.selectOptions(screen.getByLabelText('Delivery status'), 'pending');
+  expect(screen.getByRole('button', { name: 'Card details: Gengar' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Card details: Charizard' })).not.toBeInTheDocument();
+  await userEvent.type(screen.getByRole('searchbox'), 'Missing');
+  expect(screen.getByText('No matching cards')).toBeInTheDocument();
+});
