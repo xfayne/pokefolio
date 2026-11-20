@@ -1,5 +1,6 @@
 export const inventoryTranslations = {
   en: {
+    copyDetails: 'Details', enlarge: 'Enlarge card image', image: 'Card image', imageHint: 'Scroll to inspect the full image.', actionsSoon: 'Wishlist, deals and purchase actions are coming soon.', addWishlist: 'Add to Wishlist', findDeals: 'Find deals', recordPurchase: 'Record purchase',
     options: 'Sort and filter', marketPrice: 'Market price', perCard: 'For one card', marketCondition: 'Price condition', copies_one: '{{count}} copy', copies_other: '{{count}} copies',
     delivery: 'Delivery status',
     title: 'Your cards', sample: 'Sample collection', sampleNotice: 'Demo data. Edits last until you leave this screen or reload.', explore: 'Explore sample collection', disconnected: 'Your collection connection is coming next', connectionDetail: 'Purchase and account storage are being connected. You can explore the new copy view with sample cards.',
@@ -12,6 +13,7 @@ export const inventoryTranslations = {
     samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Original purchase currency; shipping shown in total cost.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
   },
   he: {
+    copyDetails: 'פרטים', enlarge: 'הגדלת תמונת הקלף', image: 'תמונת הקלף', imageHint: 'אפשר לגלול כדי לבחון את התמונה המלאה.', actionsSoon: 'פעולות רשימת המשאלות, המציאות והרכישה יהיו זמינות בהמשך.', addWishlist: 'הוספה למשאלות', findDeals: 'חיפוש מציאות', recordPurchase: 'תיעוד רכישה',
     options: 'מיון וסינון', marketPrice: 'מחיר שוק', perCard: 'לקלף יחיד', marketCondition: 'מצב למחירון', copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_many: '{{count}} עותקים', copies_other: '{{count}} עותקים',
     delivery: 'סטטוס הגעה',
     title: 'הקלפים שלך', sample: 'אוסף לדוגמה', sampleNotice: 'נתוני הדגמה. העריכות נשמרות עד יציאה מהמסך או רענון.', explore: 'פתיחת אוסף לדוגמה', disconnected: 'חיבור האוסף שלך מגיע בשלב הבא', connectionDetail: 'אנחנו מחברים את הרכישות והשמירה בחשבון. בינתיים אפשר להתרשם מתצוגת העותקים עם קלפים לדוגמה.',
