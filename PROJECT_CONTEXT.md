@@ -75,3 +75,20 @@ No Firestore schema/rules deployment, live collection write or real-data migrati
 performed. Future persistence must independently verify atomicity, auth, references,
 complete write sets and idempotency as described in the guide. #6 handles safe import;
 #7–#11 implement inventory/transaction/shipment workflows; #18–#19 extend analytics.
+
+## Issue #6 — offline import work, 2026-11-20
+
+Owner approved the migration plan in #56. #57 delivered offline backup envelopes,
+explicit coverage, exclusive creation and independent read-back verification.
+#58 adds read-only preview mapping, exact organization preservation, purchase
+reconstruction drafts from legacy parcels and pure synthetic replay/rollback contracts.
+#59 adds schema-validated opening/copy/shipment draft materialization. These are
+local/synthetic tools, not live adapters or production migration. Check each PR for
+current merge/CI status; #6 remains open.
+
+Owner clarified that legacy shipments must become purchase transactions. Current
+strict finalized purchase DTOs require known date/payable total, which legacy data
+may lack. The proposed imported-purchase variant in
+[IMPORTED_PURCHASE_PROPOSAL.md](docs/IMPORTED_PURCHASE_PROPOSAL.md) awaits approval:
+retain unknown components, link copies/shipments, and create no invented payment
+cash. Current preview transaction drafts are intermediate, not completed history UI.
