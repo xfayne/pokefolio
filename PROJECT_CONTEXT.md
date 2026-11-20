@@ -255,3 +255,35 @@ aliases and component CSS resolve to it. This supersedes all older 800/900 notes
 Keep regular/medium metadata lighter, the approved palette centralized, and
 Overview / History in that order. Continue screen by screen; request the next mock
 before implementing creation/editing or another screen.
+
+
+## Issue #8 — approved New Purchase form, 2026-11-20
+
+Owner supplied the creation mock after approving Purchase Details. Implement
+`/transactions/new` with Purchase/Sale selector (Sale unavailable), Date/Source/
+Seller/Currency grid, per-copy or Total/lot pricing, removable copy rows, shared
+16px native fields, deterministic shipping preview, totals, initially CLOSED
+optional shipment details and fixed Save above the existing bottom navigation.
+All emphasis uses the existing shared 700 weight and panel palette.
+
+The pure purchase-draft planner validates required per-copy prices, dates, manual
+seller, currency, copy identity and safe integer amounts; it delegates pending
+copy construction and shipping allocation to planPurchase. Lot card costs stay
+unallocated. Explicit shipment input creates only local records/memberships and
+a pending read-only snapshot, without provider requests or fabricated events.
+No payment date or settled cash movement is inferred; explicit payment evidence
+remains a confirmation/persistence workflow requirement.
+
+The opt-in sample form seeds 52/46/32 USD plus 12 shipping. A memory-only demo
+provider owns new synthetic plans, idempotent receipts and their History/Details
+projection. Sample/account draft UI state is separate in Zustand; no saved
+portfolio record or auth token goes there. Drafts survive in-app back/navigation,
+not a reload. New sample saves reset on reload. No Firestore writes, real account
+data, Binder/Wishlist edits, migration or tracking registrations are performed.
+Ordinary New Purchase is empty and account Save remains unavailable.
+
+Add card has a callback contract but remains unavailable until the owner provides
+the separate card-picker mock. Do not invent that screen, a confirmation screen,
+a sale form or an edit flow. Continue #8 by requesting the next mock; authenticated
+persistence, explicit payment confirmation, catalog selection/editions, optional
+listing references and remaining acquisition/dashboard links are still pending.

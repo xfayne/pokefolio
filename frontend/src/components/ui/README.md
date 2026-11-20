@@ -7,7 +7,7 @@ Adventure Blue presentation; do not copy inventory JSX or invent new surface col
 | --- | --- | --- |
 | `Card`, `ListCard` | Panel and compact list-item surfaces | Stateless |
 | `Button` | Primary/outline actions | Caller handles actions |
-| `Field`, `SearchInput`, `Select` | Labelled text/search and native selection | Controlled by caller |
+| `Input`, `Field`, `SearchInput`, `Select` | Labelled text/search and native selection | Controlled by caller |
 | `DisclosureButton`, `DisclosureContent`, `DisclosureChevron` | Accessible animated accordion parts | Caller MUST provide `open`, ID and toggle handler |
 | `PokemonArt` | Approved thumbnail/detail framing, crop and image fallback | Presentation only; accepts URL/alt, no catalog dependency |
 | `UtilitySheet` | Modal utility screen, header, entry motion, focus restoration | Caller owns contents/back/close |

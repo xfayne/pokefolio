@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/surfaces';
 import { selectPurchaseDetails } from '@/domain/purchase-details';
@@ -9,7 +9,7 @@ import type { InventoryGroup } from '@/domain/inventory';
 import { idSchema, type Money } from '@/domain/schema';
 import { CardDetailsSheet } from '@/features/inventory/collection-cards';
 import { PurchaseDetails } from './purchase-details';
-import { sampleHistory, samplePurchaseShipments } from './sample';
+import { useDemoTransactionData } from './demo-data';
 
 const disconnected: HistoryData = { ownerUid: 'disconnected', transactions: [], copies: [], catalog: [], saleLines: [], inTransit: [] };
 export function PurchasePage() {
@@ -18,8 +18,10 @@ export function PurchasePage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [inspecting, setInspecting] = useState<string | null>(null);
+  const location = useLocation();
+  const demo = useDemoTransactionData();
   const preview = params.get('transactions') === 'sample';
-  const view = useMemo(() => idSchema.safeParse(transactionId).success ? selectPurchaseDetails(preview ? sampleHistory : disconnected, transactionId, preview ? samplePurchaseShipments : []) : null, [preview, transactionId]);
+  const view = useMemo(() => idSchema.safeParse(transactionId).success ? selectPurchaseDetails(preview ? demo.history : disconnected, transactionId, preview ? demo.shipments : []) : null, [preview, transactionId, demo]);
   useEffect(() => { document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }, [transactionId]);
   const selected = view?.copies.find(c => c.copy.id === inspecting);
   const currency = view?.row.currency ?? 'USD';
@@ -32,6 +34,7 @@ export function PurchasePage() {
   const money = (m: Money) => new Intl.NumberFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', { style: 'currency', currency: m.currency }).format(m.minor / 100);
   if (!view) return <EmptyState title={t('purchaseDetails.notFound')} description={t('purchaseDetails.notFoundDetail')} action={<Button variant="outline" onClick={() => { void navigate({ pathname: '/transactions/history', search: params.toString() }); }}>{t('purchaseDetails.back')}</Button>} />;
   return <>
+    {(location.state as { demoSaved?: boolean } | null)?.demoSaved && <p role="status" className="text-sm text-slate-600">{t('newPurchase.demoSaved')}</p>}
     <PurchaseDetails view={view} onInspect={copy => setInspecting(copy.id)} />
     {selected && group && <CardDetailsSheet key={selected.copy.id} group={group} catalog={selected.copy.catalog} quotes={[]} currency={currency} initialCopy={null} initialInspection={selected.copy.id} onClose={() => setInspecting(null)} onViewPurchase={() => setInspecting(null)} money={money}
       cost={c => c.status === 'exact' ? money(c.value) : c.status === 'estimated' ? `${money(c.value)} · ${t('inventory.estimated')}` : t(c.status === 'unallocated' ? 'inventory.unallocated' : 'inventory.unavailable')}
