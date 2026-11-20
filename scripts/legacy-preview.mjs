@@ -27,8 +27,9 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
       issue(`shipments[${i}]`, 'INVALID_OR_DUPLICATE_PARCEL', parcel); continue;
     }
     parcelIds.add(parcel.id);
+    if (new Set(parcel.cardIds).size !== parcel.cardIds.length) issue(`shipments[${i}].cardIds`, 'REPEATED_COPY_MEMBERSHIP', parcel.cardIds);
   }
-  const validDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
+  const validDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !v.startsWith('0000') && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
   const byCatalog = new Map();
   for (const [id, value] of Object.entries(maps.owned)) if (typeof value !== 'boolean') issue(`owned.${id}`, 'INVALID_OWNERSHIP_MARKER', value);
   for (const [id, value] of Object.entries(maps.pendingPurchase)) if (!object(value)) issue(`pendingPurchase.${id}`, 'INVALID_PENDING_METADATA', value);
@@ -56,7 +57,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     const edition = maps.firstEdition[cardId];
     if (edition !== undefined && typeof edition !== 'boolean') issue(`firstEdition.${cardId}`, 'INVALID_EDITION', edition);
     const copy = { id: copyId, cardId, acquisition: 'opening-inventory', possession: received ? 'received' : 'pending',
-      condition: ['NM', 'LP', 'MP', 'HP', 'DMG', 'DAMAGED'].includes(grade) ? { status: 'known', value: grade === 'DMG' ? 'DAMAGED' : grade } : unknown('No valid original condition'),
+      condition: ['NM', 'LP', 'MP', 'HP', 'DMG', 'DAMAGED'].includes(grade) ? { status: 'known', value: grade === 'DMG' ? 'DAMAGED' : grade, source: 'legacy' } : unknown('No valid original condition'),
       edition: typeof edition === 'boolean' ? edition ? 'first-edition' : 'unlimited' : 'unknown',
       acquiredOn: dates.length === 1 && validDate(dates[0]) && linked.length === 1 ? { status: 'known', value: dates[0], source: 'legacy' } : unknown('No unambiguous purchase date'),
       cardCost, shippingCost: unknown('Not evidenced'), taxCost: unknown('Not evidenced'), feeCost: unknown('Not evidenced') };
