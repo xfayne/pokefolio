@@ -38,6 +38,7 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await expect(page.locator('header')).toHaveCSS('background-color', 'oklch(0.208 0.042 265.755)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
