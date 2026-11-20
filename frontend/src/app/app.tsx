@@ -44,7 +44,7 @@ function Shell() {
   return <div className="mx-auto min-h-dvh max-w-3xl bg-blue-50">
     <a href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }} className="skip-link rounded-xl bg-white p-3 text-blue-700">{t('skip')}</a>
     <header className="top-bar sticky top-0 z-20 border-b border-slate-700 bg-slate-900 text-white">
-      <div className="flex min-h-20 items-center gap-3 px-4 sm:px-6">
+      <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <span aria-hidden className="pokeball size-8 shrink-0" />
         <h1 className="min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(current)}</h1>
         <div className="flex shrink-0 gap-1">
@@ -53,8 +53,7 @@ function Shell() {
         </div>
       </div>
     </header>
-    <main id="main-content" tabIndex={-1} className="app-content space-y-6 px-4 pt-6 sm:px-6">
-      <p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p>
+    <main id="main-content" tabIndex={-1} className="app-content space-y-6 px-4 pt-4 sm:px-6">
       <Routes location={contentLocation}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={`/${name}/${sections[name as keyof typeof sections][0]}`} replace /> : <SectionPage name={name} />} />)}
@@ -69,7 +68,7 @@ function Shell() {
       </NavLink>)}</div>
     </nav>
     {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
-      {utility === 'search' ? <div className="space-y-6"><Field id="catalog-search" label={t('searchCards')} placeholder={t('searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} type="search" /><EmptyState title={t('catalogPending')} description={t('catalogDescription')} /></div> : <div className="space-y-4"><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <div className="space-y-6"><Field id="catalog-search" label={t('searchCards')} placeholder={t('searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} type="search" /><EmptyState title={t('catalogPending')} description={t('catalogDescription')} /></div> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }
