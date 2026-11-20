@@ -10,9 +10,9 @@ it('expands duplicates with separate grades/prices and edits the exact chosen co
   const onSave = vi.fn().mockResolvedValue(undefined);
   const original = data();
   render(<CollectionCards data={original} onSave={onSave} />);
-  expect(screen.getByText('3 cards · 4 received copies')).toBeInTheDocument();
-  expect(screen.getByText('1 on the way')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: /^Charizard: Copies/ }));
+  expect(screen.queryByText('Priced holdings')).not.toBeInTheDocument();
+  expect(screen.queryByText('3 cards · 4 received copies')).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
   expect(screen.getByText('$180.00')).toBeInTheDocument();
   expect(screen.getByText('$150.00')).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Edit copy charizard-b' }));
@@ -28,7 +28,7 @@ it('expands duplicates with separate grades/prices and edits the exact chosen co
 it('keeps failed edits available for retry and cancellation never saves', async () => {
   const onSave = vi.fn().mockRejectedValue(Error('Conflict'));
   render(<CollectionCards data={data()} onSave={onSave} />);
-  await userEvent.click(screen.getByRole('button', { name: 'Card details: Gengar' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Card details: Gengar/ }));
   const dialog = screen.getByRole('dialog');
   await userEvent.click(within(dialog).getAllByRole('button', { name: 'Edit copy' })[1]!);
   await userEvent.type(within(dialog).getByLabelText('Notes'), 'Keep me');
@@ -43,10 +43,10 @@ it('keeps failed edits available for retry and cancellation never saves', async 
 });
 it('filters pending catalog rows, searches and shows unpriced coverage without zero substitution', async () => {
   render(<CollectionCards data={data()} onSave={vi.fn()} />);
-  expect(screen.getByText('3 priced · 1 unpriced')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
   await userEvent.selectOptions(screen.getByLabelText('Delivery status'), 'pending');
-  expect(screen.getByRole('button', { name: 'Card details: Gengar' })).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Card details: Charizard' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /^Card details: Gengar/ })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^Card details: Charizard/ })).not.toBeInTheDocument();
   await userEvent.type(screen.getByRole('searchbox'), 'Missing');
   expect(screen.getByText('No matching cards')).toBeInTheDocument();
 });

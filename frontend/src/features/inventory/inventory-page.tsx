@@ -20,5 +20,5 @@ export function InventoryPage() {
     if (plan) setState(previous => ({ copies: previous.copies.map(c => c.id === before.id ? plan.change.after : c), audits: [...previous.audits, plan.audit] }));
   };
   if (!preview) return <EmptyState title={t('inventory.disconnected')} description={t('inventory.connectionDetail')} action={<Button onClick={() => { const next = new URLSearchParams(params); next.set('inventory', 'sample'); setParams(next); }}>{t('inventory.explore')}</Button>} />;
-  return <div className="space-y-4"><aside className="rounded-xl border border-blue-200 bg-blue-100/60 px-3 py-2 text-sm"><p className="font-semibold text-blue-900">{t('inventory.sample')}</p><p className="mt-1 text-xs text-slate-700">{t('inventory.sampleNotice')} {t('inventory.samplePrices')}</p></aside><CollectionCards data={{ ownerUid: sampleOwner, copies: state.copies, catalog: sampleCatalog, quotes: sampleQuotes, currency: 'USD' }} onSave={save} /></div>;
+  return <CollectionCards data={{ ownerUid: sampleOwner, copies: state.copies, catalog: sampleCatalog, quotes: sampleQuotes, currency: 'USD' }} onSave={save} />;
 }
