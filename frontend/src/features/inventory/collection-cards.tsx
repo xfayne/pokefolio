@@ -107,7 +107,6 @@ export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy
         <span className="min-w-0 flex-1 text-sm">{t('inventory.paid')}: {cost(v.paid)}{v.copy.possession !== 'received' && <span className="ms-2 text-xs text-slate-600">{t(`inventory.${v.copy.possession}`)}</span>}</span>
         <button type="button" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-blue-700" onClick={() => setInspecting(v.copy.id)} aria-label={`${t('inventory.copyDetails')} ${n + 1}`}>{t('inventory.copyDetails')}</button>
         {v.copy.acquisition.kind === 'purchase' && <button type="button" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-blue-700" onClick={() => setPurchase(v.copy.id)}>{t('inventory.purchase')}</button>}
-        <button type="button" aria-label={`${t('inventory.edit')}: ${n + 1}`} className="flex size-11 items-center justify-center rounded-lg text-blue-700" onClick={() => setEditing(v.copy.id)}><LuPencil aria-hidden /></button>
       </li>)}</ul></Card>}
       <div className="space-y-2"><p className="text-xs text-slate-600">{t('inventory.actionsSoon')}</p><div className="grid grid-cols-2 gap-2">
         <Button variant="outline" disabled><LuHeart aria-hidden />{t('inventory.addWishlist')}</Button>

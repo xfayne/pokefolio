@@ -30,14 +30,15 @@ it('keeps failed edits available for retry and cancellation never saves', async 
   render(<CollectionCards data={data()} onSave={onSave} />);
   await userEvent.click(screen.getByRole('button', { name: /^Card details: Gengar/ }));
   const dialog = screen.getByRole('dialog');
-  await userEvent.click(within(dialog).getAllByRole('button', { name: /^Edit copy/ })[1]!);
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Details 2' }));
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Edit copy' }));
   await userEvent.type(within(dialog).getByLabelText('Notes'), 'Keep me');
   await userEvent.click(within(dialog).getByRole('button', { name: 'Save copy' }));
   expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not save');
   expect(within(dialog).getByLabelText('Notes')).toHaveValue('Keep me');
   await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
   expect(onSave).toHaveBeenCalledTimes(1);
-  await userEvent.click(within(dialog).getAllByRole('button', { name: 'View purchase' })[1]!);
+  await userEvent.click(within(dialog).getByRole('button', { name: 'View purchase' }));
   expect(within(dialog).getByText('purchase-gengar-pending')).toBeInTheDocument();
   expect(within(dialog).getByText('line-gengar-pending')).toBeInTheDocument();
 });
