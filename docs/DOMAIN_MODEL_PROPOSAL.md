@@ -1,11 +1,11 @@
 # Issue #5 — Transaction and inventory domain proposal
 
-Status: **Approved by the owner on 2026-11-20; implementation in progress.**
+Status: **Approved by the owner on 2026-11-20; domain foundation implemented.**
 
 Prepared 2026-11-20 against main `05c0c6083c7e903f9e7531c82da05e3077c1c0fe`.
 The owner approved the policies in section 10, including the simpler initial rule
 that only held, received copies can be sold. This document is not a deployed rules
-change or migration authorization. Examples are synthetic. Issue #5 remains open.
+change or migration authorization. Examples are synthetic. Delivery receipts are tracked in Issue #5.
 
 ## 1. Design and scope
 
@@ -38,7 +38,7 @@ seller and notes. An expired listing or missing tracking number never blocks ent
 
 ## 2. Proposed typed boundaries
 
-These abbreviated TypeScript sketches describe contracts for approval, not runtime
+These abbreviated TypeScript sketches describe approved contracts, not runtime
 code. Every persisted domain record has `schemaVersion: 1`, its stable ID, revision
 number and server-recorded timestamps. Schema version is local to these new records,
 unrelated to existing public-binder schema version 2.
@@ -235,7 +235,7 @@ Illustrative record fragments (shared metadata omitted):
     "direction": "out", "purpose": "purchase",
     "money": { "currency": "GBP", "minor": 7100 },
     "effectiveOn": { "status": "known", "value": "2026-11-20", "source": "user" },
-    "idempotencyKey": "purchase-example-1:initial-payment"
+    "idempotencyKey": "purchase-example-1-initial-payment"
   }
 }
 ```

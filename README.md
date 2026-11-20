@@ -31,7 +31,7 @@ Open http://localhost:5173/pokefolio/. The Adventure Blue shell defaults to Dash
 - React Hook Form + Zod for forms/boundary validation; i18next for localization.
 - Vitest, Testing Library, Playwright and ESLint for verification.
 
-Local development is disconnected unless supplied the exact validated staging configuration. The frontend rejects foreign/production Firebase projects and alternate API origins. It performs no collection migration or Firestore writes. Inventory/transaction persistence models remain separate roadmap decisions.
+Local development is disconnected unless supplied the exact validated staging configuration. The frontend rejects foreign/production Firebase projects and alternate API origins. It performs no collection migration or Firestore writes. The approved inventory/transaction domain is defined under `frontend/src/domain/`; live persistence adapters remain separate roadmap work.
 
 ## Environments and release
 
@@ -48,4 +48,5 @@ Never modify legacy production Firestore data. Real data transfer needs an indep
 See [Project context](PROJECT_CONTEXT.md), [React foundation](frontend/README.md), [Production setup](docs/PRODUCTION_SETUP.md), and [safe import](docs/SAFE_IMPORT.md).
 
 Issue #5 starts with the [transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md).
-Its schema and financial policies were owner-approved on 2026-11-20; implementation is in progress.
+Its schema and financial policies were owner-approved on 2026-11-20. Typed records,
+allocation/lifecycle primitives and persistence contracts live in the [domain module](frontend/src/domain/README.md); live database adapters and screen workflows remain separate roadmap work.
