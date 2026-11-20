@@ -180,3 +180,13 @@ keeps a static copy list. Remove the dialog focus outline responsible for blue
 corner artifacts and square its exterior header corners. Keep keyboard outlines
 on interactive controls. Rows use a lighter #edf5ff surface. Reduce artwork
 magnification to 1.1 so the full width inside the original yellow edges is visible.
+
+
+## Authoritative copy defaults and palette — 2026-11-20
+
+All Cards-list accordions default CLOSED, including singletons. ONLY Card Details
+Your copies defaults open for exactly one copy, otherwise closed. Both disclosures
+animate and preserve explicit user toggles. This supersedes previous singleton
+default notes. Shared Card surfaces and inventory rows use --surface-panel and
+--surface-border, defined once in styles.css from the approved Card Details palette;
+fields retain the shared --surface-field token. Do not add screen-specific colors.

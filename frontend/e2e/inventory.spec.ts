@@ -10,10 +10,10 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '700');
-  await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('button', { name: '2 copies: Charizard' })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('searchbox')).toHaveCSS('font-style', 'normal');
-  await expect(page.locator('.inventory-card').first()).toHaveCSS('background-color', 'rgb(237, 245, 255)');
+  await expect(page.locator('.inventory-card').first()).toHaveCSS('background-color', 'rgb(242, 247, 253)');
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toHaveCSS('font-weight', '800');
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toBeVisible();
   const toolbar = page.locator('.collection-toolbar');
@@ -42,6 +42,8 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole('button', { name: 'Save copy' }).click();
+  await expect(dialog.getByRole('button', { name: /Your copies/ })).toHaveAttribute('aria-expanded', 'false');
+  await dialog.getByRole('button', { name: /Your copies/ }).click();
   await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
   await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
