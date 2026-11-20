@@ -20,11 +20,9 @@ export function CardMarketPrice({ catalog, quotes, currency, copies, money }: {
   const current = matches.filter(q => Date.parse(q.observedAt) === latest);
   const quote = current[0];
   const amount = quote && current.every(q => q.money.minor === quote.money.minor) ? quote.money : null;
-  return <Card className="space-y-3">
-    <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">{t('inventory.marketPrice')}</h2><p className="text-xs text-slate-600">{t('inventory.perCard')}</p></div>
+  return <Card className="!p-3">
+    <div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-semibold">{t('inventory.marketPrice')}</h2><p className="text-2xl font-bold text-blue-700" aria-live="polite">{amount ? money(amount) : t('inventory.unpriced')}</p><p className="text-xs text-slate-600">{t('inventory.perCard')} · {condition}</p></div>
       <label><span className="sr-only">{t('inventory.marketCondition')}</span><select aria-label={t('inventory.marketCondition')} className="min-h-11 rounded-xl border border-blue-200 bg-white px-3 text-base" value={condition} onChange={e => setCondition(conditionSchema.parse(e.target.value))}>{conditionSchema.options.map(c => <option key={c} value={c}>{c}</option>)}</select></label>
     </div>
-    <p className="text-2xl font-bold text-blue-700" aria-live="polite">{amount ? money(amount) : t('inventory.unpriced')}</p>
-    <p className="text-xs text-slate-600">{catalog.kind === 'identified' ? t(`inventory.${catalog.edition}`) : t('inventory.unidentified')}</p>
   </Card>;
 }
