@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('purchase details match the approved mock and preserve exact copy costs and safe navigation', async ({ page, context }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const writes: string[] = [];
   page.on('request', r => { if (/firestore|workers\.dev/.test(r.url())) writes.push(r.url()); });
   await page.goto('./#/transactions/history?transactions=sample');
@@ -57,10 +58,10 @@ test('purchase details match the approved mock and preserve exact copy costs and
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.goto('./#/transactions/purchases/sample-nov-19');
-  await expect(page.getByRole('heading', { name: 'Purchase unavailable' })).toBeVisible();
-  await page.getByRole('button', { name: 'Back to History', exact: true }).first().click();
+  await expect(page.getByRole('heading', { name: 'הרכישה אינה זמינה' })).toBeVisible();
+  await page.getByRole('button', { name: 'חזרה להיסטוריה', exact: true }).first().click();
   await expect(page.getByRole('listitem')).toHaveCount(0);
   await page.goto('./#/transactions/purchases/absent?transactions=sample');
-  await expect(page.getByRole('heading', { name: 'Purchase unavailable' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'הרכישה אינה זמינה' })).toBeVisible();
   expect(writes).toEqual([]);
 });
