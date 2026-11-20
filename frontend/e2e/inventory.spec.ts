@@ -9,6 +9,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).locator('span.font-semibold')).toHaveCSS('font-weight', '600');
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
@@ -35,6 +36,13 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sort and filter' }).click();
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
+  await page.setViewportSize({ width: 320, height: 400 });
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await expect(page.getByRole('searchbox')).toBeInViewport();
+  const searchTop = await page.getByRole('searchbox').evaluate(el => el.getBoundingClientRect().top);
+  const headerBottom = await page.locator('header').evaluate(el => el.getBoundingClientRect().bottom);
+  expect(searchTop).toBeGreaterThanOrEqual(headerBottom);
+  await page.setViewportSize({ width: 390, height: 844 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByRole('button', { name: 'עברית', exact: true }).click();

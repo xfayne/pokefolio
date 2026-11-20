@@ -5,7 +5,8 @@ import { UtilitySheet } from '@/components/layout/utility-sheet';
 import { Button } from '@/components/ui/button';
 import { Card, EmptyState } from '@/components/ui/surfaces';
 import { selectInventory, type CopyMetadataEdit, type CopyView, type InventoryCatalogCard, type CopyQuote, type InventoryGroup } from '@/domain/inventory';
-import { CardMarketPrice, bestCopy } from './card-market-price';
+import { CardMarketPrice } from './card-market-price';
+import { bestCopy } from './copy-condition';
 import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/domain/schema';
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;

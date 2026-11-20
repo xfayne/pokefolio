@@ -4,12 +4,7 @@ import { Card } from '@/components/ui/surfaces';
 import { catalogIdentity, type CopyQuote, type CopyView } from '@/domain/inventory';
 import { conditionSchema, type CatalogRef, type Money } from '@/domain/schema';
 
-// Rank metadata only; never change ownership or a copy's recorded condition.
-export function bestCopy(copies: readonly CopyView[]) {
-  return copies.filter(v => v.copy.disposition === 'held' && v.copy.condition.status === 'known').toSorted((a, b) =>
-    conditionSchema.options.indexOf(a.copy.condition.status === 'known' ? a.copy.condition.value : 'DAMAGED') -
-    conditionSchema.options.indexOf(b.copy.condition.status === 'known' ? b.copy.condition.value : 'DAMAGED'))[0];
-}
+import { bestCopy } from './copy-condition';
 
 export function CardMarketPrice({ catalog, quotes, currency, copies, money }: {
   catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; copies: readonly CopyView[]; money: (m: Money) => string;
