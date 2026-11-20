@@ -33,3 +33,11 @@ spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 
 Import directly from each module (for example `@/components/ui/disclosure`).
 No new UI dependency or data/storage behavior is introduced by this extraction.
+
+## Authoritative bold weight (2026-11-20)
+
+All emphasized UI text uses `--font-weight-bold: 700`, matching card names in
+Collection → Cards. The semibold/extrabold/black Tailwind aliases resolve to the
+same token; component CSS also uses it. Do not introduce another bold weight.
+Regular/medium supporting text remains lighter. This supersedes older 800/900
+counts, headings and condition-selector notes.

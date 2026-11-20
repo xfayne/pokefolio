@@ -14,7 +14,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByRole('button', { name: '2 copies: Charizard' })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('searchbox')).toHaveCSS('font-style', 'normal');
   await expect(page.locator('.inventory-card').first()).toHaveCSS('background-color', 'rgb(242, 247, 253)');
-  await expect(page.getByText('3 cards · 5 copies', { exact: true })).toHaveCSS('font-weight', '800');
+  await expect(page.getByText('3 cards · 5 copies', { exact: true })).toHaveCSS('font-weight', '700');
   await expect(page.getByText('3 cards · 5 copies', { exact: true })).toBeVisible();
   const toolbar = page.locator('.collection-toolbar');
   const tabsBottom = await page.getByRole('navigation', { name: 'Section navigation' }).evaluate(el => el.getBoundingClientRect().bottom);
@@ -47,7 +47,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByRole('listitem', { name: 'Copy 1 · NM', exact: true })).toBeVisible();
   await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
-  await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveCSS('font-weight', '800');
+  await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveCSS('font-weight', '700');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 22%');
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();

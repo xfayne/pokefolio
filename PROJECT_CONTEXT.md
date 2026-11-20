@@ -228,3 +228,30 @@ wired; those buttons are aria-disabled with an explanatory status until their
 individual mocks/screens are approved. No new transaction forms, detail design,
 Firestore persistence, migration or provider mutation is included. Continue #8
 screen by screen; ask the owner for the next screen's mock before implementing it.
+
+
+## Issue #8 — approved Purchase Details and shared bold weight, 2026-11-20
+
+Owner supplied the Purchase Details mock and authorized this screen after History.
+Purchase rows open `/transactions/purchases/:transactionId` (sample query opt-in
+required); direct links, reload and back retain the correct data mode. The focused
+page retains primary navigation, hides section tabs and uses a back/title/actions
+header. Editing actions remain unavailable pending the next approved form.
+
+Reuse Card, PokemonArt, the shared TransactionStatus and the existing exact-copy
+CardDetailsSheet (read-only when no save adapter is supplied). Cards retain
+per-copy conditions and card prices; original purchase totals and stored shipping
+allocations are separate. Do not divide missing costs or invent an average for
+rounded allocations, fabricate payments, convert currency or infer tracking events.
+The sample has card costs 52/46/32 USD, shipping 12 USD split 4 each and total 142.
+Read-only owner-scoped tracking snapshots support chronological events, explicit
+missing states and full-number clipboard copying. Sample Royal Mail data is fake;
+no provider request, registration, Firestore write or real-data migration occurs.
+Live persistence, copy/dashboard purchase links and shipment adapters remain #8/#11.
+
+During implementation the owner explicitly requested one bold weight everywhere,
+matching Collection → Cards names. `--font-weight-bold` is 700; Tailwind bold
+aliases and component CSS resolve to it. This supersedes all older 800/900 notes.
+Keep regular/medium metadata lighter, the approved palette centralized, and
+Overview / History in that order. Continue screen by screen; request the next mock
+before implementing creation/editing or another screen.

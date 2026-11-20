@@ -78,6 +78,14 @@ identify missing amounts; they are not cash flow or profit.
 
 The [sample history](https://xfayne.github.io/pokefolio/#/transactions/history?transactions=sample)
 is explicitly opt-in and synthetic. The ordinary route reports that account
-storage is not connected. New transaction and transaction-detail actions remain
-unavailable until their separately approved screens are implemented. Overview remains a placeholder until its screen is
+storage is not connected. New transaction and sale-detail actions remain unavailable until their separately
+approved screens are implemented. Purchase rows open the approved Purchase Details screen. Overview remains a placeholder until its screen is
 implemented; the former Transactions Shipments URL redirects to Overview. This step does not finish #8 or write to Firestore.
+
+Purchase Details follows the approved 2026-11-20 mock: acquisition summary,
+individual physical-copy card costs, original-currency cost breakdown and
+read-only shipment timeline. The sample purchase reconciles 52 + 46 + 32 + 12 =
+142 USD, including 4 USD shipping per copy. Card rows inspect the exact copy
+through the existing card sheet; tracking copy uses the full sample number.
+Shipment snapshots are synthetic; live tracking and persistence remain pending.
+The shared bold weight is 700 throughout the UI, matching Collection card names.
