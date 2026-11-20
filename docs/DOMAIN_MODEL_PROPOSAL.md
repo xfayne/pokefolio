@@ -1,10 +1,11 @@
 # Issue #5 — Transaction and inventory domain proposal
 
-Status: **Proposed — owner approval required before implementation.**
+Status: **Approved by the owner on 2026-11-20; implementation in progress.**
 
 Prepared 2026-11-20 against main `05c0c6083c7e903f9e7531c82da05e3077c1c0fe`.
-This is a design document, not an implemented schema, deployed rules change or
-migration authorization. Examples are synthetic. Issue #5 remains open.
+The owner approved the policies in section 10, including the simpler initial rule
+that only held, received copies can be sold. This document is not a deployed rules
+change or migration authorization. Examples are synthetic. Issue #5 remains open.
 
 ## 1. Design and scope
 
@@ -122,7 +123,7 @@ explicitly confirmed purchase date for payment, never silently infer it from ent
    its method/estimated flag. It cannot become an exact price through editing or FX.
 6. Known taxes/fees may be attributed explicitly to copies. Proposed fallback for
    known transaction-wide purchase taxes/fees is the same equal-share algorithm,
-   separately labeled; this fallback requires owner approval with this proposal.
+   separately labeled; this fallback was approved with this proposal.
 7. With a complete breakdown, subtotal + shipping + taxes + purchase fees equals
    payable total exactly. With incomplete costs, report the unallocated/unknown
    balance and do not claim complete per-copy basis.
@@ -313,11 +314,11 @@ sale eligibility/reversal, idempotency/concurrent edits, missing FX/history, and
 preservation of Binder/Wishlist fixtures. Run existing required CI for each PR;
 screen E2E additions belong to actual screen changes, not this document.
 
-## 10. Owner decisions requested
+## 10. Owner approval — 2026-11-20
 
 Existing approved requirements are retained: per-copy ordinary costs, equal shipping,
 explicit unknown lot costs, no fabricated history and independent organization state.
-Approve the following proposed policies before schema implementation:
+The owner approved the following policies before schema implementation:
 
 - Transaction-linked records with revision history, without full event sourcing.
 - Equal-share fallback for known transaction-wide purchase taxes/fees; explicit

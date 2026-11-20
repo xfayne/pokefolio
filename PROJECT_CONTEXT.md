@@ -62,6 +62,6 @@ User requested react-icons in the same PR. Shared navigation/actions use named L
 [Transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md) records the
 proposed copy/transaction/lot identities, money and allocation semantics, sale/refund
 lifecycle, owner-scoped persistence boundaries, synthetic scenarios and read-only
-legacy mapping. **Owner approval is pending; do not treat this as an approved schema.**
+legacy mapping. **Owner approved the proposal on 2026-11-20, including sales restricted to held, received copies initially.**
 The proposal adds no runtime types, Firestore writes/rules, migrations or screen behavior.
-Issue #5 remains open; implementation follows approval through focused PRs.
+Issue #5 remains open; implementation proceeds through focused PRs.

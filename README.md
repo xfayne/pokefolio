@@ -48,4 +48,4 @@ Never modify legacy production Firestore data. Real data transfer needs an indep
 See [Project context](PROJECT_CONTEXT.md), [React foundation](frontend/README.md), [Production setup](docs/PRODUCTION_SETUP.md), and [safe import](docs/SAFE_IMPORT.md).
 
 Issue #5 starts with the [transaction/inventory domain proposal](docs/DOMAIN_MODEL_PROPOSAL.md).
-Its schema and financial policies are proposed for owner approval, not implemented.
+Its schema and financial policies were owner-approved on 2026-11-20; implementation is in progress.
