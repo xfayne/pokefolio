@@ -9,7 +9,15 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeHidden();
-  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '600');
+  await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '700');
+  await expect(page.getByRole('button', { name: '1 copy: Snorlax' })).toHaveCount(0);
+  const toolbar = page.locator('.collection-toolbar');
+  const tabsBottom = await page.getByRole('navigation', { name: 'Section navigation' }).evaluate(el => el.getBoundingClientRect().bottom);
+  const inputTop = await page.getByRole('searchbox').evaluate(el => el.getBoundingClientRect().top);
+  expect(inputTop - tabsBottom).toBeLessThanOrEqual(12);
+  const listTop = await page.locator('section[aria-label="Your cards"] > ul').evaluate(el => el.getBoundingClientRect().top);
+  const toolbarBottom = await toolbar.evaluate(el => el.getBoundingClientRect().bottom);
+  expect(listTop - toolbarBottom).toBeLessThanOrEqual(8);
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
