@@ -118,3 +118,10 @@ ad536d211aa15facacea8e2d9318d123373b538e before merge to
 limitations. #21 explicitly retains real source capture/backup, exact owner approval,
 authenticated Firestore adapter/rules/atomicity and live release acceptance. No real
 export/migration, provider mutation or new product screen was performed.
+
+
+## Issue #7 — physical copies and approved screens, 2026-11-20
+
+PR #62 adds strict copy grouping, one-copy metadata edit plans and exact Binder-pocket references. The Collection Cards/Card Details implementation reuses the existing approved mocks: compact expandable catalog rows, separate conditions/editions/native card prices and landed cost, pending counts, partial market coverage, and a focused copy editor. A purchase reference view retains the exact transaction and line IDs until #8 connects the full transaction screen.
+
+`CollectionCards` accepts owner-scoped inventory and an asynchronous save adapter. `#/collection/cards?inventory=sample` explicitly opts into synthetic data; demo edits and audit snapshots stay in memory and reset on leaving the screen/reload. The ordinary route reports that account storage is not connected. Never present demo copies as authenticated holdings. No real Firestore read/write or new pricing provider is added; real storage/atomic revision checks and full transaction navigation remain #8/#21, sale UI #9 and the existing Binder adapter/UI #13. Domain and UI regressions cover distinct copy edits/sales, unchanged siblings and Binder holes/indexes, coverage, retry/cancel, purchase references and mobile English/Hebrew accessibility.

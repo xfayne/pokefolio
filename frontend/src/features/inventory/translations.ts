@@ -1,0 +1,24 @@
+export const inventoryTranslations = {
+  en: {
+    delivery: 'Delivery status',
+    title: 'Your cards', sample: 'Sample collection', sampleNotice: 'Demo data. Edits last until you leave this screen or reload.', explore: 'Explore sample collection', disconnected: 'Your collection connection is coming next', connectionDetail: 'Purchase and account storage are being connected. You can explore the new copy view with sample cards.',
+    search: 'Search your cards', sort: 'Sort cards', name: 'Name', value: 'Value', quantity: 'Copies', all: 'All current copies', received: 'Received', pending: 'On the way', unknown: 'Unknown', sold: 'Sold',
+    totals: '{{cards}} cards · {{copies}} received copies', pendingTotal: '{{count}} on the way', unknownTotal: '{{count}} with unknown delivery', soldTotal: '{{count}} sold',
+    pricedValue: 'Priced holdings', coverage: '{{priced}} priced · {{missing}} unpriced', empty: 'No matching cards', emptyDetail: 'Try another search or delivery filter.', copies: '{{count}} copies', details: 'Card details',
+    copy: 'Copy {{number}}', edit: 'Edit copy', condition: 'Condition', edition: 'Edition', unlimited: 'Unlimited', 'first-edition': '1st Edition', notes: 'Notes', paid: 'Card price', basis: 'Total cost', market: 'Market', unpriced: 'Unpriced', estimated: 'Estimated', unallocated: 'Unallocated lot cost',
+    purchase: 'View purchase', purchaseRef: 'Purchase reference', transactionId: 'Transaction ID', lineId: 'Purchase line', acquired: 'Acquired', 'opening-inventory': 'Opening inventory', gift: 'Gift', adjustment: 'Adjustment',
+    purchaseNext: 'The full transaction screen is being connected in the next update.', ownCopies: 'Your copies', save: 'Save copy', saving: 'Saving…', cancel: 'Cancel', saved: 'Copy updated', saveFailed: 'Could not save this copy. Your changes are still here. Try again.', back: 'Back to card', noCatalog: 'Catalog details unavailable', unidentified: 'Unidentified card',
+    samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Original purchase currency; shipping shown in total cost.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
+  },
+  he: {
+    delivery: 'סטטוס הגעה',
+    title: 'הקלפים שלך', sample: 'אוסף לדוגמה', sampleNotice: 'נתוני הדגמה. העריכות נשמרות עד יציאה מהמסך או רענון.', explore: 'פתיחת אוסף לדוגמה', disconnected: 'חיבור האוסף שלך מגיע בשלב הבא', connectionDetail: 'אנחנו מחברים את הרכישות והשמירה בחשבון. בינתיים אפשר להתרשם מתצוגת העותקים עם קלפים לדוגמה.',
+    search: 'חיפוש באוסף', sort: 'מיון קלפים', name: 'שם', value: 'שווי', quantity: 'עותקים', all: 'כל העותקים הנוכחיים', received: 'התקבל', pending: 'בדרך', unknown: 'לא ידוע', sold: 'נמכר',
+    totals: '{{cards}} קלפים · {{copies}} עותקים שהתקבלו', pendingTotal: '{{count}} בדרך', unknownTotal: '{{count}} עם סטטוס הגעה לא ידוע', soldTotal: '{{count}} נמכרו',
+    pricedValue: 'שווי עותקים מתומחרים', coverage: '{{priced}} מתומחרים · {{missing}} ללא מחיר', empty: 'לא נמצאו קלפים', emptyDetail: 'נסה חיפוש אחר או סינון הגעה אחר.', copies: '{{count}} עותקים', details: 'פרטי קלף',
+    copy: 'עותק {{number}}', edit: 'עריכת עותק', condition: 'מצב', edition: 'מהדורה', unlimited: 'ללא הגבלה', 'first-edition': 'מהדורה ראשונה', notes: 'הערות', paid: 'מחיר הקלף', basis: 'עלות כוללת', market: 'מחיר שוק', unpriced: 'ללא מחיר', estimated: 'משוער', unallocated: 'עלות לוט שלא חולקה',
+    purchase: 'הצגת רכישה', purchaseRef: 'קישור לרכישה', transactionId: 'מזהה עסקה', lineId: 'שורת רכישה', acquired: 'תאריך קבלה לאוסף', 'opening-inventory': 'מלאי פתיחה', gift: 'מתנה', adjustment: 'התאמה',
+    purchaseNext: 'מסך העסקה המלא יחובר בעדכון הבא.', ownCopies: 'העותקים שלך', save: 'שמירת עותק', saving: 'שומרת…', cancel: 'ביטול', saved: 'העותק עודכן', saveFailed: 'שמירת העותק נכשלה. השינויים עדיין כאן, אפשר לנסות שוב.', back: 'חזרה לקלף', noCatalog: 'פרטי הקטלוג אינם זמינים', unidentified: 'קלף לא מזוהה',
+    samplePrices: 'מחירי הדגמה · USD', source: 'מקור רכישה', nativePrice: 'מטבע הרכישה המקורי; המשלוח מופיע בעלות הכוללת.', unavailable: 'עלות לא ידועה', noteLimit: 'עד 2,000 תווים',
+  },
+};
