@@ -37,7 +37,7 @@ Use built-in Tailwind v4 colors directly. The exact color references are CSS var
 | Decorative chart | `stroke-teal-500 fill-teal-100` | Value line / area; pair with readable summary and chart labels |
 | Decorative collecting accent | `text-amber-500` | Trophy / rarity flourish; not essential small text |
 
-Brand red is reserved for the central Poké Ball artwork. Financial loss uses rose plus explicit meaning, never Poké Ball red alone. Active navigation has text, shape and an indicator; color alone is insufficient. Dark mode is a later design proposal; navy navigation does not imply a complete dark theme.
+Brand red is reserved for the central Poké Ball artwork. Financial loss uses rose plus explicit meaning, never Poké Ball red alone. Active navigation uses cyan and semibold labels with semantic aria-current. The owner removed the underline indicator on 2026-11-20 to keep the bar compact. Dark mode is a later design proposal; navy navigation does not imply a complete dark theme.
 
 ## 3. Typography
 
@@ -101,7 +101,7 @@ Use existing local shadcn/ui approach and named Lucide-family imports from react
 - Chart choices: 1M, 3M, 1Y, All. Selected choice visually filled.
 - Do not restore the removed P/L on known-cost holdings note.
 - Use safe-area bottom padding, reserve scroll padding for the full bottom bar including raised ball, and keep all content reachable above the bar/keyboard.
-- Proposed navigation targets: `min-h-16`; active state includes an indicator and `aria-current`. The raised ball still has a readable Dashboard label.
+- Proposed navigation targets: `min-h-16`; active state uses cyan/semibold labels and `aria-current`, without an underline indicator. The raised ball still has a readable Dashboard label.
 - Existing Binder page behavior, empty pockets, moves and Wishlist drag ordering remain unchanged.
 
 ## 7. Motion, states and accessibility
