@@ -190,3 +190,14 @@ animate and preserve explicit user toggles. This supersedes previous singleton
 default notes. Shared Card surfaces and inventory rows use --surface-panel and
 --surface-border, defined once in styles.css from the approved Card Details palette;
 fields retain the shared --surface-field token. Do not add screen-specific colors.
+
+
+## Shared UI extraction — 2026-11-20
+
+Approved surfaces, search/select controls, framed PokemonArt, ListCard, controlled
+Disclosure parts and UtilitySheet live in frontend/src/components/ui/. Inventory
+and app utilities consume them directly. The shared guide defines palette, motion,
+RTL, focus and form sizing contracts. UI components have no inventory/domain or
+persistence dependencies and no copy-count defaults. Cards list defaults closed;
+Your copies defaults open only for exactly one copy, in feature code. No visual
+redesign or real-data behavior is part of this refactor.

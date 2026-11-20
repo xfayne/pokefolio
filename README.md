@@ -65,3 +65,5 @@ labelled [sample collection](https://xfayne.github.io/pokefolio/#/collection/car
 uses the approved compact Cards/Card Details layout and lets you expand copies and edit one copy in memory; it contains no real holdings.
 Live account persistence and full purchase navigation follow in #8/#21.
 See [physical-copy rules](docs/COPY_INVENTORY.md).
+
+Reusable approved presentation primitives are documented in the [shared UI guide](frontend/src/components/ui/README.md). Reuse these for future screens rather than duplicating styles or copy-specific disclosure defaults.
