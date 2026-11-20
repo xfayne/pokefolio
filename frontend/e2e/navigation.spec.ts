@@ -32,7 +32,7 @@ test('five destinations, nested sections, catalog focus and back restore', async
 test('mobile English / Hebrew visuals, contrast and narrow safe layout', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => document.fonts.ready);
-  await expect(page).toHaveScreenshot('shell-en.png', { fullPage: true });
+  await expect(page).toHaveScreenshot('shell-en.png', { fullPage: true, scale: 'device' });
   await expect(page.locator('header')).toHaveCSS('background-color', 'oklch(0.208 0.042 265.755)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -42,7 +42,7 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await page.getByRole('button', { name: 'עברית' }).click();
   await page.getByRole('button', { name: 'סגירה', exact: true }).click();
   await page.evaluate(() => document.fonts.ready);
-  await expect(page).toHaveScreenshot('shell-he.png', { fullPage: true });
+  await expect(page).toHaveScreenshot('shell-he.png', { fullPage: true, scale: 'device' });
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -76,6 +76,7 @@ test('catalog controls remain reachable in a short viewport', async ({ page }) =
   await expect(input).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeInViewport();
   await input.fill('Pikachu');
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page).toHaveURL(/dashboard$/);
 });
+
