@@ -99,3 +99,7 @@ The page heading is Wishlist. Its internal tabs are **Cards** and **Deals**. The
 ## Transaction navigation correction
 
 The History image predates the decision to remove the History/Shipments strip. Transactions is a single history view with tracking in details; the rejected standalone tracking screen is deliberately not included.
+
+## Approved Transactions Overview — 2026-11-20
+
+Supersedes the single-history layout above: Transactions has **Overview / History**. No Shipments tab. [Approved mock](approved/transactions-overview.png). Overview provides period selection, purchase spend, net sale receipts, net cash flow, a monthly comparison chart, physical-copy activity and month drilldown to History. Cash flow is distinct from profit. Preserve previously approved bottom-navigation icons; incidental generated icon differences are not a redesign approval.

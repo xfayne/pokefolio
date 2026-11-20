@@ -53,11 +53,24 @@ Read [decisions](decisions.md) before implementing: written corrections override
 
 ![Wishlist — Cards](approved/wishlist-cards.png)
 
+### Wishlist — Deals — proposal, refinements needed
+
+[Open full image](proposals/wishlist-deals-proposal.png)
+
+![Wishlist — Deals](proposals/wishlist-deals-proposal.png)
+
+
 ### Analyze — Classic Red
 
 [Open full image](approved/analyze-classic-red.png)
 
 ![Analyze — Classic Red](approved/analyze-classic-red.png)
+
+### Transactions — Overview
+
+[Open full image](approved/transactions-overview.png)
+
+![Transactions Overview](approved/transactions-overview.png)
 
 ### Transactions — History
 
@@ -101,9 +114,7 @@ Read [decisions](decisions.md) before implementing: written corrections override
 
 ![Card details](approved/card-details.png)
 
-### Wishlist — Deals — proposal, refinements needed
 
-[Open full image](proposals/wishlist-deals-proposal.png)
+## Approved Transactions Overview — 2026-11-20
 
-![Wishlist — Deals](proposals/wishlist-deals-proposal.png)
-
+Overview / History replaces the earlier single-history decision. Overview includes period selection, purchase spending, net sale receipts, net cash flow, monthly grouped bars and physical-copy activity. Month selection drills into filtered History. Net cash flow is not profit. Demo numbers are illustrative; the existing five-item bottom navigation and Analyze icon remain as previously approved, despite incidental icon differences in this new mock.
