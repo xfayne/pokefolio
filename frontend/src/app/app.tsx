@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { HashRouter, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import { useUIStore } from '@/state/ui';
 import { createQueryClient } from './query-client';
 import { ErrorBoundary } from './error-boundary';
 import '@/lib/i18n';
-import { InventoryPage } from '@/features/inventory/inventory-page';
+const InventoryPage = lazy(async () => { const module = await import('@/features/inventory/inventory-page'); return { default: module.InventoryPage }; });
 
 const queryClient = createQueryClient();
 const destinations = [
@@ -28,7 +28,7 @@ function SectionPage({ name }: { name: Destination }) {
   const tabs = name in sections ? sections[name as keyof typeof sections] : null;
   return <div className="space-y-6">
     {tabs && <nav aria-label={t('sectionNavigation')} className="flex gap-1 rounded-2xl border border-blue-100 bg-blue-100/70 p-1">{tabs.map(tab => <NavLink key={tab} to={`/${name}/${tab}`} className={({ isActive }) => `flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
-    {location.pathname === '/collection/cards' ? <InventoryPage /> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
