@@ -25,6 +25,12 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Configure bounded downloads from the official Ubuntu mirror
+        run: |
+          printf 'Acquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::Retries "2";\n' | sudo tee /etc/apt/apt.conf.d/99-pokefolio-downloads >/dev/null
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
       - run: npx playwright install --with-deps chromium
       - name: Verify staging artifact with synthetic public configuration
         run: node ../scripts/package-react-staging.mjs
