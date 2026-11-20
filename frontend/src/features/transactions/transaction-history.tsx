@@ -70,7 +70,8 @@ export function TransactionHistory({ data, empty, onCreate, onOpen }: {
         </div>
       </div>
       <ul className="history-rows">{month.rows.map(row => <ListCard key={row.id} className="history-row" aria-label={`${t(`transactionHistory.${row.kind}`)} · ${row.source || t(`transactionHistory.${row.sourceKind}`)} · ${row.date ?? t('transactionHistory.undated')}`}>
-        <button type="button" className="history-row-content" aria-label={`${t('transactionHistory.open')}: ${row.id}`} aria-disabled={!onOpen} onClick={() => onOpen ? onOpen(row.id) : setNotice(t('transactionHistory.detailSoon'))}>
+        <button type="button" className="history-row-content" aria-disabled={!onOpen} onClick={() => onOpen ? onOpen(row.id) : setNotice(t('transactionHistory.detailSoon'))}>
+          <span className="sr-only">{t('transactionHistory.open')}: {row.id}. </span>
           <span className={`history-identity ${row.kind === 'sale' ? 'history-sale' : ''}`}>
             <span className="history-kind-icon">{row.kind === 'sale' ? <LuTag aria-hidden /> : <LuShoppingCart aria-hidden />}</span>
             <span className="min-w-0"><span className="history-kind-label">{t(`transactionHistory.${row.kind}`)}</span><span className="history-source" title={row.source}>

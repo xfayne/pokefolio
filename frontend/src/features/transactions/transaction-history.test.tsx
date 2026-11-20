@@ -36,7 +36,7 @@ it('exposes only supplied creation/detail callbacks and supports Hebrew labels',
   render(<TransactionHistory data={sampleHistory} onCreate={create} onOpen={open} />);
   await userEvent.click(screen.getByRole('button', { name: 'New transaction' }));
   expect(create).toHaveBeenCalledOnce();
-  await userEvent.click(screen.getByRole('button', { name: 'View transaction: sample-nov-19' }));
+  await userEvent.click(screen.getByRole('button', { name: /View transaction: sample-nov-19/ }));
   expect(open).toHaveBeenCalledWith('sample-nov-19');
   await i18n.changeLanguage('he');
   expect(await screen.findByRole('button', { name: 'עסקה חדשה' })).toBeInTheDocument();

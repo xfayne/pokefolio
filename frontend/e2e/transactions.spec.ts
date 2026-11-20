@@ -28,7 +28,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => { window.scrollTo(0, 0); return document.fonts.ready; });
   await page.locator('.pokemon-art img').evaluateAll(imgs => Promise.all(imgs.map(img => (img as HTMLImageElement).decode().catch(() => undefined))));
-  await test.info().attach('transaction-history-en', { body: await page.screenshot(), contentType: 'image/png' });
+  await test.info().attach('transaction-history-en', { body: await page.screenshot({ path: test.info().outputPath('transaction-history-en.png') }), contentType: 'image/png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Sales', exact: true }).click();
   await expect(page.getByRole('listitem')).toHaveCount(1);
@@ -55,7 +55,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
     await page.setViewportSize({ width, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
-  await test.info().attach('transaction-history-he', { body: await page.screenshot(), contentType: 'image/png' });
+  await test.info().attach('transaction-history-he', { body: await page.screenshot({ path: test.info().outputPath('transaction-history-he.png') }), contentType: 'image/png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('./#/transactions/history');
   await expect(page.getByRole('listitem')).toHaveCount(0);
