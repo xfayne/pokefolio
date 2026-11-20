@@ -65,3 +65,9 @@ lifecycle, owner-scoped persistence boundaries, synthetic scenarios and read-onl
 legacy mapping. **Owner approved the proposal on 2026-11-20, including sales restricted to held, received copies initially.**
 The proposal adds no runtime types, Firestore writes/rules, migrations or screen behavior.
 Issue #5 remains open; implementation proceeds through focused PRs.
+
+First implementation: `frontend/src/domain/schema.ts` adds strict private DTO schemas
+and inferred types for copies, purchases/lines, sales, lots, cash, refunds, acquisitions,
+shipments, revisions and historical FX evidence. Boundary tests use synthetic data.
+Runtime adapters, allocation/lifecycle commands and migration are separate work; no
+live writes or rules changes are enabled by these contracts.
