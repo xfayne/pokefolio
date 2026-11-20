@@ -1,6 +1,6 @@
 # Issue #6 — Legacy import plan and synthetic preview
 
-Status: Owner approved on 2026-11-20. Offline implementation in progress; no live writes.
+Status: Owner approved on 2026-11-20. Offline tools implemented; no live writes.
 Prepared 2026-11-20 from current main, the approved #5 domain proposal,
 domain implementation guide and retained legacy cloud/card/shipment modules.
 Related: #6; final real-data cutover remains #21.
@@ -21,8 +21,8 @@ Unknown fields and invalid values remain intact in the archived source.
 
 | Source | Proposed target and evidence |
 | --- | --- |
-| Truthy owned marker | One received, held opening copy; preserve original marker |
-| pendingPurchase only | One pending, held opening copy; preserve wasWish/wishIndex/binderIndex |
+| Truthy owned marker | One received, held copy; parcel-linked purchase or opening inventory; preserve original marker |
+| pendingPurchase only | One pending, held copy; parcel-linked purchase or opening inventory; preserve wasWish/wishIndex/binderIndex |
 | owned plus pending | Blocking conflict; no automatic precedence |
 | Explicit independent duplicate-copy evidence | Separate stable copy IDs; never infer quantity from a boolean |
 | purchasePrices.amount/currency | Exact evidenced card component only if valid; other charges unknown |
@@ -43,14 +43,15 @@ Unknown fields and invalid values remain intact in the archived source.
 A known card price does not prove shipping, taxes or fees were zero.
 A parcel is not automatically a transaction: combined and split shipments exist.
 Owner clarification on 2026-11-20: legacy shipments must seed reconstructed purchase
-transactions. The offline report creates linked purchase drafts preserving known
-membership, prices and purchase dates. Missing charges, payable totals and payment
-evidence remain unknown; partial drafts are not finalized purchase DTOs and do not
-invent cash movements. Copies retain opening acquisition provenance until a complete,
-validated purchase reconstruction can link them without double counting.
+transactions. The offline report creates imported purchase transactions preserving known
+membership, per-copy prices and purchase dates. The owner further clarified that
+prices 20 + 30 produce transaction total 50; missing separately recorded charges add
+no amount. Missing prices/dates and charge coverage remain explicit. Parcel-linked
+copies use purchase acquisition links; only cards without parcel purchase evidence
+retain opening provenance. No payment cash movement is inferred from a purchase date.
 
-Opening records retain received/pending possession and known acquisition-date
-evidence without creating cash movements. Monthly spending remains incomplete
+All records retain received/pending possession and known acquisition-date
+evidence without inventing payment cash movements. Monthly spending remains incomplete
 where payment evidence is unavailable.
 
 ## Synthetic before/after preview
@@ -61,7 +62,7 @@ These examples are not the owner's data. Amounts are GBP.
 | --- | --- | --- |
 | Gengar owned, LP, price 20 GBP, no date | 1 received opening copy; card cost 2000 pence; date/other charges unknown | No purchase or cash movement |
 | Childhood Pikachu owned, no price/date | 1 received opening copy, unknown cost/date | Not zero-cost and no invented month |
-| Snorlax pending, price 30 GBP, parcel purchaseDate 2026-11-12 | 1 pending opening copy, retained date and parcel link | Receipt later changes same copy, never adds one |
+| Snorlax pending, price 30 GBP, parcel purchaseDate 2026-11-12 | 1 imported purchase at GBP 30, one pending copy, retained date and parcel link | Receipt later changes same copy, never adds one |
 | Same catalog ID in two active parcels | Unresolved association | Blocks apply; does not create a second copy |
 | Same ID both owned and pending | Unresolved possession | Blocks apply, retains both source values |
 | Two separately evidenced physical copies | 2 distinct copy identities | A bare legacy ownership boolean is insufficient |
