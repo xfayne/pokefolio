@@ -10,8 +10,13 @@ export function canonical(value, ancestors = new Set()) {
   if (!Array.isArray(value) && proto !== Object.prototype && proto !== null) throw Error('UNSUPPORTED_JSON_OBJECT');
   if (Reflect.ownKeys(value).some(k => typeof k === 'symbol')) throw Error('UNSUPPORTED_JSON_KEY');
   const next = new Set(ancestors).add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    if (Array.isArray(value) && key === 'length') continue;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor.enumerable || !('value' in descriptor)) throw Error('UNSUPPORTED_JSON_PROPERTY');
+  }
   if (Array.isArray(value)) {
-    if (Object.keys(value).length !== value.length) throw Error('SPARSE_OR_EXTENDED_ARRAY');
+    if (Object.keys(value).length !== value.length || Object.keys(value).some((k, i) => k !== String(i))) throw Error('SPARSE_OR_EXTENDED_ARRAY');
     return '[' + Array.from(value, v => canonical(v, next)).join(',') + ']';
   }
   return '{' + Object.keys(value).sort().map(k => {
