@@ -24,7 +24,7 @@ Open http://localhost:5173/pokefolio/. The Adventure Blue shell defaults to Dash
 
 - React Router for hash navigation on GitHub Pages.
 - Tailwind and locally owned shadcn/ui components; add only needed components.
-- Named `react-icons/lu` imports for shared icons, with self-hosted Inter and Noto Sans Hebrew.
+- Named `react-icons/lu` imports for shared icons, with self-hosted Nunito Sans and Noto Sans Hebrew.
 - Axios for API transport and TanStack Query for remote API state.
 - Firebase SDK for Auth/Firestore, with typed services and auth subscriptions.
 - Zustand for transient UI state only; never duplicate collection data or tokens in it.
