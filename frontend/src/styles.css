@@ -31,7 +31,8 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .pokeball::after { content: ''; position: absolute; width: 30%; height: 30%; inset: 35%; border-radius: 50%; border: 2px solid #0f172a; background: white; box-sizing: border-box; }
 .utility-dialog { margin: 0 auto; padding: 0; border: 0; width: 100%; max-width: 48rem; height: 100dvh; max-height: 100dvh; background: var(--color-blue-50); color: var(--color-slate-950); overflow: hidden; }
 .utility-dialog::backdrop { background: #02061780; }
-.utility-dialog[open] { animation: card-sheet-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.utility-dialog[open] > .sheet-frame { transform: translateY(100%); opacity: 0.35; }
+.utility-dialog[open][data-entered="true"] > .sheet-frame { animation: card-sheet-enter 400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 .utility-dialog[open]::backdrop { animation: sheet-backdrop-enter 240ms ease-out both; }
 @keyframes card-sheet-enter { from { transform: translateY(100%); opacity: 0.35; } to { transform: translateY(0); opacity: 1; } }
 @keyframes sheet-backdrop-enter { from { background: #02061700; } to { background: #02061780; } }
@@ -61,15 +62,16 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .collection-toolbar { background: #edf5ff; }
 .collection-search { min-height: 2.125rem; border-radius: 0.875rem; background: var(--surface-field); }
 .collection-search { box-shadow: 0 2px 4px #1d6cbd12; }
-.collection-search::placeholder { color: #71758d; font-style: italic; }
+.collection-search::placeholder { color: #71758d; font-style: normal; }
 .collection-list-controls { padding-block: 0.5rem; }
 .collection-list-controls select { min-height: 2rem; padding-block: 0; background-color: var(--surface-field); border-radius: 0.625rem; }
 .collection-list-controls > button { width: 2.25rem; height: 2rem; border-radius: 0.625rem; background: var(--surface-field); }
 .collection-list-controls { border-bottom: 1px solid #bbd4f3; }
 .collection-list-controls select { appearance: none; padding-inline-end: 1.5rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2337466d' stroke-width='1.8'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-size: 1rem; background-position: right 0.4rem center; }
 [dir="rtl"] .collection-list-controls select { background-position: left 0.4rem center; }
-.inventory-card { background: var(--surface-card); border-radius: 0.75rem; }
-.inventory-card, .copies-panel { box-shadow: 0 2px 4px #216dc21a; }
+.inventory-card { background: #e5effc; border: 1px solid #dce9fa; border-radius: 0.75rem; }
+.inventory-card { box-shadow: 0 1px 3px #216dc20d; }
+.copies-panel { box-shadow: 0 2px 4px #216dc21a; }
 .card-art-large { box-shadow: 0 6px 12px #07345330; }
 .app-shell > .bottom-bar { border-radius: 1.25rem 1.25rem 0 0; }
 .utility-dialog { border-radius: 1.5rem 1.5rem 0 0; background: #eaf3ff; }
@@ -88,3 +90,9 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .copies-panel li > button { min-height: 2.25rem; }
 .surface-panel { background: var(--surface-panel); }
 .surface-field { background: var(--surface-field); }
+
+.pokemon-art { position: relative; overflow: hidden; border: 2px solid #f4ca27; border-radius: 0.375rem; background: #f4ca27; }
+.pokemon-art-large { border-width: 6px; border-radius: 0.875rem; }
+.pokemon-art-window { display: block; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; }
+.pokemon-art img { display: block; object-position: 50% 22%; transform: scale(1.7); transform-origin: 50% 22%; }
+.card-details select { font-weight: 800; }

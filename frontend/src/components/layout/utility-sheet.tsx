@@ -11,8 +11,15 @@ export function UtilitySheet({ title, onClose, onBack, children }: { title: stri
     const overflow = document.body.style.overflow;
     dialog.showModal();
     dialog.focus({ preventScroll: true });
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => { dialog.dataset.entered = 'true'; });
+    });
     document.body.style.overflow = 'hidden';
     return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      delete dialog.dataset.entered;
       dialog.close();
       document.body.style.overflow = overflow;
       opener?.focus({ preventScroll: true });

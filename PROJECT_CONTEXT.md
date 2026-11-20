@@ -157,3 +157,15 @@ Details rounds the top of the sheet and the light content boundary, without
 rounding the exterior bottom. Native dialog entry animation starts on `[open]`,
 with reduced-motion support. Artwork uses centered cover cropping without
 distortion; image enlargement still exposes the full original card.
+
+
+## Cards owner refinements — 2026-11-20
+
+Cards use light-blue rows with a matching subtle border, regular search placeholder,
+700-weight card labels and 800-weight counts. Both artwork sizes magnify and crop
+the upper illustration region inside a yellow frame; enlargement preserves the
+full original. A singleton's copies expand by default; multiple copies default to
+closed, and explicit toggles persist while filtering. The condition selector is
+800-weight. Sheet entry animates its inner frame after two animation frames, so
+native dialog display promotion cannot consume the entry animation before paint.
+Reduced motion remains respected. Accepted main-screen corners are unchanged.
