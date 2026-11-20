@@ -7,7 +7,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await page.goto('./#/collection/cards');
   await page.getByRole('button', { name: 'Explore sample collection' }).click();
   await expect(page.getByText('3 cards · 4 received copies')).toBeVisible();
-  await page.getByRole('button', { name: 'Charizard: Copies' }).click();
+  await page.getByRole('button', { name: /^Charizard: Copies/ }).click();
   await page.getByRole('button', { name: 'Edit copy charizard-b' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Condition', { exact: true }).selectOption('MP');

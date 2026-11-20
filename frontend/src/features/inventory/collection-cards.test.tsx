@@ -12,7 +12,7 @@ it('expands duplicates with separate grades/prices and edits the exact chosen co
   render(<CollectionCards data={original} onSave={onSave} />);
   expect(screen.getByText('3 cards · 4 received copies')).toBeInTheDocument();
   expect(screen.getByText('1 on the way')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Charizard: Copies' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Charizard: Copies/ }));
   expect(screen.getByText('$180.00')).toBeInTheDocument();
   expect(screen.getByText('$150.00')).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Edit copy charizard-b' }));
