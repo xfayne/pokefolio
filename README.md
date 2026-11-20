@@ -67,3 +67,18 @@ Live account persistence and full purchase navigation follow in #8/#21.
 See [physical-copy rules](docs/COPY_INVENTORY.md).
 
 Reusable approved presentation primitives are documented in the [shared UI guide](frontend/src/components/ui/README.md). Reuse these for future screens rather than duplicating styles or copy-specific disclosure defaults.
+
+## Transaction history (#8, first screen)
+
+Transactions opens History, with Shipments as its second tab. History follows the
+2026-11-20 approved mock, including the monthly net transaction total beside the
+month. Search, purchase/sale filters and collapsed currency/status filters operate
+on original transaction records. Monthly totals keep currencies separate and
+identify missing amounts; they are not cash flow or profit.
+
+The [sample history](https://xfayne.github.io/pokefolio/#/transactions/history?transactions=sample)
+is explicitly opt-in and synthetic. The ordinary route reports that account
+storage is not connected. New transaction and transaction-detail actions remain
+unavailable until their separately approved screens are implemented. Shipments
+remains a placeholder for #11; the old Transactions Overview route redirects to
+History. This step does not finish #8 or write to Firestore.

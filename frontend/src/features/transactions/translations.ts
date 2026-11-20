@@ -1,0 +1,26 @@
+export const transactionTranslations = {
+  en: {
+    title: 'Transaction history', new: 'New transaction', search: 'Search transactions', all: 'All', purchases: 'Purchases', sales: 'Sales',
+    purchase: 'Purchase', sale: 'Sale', filters: 'Filter transactions', currency: 'Currency', status: 'Status', any: 'All', reset: 'Reset filters',
+    total: 'Transaction total', monthTotal: 'Net transaction total · sales minus purchases · original currency · not cash flow or profit',
+    copies_one: '{{count}} copy', copies_other: '{{count}} copies', noCopies: 'No copies linked',
+    inTransit: 'In transit', received: 'Received', pending: 'Pending', partial: 'Part received', unknown: 'Status unknown', completed: 'Completed',
+    unavailable: 'Unknown', undated: 'Date unknown', missing: 'Incomplete totals', ebay: 'eBay', manual: 'Manual', other: 'Other',
+    noResults: 'No matching transactions', noResultsDetail: 'Try another search or reset your filters.',
+    disconnected: 'Your transaction history', connectionDetail: 'Account storage is not connected yet. Explore the sample history while purchase recording is being built.', explore: 'Explore sample history',
+    createSoon: 'The new transaction form is coming next.', detailSoon: 'Transaction details are coming next.',
+    open: 'View transaction', demo: 'Demo',
+  },
+  he: {
+    title: 'היסטוריית עסקאות', new: 'עסקה חדשה', search: 'חיפוש עסקאות', all: 'הכול', purchases: 'רכישות', sales: 'מכירות',
+    purchase: 'רכישה', sale: 'מכירה', filters: 'סינון עסקאות', currency: 'מטבע', status: 'סטטוס', any: 'הכול', reset: 'איפוס סינון',
+    total: 'סכום העסקה', monthTotal: 'סכום עסקאות נטו · מכירות פחות רכישות · במטבע המקורי · אינו תזרים או רווח',
+    copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_other: '{{count}} עותקים', noCopies: 'אין עותקים מקושרים',
+    inTransit: 'בדרך', received: 'התקבל', pending: 'ממתין למשלוח', partial: 'התקבל חלקית', unknown: 'סטטוס לא ידוע', completed: 'הושלמה',
+    unavailable: 'לא ידוע', undated: 'תאריך לא ידוע', missing: 'סכומים חלקיים', ebay: 'eBay', manual: 'ידני', other: 'אחר',
+    noResults: 'לא נמצאו עסקאות מתאימות', noResultsDetail: 'נסה חיפוש אחר או אפס את הסינון.',
+    disconnected: 'היסטוריית העסקאות שלך', connectionDetail: 'שמירת העסקאות בחשבון עדיין אינה מחוברת. אפשר לצפות בהיסטוריה לדוגמה בזמן בניית תהליך הרכישה.', explore: 'הצגת עסקאות לדוגמה',
+    createSoon: 'טופס העסקה החדשה יתווסף בהמשך.', detailSoon: 'מסך פרטי העסקה יתווסף בהמשך.',
+    open: 'הצגת עסקה', demo: 'דמו',
+  },
+};

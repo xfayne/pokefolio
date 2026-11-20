@@ -100,3 +100,56 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .ui-disclosure { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 240ms ease, opacity 180ms ease; }
 .ui-disclosure[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
 .ui-disclosure > div { min-height: 0; overflow: hidden; }
+
+/* Transaction History — approved 2026-11-20 mock, shared palette and art. */
+.transaction-history { display: flex; flex-direction: column; gap: 0.875rem; padding-top: 0.5rem; }
+.history-new { min-height: 2.5rem; border-radius: 1rem; background-image: linear-gradient(180deg, #0070ef, var(--adventure-blue)); }
+.history-tools { display: flex; flex-direction: column; gap: 0.75rem; }
+.history-tools .ui-search { min-height: 2.375rem; border-color: #9db6d9; }
+.history-filter-row { display: flex; align-items: center; gap: 1rem; }
+.history-kinds { display: grid; grid-template-columns: 0.8fr 1.15fr 1fr; flex: 1; min-width: 0; gap: 0.625rem; }
+.history-kinds button { min-height: 2rem; padding: 0.25rem 0.5rem; border-radius: 2rem; font-size: 0.875rem; font-weight: 800; }
+.history-kinds button[aria-pressed="true"] { background-image: linear-gradient(180deg, #0070ef, var(--adventure-blue)); }
+.history-kinds button[aria-pressed="false"] { background: transparent; border-color: #9db6d9; }
+.history-filter-button { position: relative; display: flex; align-items: center; justify-content: center; width: 2.5rem; min-height: 2rem; flex-shrink: 0; border: 1px solid var(--surface-border); border-radius: 0.625rem; box-shadow: 0 1px 3px #216dc212; }
+.history-filter-count { position: absolute; inset-inline-end: -0.25rem; top: -0.375rem; border-radius: 50%; background: var(--adventure-blue); color: white; width: 1rem; font-size: 0.6875rem; }
+.history-advanced { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; padding-top: 0.5rem; }
+.history-advanced label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.875rem; font-weight: 700; }
+.history-month { display: flex; flex-direction: column; gap: 0.5rem; }
+.history-month-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.history-month-heading h2 { font-size: 1.25rem; font-weight: 900; line-height: 1.3; letter-spacing: -0.035em; }
+.history-month-totals { display: flex; align-items: flex-end; flex-direction: column; flex-shrink: 0; color: #52617c; font-size: 1rem; font-weight: 800; }
+.history-month-totals bdi { white-space: nowrap; }
+.history-rows { display: flex; flex-direction: column; gap: 0.375rem; }
+.history-row-content { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) 0.625rem; width: 100%; min-height: 4.5rem; align-items: center; gap: 0.375rem; padding: 0.375rem 0.5rem; text-align: start; border-radius: inherit; }
+.history-identity { display: flex; align-items: center; min-width: 0; gap: 0.5rem; }
+.history-kind-icon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 1.875rem; height: 1.875rem; color: #0059dd; background: #e1ecff; border-radius: 0.625rem; }
+.history-kind-icon svg { width: 1.375rem; height: 1.375rem; }
+.history-kind-label { display: block; font-size: 1rem; font-weight: 900; letter-spacing: -0.02em; }
+.history-source { display: block; font-size: 0.6875rem; line-height: 1.25; color: #445575; overflow-wrap: anywhere; }
+.history-cards { display: flex; min-width: 0; align-items: center; justify-content: center; flex-direction: column; gap: 0.125rem; }
+.history-artwork { display: flex; width: 100%; align-items: center; justify-content: center; gap: 0.1875rem; }
+.history-art { width: min(30%, 2rem); height: auto; aspect-ratio: 0.8; flex-shrink: 1; border-radius: 0.1875rem; }
+.history-art .pokemon-art-window { position: absolute; inset: 0; }
+.history-copy-count { font-size: 0.6875rem; line-height: 1.25; text-align: center; }
+.history-amount { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; border-inline-start: 1px solid var(--surface-border); padding-inline-start: 0.5rem; }
+.history-total-label { color: #445575; font-size: 0.625rem; line-height: 1.25; }
+.history-total { display: block; max-width: 100%; overflow-wrap: anywhere; font-size: 1.125rem; font-weight: 900; line-height: 1.25; letter-spacing: -0.025em; }
+.history-sale .history-kind-label, .history-sale .history-total { color: #087e79; }
+.history-sale .history-kind-icon { color: #087e79; background: #dbf2f0; }
+.history-status { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.125rem; padding: 0.125rem 0.375rem; border-radius: 0.5rem; color: #445575; background: #e5ecf5; font-size: 0.625rem; font-weight: 800; line-height: 1.25; }
+.history-status svg { width: 0.875rem; height: 0.875rem; flex-shrink: 0; }
+.history-status-inTransit, .history-status-partial, .history-status-pending { color: #805000; background: #fff0c8; }
+.history-status-received, .history-status-completed { color: #117126; background: #ddf6df; }
+.history-chevron { width: 0.875rem; height: 0.875rem; color: #52617c; justify-self: center; }
+@media (max-width: 359px) {
+  .history-row-content { gap: 0.25rem; padding-inline: 0.375rem; }
+  .history-identity { gap: 0.25rem; }
+  .history-kind-icon { width: 1.375rem; height: 1.625rem; }
+  .history-kind-icon svg { width: 1.125rem; }
+  .history-kind-label { font-size: 0.875rem; }
+  .history-amount { padding-inline-start: 0.375rem; }
+  .history-month-heading h2 { font-size: 1.125rem; }
+  .history-month-totals { font-size: 0.875rem; }
+  .history-status { padding-inline: 0.25rem; gap: 0.125rem; }
+}
