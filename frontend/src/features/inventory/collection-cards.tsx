@@ -71,12 +71,14 @@ export function CollectionCards({ data, onSave }: { data: InventoryData; onSave:
       </div>
       {expanded.has(g.key) && <div id={`${id}-${g.key}`} className="border-t border-blue-100 bg-blue-50/70 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span>{t('inventory.marketValue')}</span></div>
-        {g.copies.map((v, n) => <div key={v.copy.id} className="flex flex-wrap items-center gap-x-2 border-t border-blue-100 py-1">
-          <span className="text-xs font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
-          <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
-          <span className="min-w-0 flex-1 text-xs text-slate-600">{t('inventory.paid')}: {cost(v.paid)}</span>
+        {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-t border-blue-100 py-1">
+          <button type="button" className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" aria-label={`${t('inventory.copyDetails')} ${v.copy.id}`} onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
+            <span className="font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 font-medium text-blue-800">{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
+            <span className="text-slate-600">{t('inventory.paid')}: {cost(v.paid)}</span>
+            <span className="text-blue-700">{t('inventory.copyDetails')}</span>
+          </button>
           <span className="text-sm font-bold tabular-nums">{metric(v.market)}</span>
-          <button type="button" className="min-h-11 rounded-lg px-1 text-xs font-semibold text-blue-700" aria-label={`${t('inventory.copyDetails')} ${v.copy.id}`} onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>{t('inventory.copyDetails')}</button>
           <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-11 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
         </div>)}
       </div>}
