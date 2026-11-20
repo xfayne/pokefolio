@@ -43,16 +43,16 @@ export function TransactionHistory({ data, empty, onCreate, onOpen }: {
             {t(`transactionHistory.${kind === 'purchase' ? 'purchases' : kind === 'sale' ? 'sales' : 'all'}`)}
           </Button>)}
         </div>
-        <DisclosureButton open={filtersOpen} contentId={`${id}-filters`} onClick={() => setFiltersOpen(v => !v)} aria-label={t('transactionHistory.filters')} className="history-filter-button surface-field">
+        <DisclosureButton open={filtersOpen} contentId={`${id}-filters`} onClick={() => setFiltersOpen(v => !v)} aria-label={`${t('transactionHistory.filters')}${advancedCount ? ` (${advancedCount})` : ''}`} className="history-filter-button surface-field">
           <LuFilter aria-hidden className="size-5" />{advancedCount > 0 && <span className="history-filter-count">{advancedCount}</span>}
         </DisclosureButton>
       </div>
       <DisclosureContent id={`${id}-filters`} open={filtersOpen}>
         <div className="history-advanced">
-          <label>{t('transactionHistory.currency')}<Select value={filters.currency} onChange={e => setFilters(f => ({ ...f, currency: e.target.value as HistoryFilters['currency'] }))}>
+          <label>{t('transactionHistory.currency')}<Select aria-label={t('transactionHistory.currency')} value={filters.currency} onChange={e => setFilters(f => ({ ...f, currency: e.target.value as HistoryFilters['currency'] }))}>
             <option value="all">{t('transactionHistory.any')}</option>{currencySchema.options.map(c => <option key={c} value={c}>{c}</option>)}
           </Select></label>
-          <label>{t('transactionHistory.status')}<Select value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value as HistoryFilters['status'] }))}>
+          <label>{t('transactionHistory.status')}<Select aria-label={t('transactionHistory.status')} value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value as HistoryFilters['status'] }))}>
             <option value="all">{t('transactionHistory.any')}</option>{statuses.map(s => <option key={s} value={s}>{t(`transactionHistory.${s}`)}</option>)}
           </Select></label>
           <Button variant="outline" className="col-span-2" onClick={() => setFilters(initialFilters)}>{t('transactionHistory.reset')}</Button>
@@ -75,7 +75,7 @@ export function TransactionHistory({ data, empty, onCreate, onOpen }: {
           <span className={`history-identity ${row.kind === 'sale' ? 'history-sale' : ''}`}>
             <span className="history-kind-icon">{row.kind === 'sale' ? <LuTag aria-hidden /> : <LuShoppingCart aria-hidden />}</span>
             <span className="min-w-0"><span className="history-kind-label">{t(`transactionHistory.${row.kind}`)}</span><span className="history-source" title={row.source}>
-              {row.source || t(`transactionHistory.${row.sourceKind}`)} · {row.date ? date(row.date) : t('transactionHistory.undated')}
+              <span className="history-source-name">{row.source || t(`transactionHistory.${row.sourceKind}`)}</span><span className="history-source-date"> · {row.date ? date(row.date) : t('transactionHistory.undated')}</span>
             </span></span>
           </span>
           <span className="history-cards">

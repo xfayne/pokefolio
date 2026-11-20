@@ -126,7 +126,9 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .history-kind-icon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 1.875rem; height: 1.875rem; color: #0059dd; background: #e1ecff; border-radius: 0.625rem; }
 .history-kind-icon svg { width: 1.375rem; height: 1.375rem; }
 .history-kind-label { display: block; font-size: 1rem; font-weight: 900; letter-spacing: -0.02em; }
-.history-source { display: block; font-size: 0.6875rem; line-height: 1.25; color: #445575; overflow-wrap: anywhere; }
+.history-source { display: flex; font-size: 0.65625rem; line-height: 1.25; color: #445575; }
+.history-source-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-source-date { flex-shrink: 0; white-space: pre; }
 .history-cards { display: flex; min-width: 0; align-items: center; justify-content: center; flex-direction: column; gap: 0.125rem; }
 .history-artwork { display: flex; width: 100%; align-items: center; justify-content: center; gap: 0.1875rem; }
 .history-art { width: min(30%, 2rem); height: auto; aspect-ratio: 0.8; flex-shrink: 1; border-radius: 0.1875rem; }
