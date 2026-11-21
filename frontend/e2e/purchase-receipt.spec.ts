@@ -33,7 +33,7 @@ test('receipt is independent of tracking events and the compact market controls 
   await expect(page.locator('header').getByRole('button',{name:'Received',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Back to History',exact:true}).click();
   await page.getByRole('button',{name:'Search',exact:true}).click();
-  await page.getByRole('searchbox').fill('Gengar');
+  await page.getByRole('searchbox',{name:'Search cards',exact:true}).fill('Gengar');
   await page.locator('.catalog-result').first().click();
   const condition=page.getByRole('combobox',{name:'Price condition'});
   const edition=page.getByRole('checkbox',{name:'First Edition',exact:true});
