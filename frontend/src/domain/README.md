@@ -67,3 +67,8 @@ not an authenticated write adapter and planning timestamps are not server timest
 
 The mapper uses version 2. The [offline runbook](../../../docs/LEGACY_IMPORT_RUNBOOK.md)
 describes backup verification, scope limitations and the isolated filesystem adapter.
+
+`sale.ts` completes sale draft validation, per-copy receipt/expense allocation,
+immutable acquisition-basis snapshots, exact-membership edits and audited reversal
+commands. `validateSaleCommit` checks complete lifecycle write sets before the
+adapter compares stored snapshots atomically. See `docs/SALE_TRANSACTIONS.md`.

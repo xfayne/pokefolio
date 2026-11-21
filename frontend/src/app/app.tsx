@@ -1,3 +1,5 @@
+import { NewSalePage } from '@/features/transactions/new-sale-page';
+import { SalePage, SaleActions } from '@/features/transactions/sale-page';
 import {DisplayCurrencyProvider,CurrencySettings} from '@/services/display-currency';
 import { PurchaseActions } from '@/features/transactions/purchase-actions';
 import { usePortfolio } from '@/hooks/use-portfolio';
@@ -91,12 +93,15 @@ function Shell() {
   const catalogOwned: Record<string,number> = {};
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
   const isEditing = contentLocation.pathname.endsWith('/edit');
-  const isNewPurchase = contentLocation.pathname === '/transactions/new';
+  const isNewPurchase = ['/transactions/new', '/transactions/new-sale'].includes(contentLocation.pathname);
   const purchaseMatch = matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
+  const saleMatch = matchPath('/transactions/sales/:transactionId', contentLocation.pathname);
+  const isSale = !!saleMatch;
+  const editingSale = contentLocation.pathname.startsWith('/transactions/sales/');
   const isPurchase = !!purchaseMatch;
   const selectedPurchase = account.records.find(e => e.collection === 'transactions' && e.record.id === purchaseMatch?.params.transactionId);
   const canEditPurchase = isPurchase && contextParams.get('transactions') !== 'sample' && selectedPurchase?.collection === 'transactions' && selectedPurchase.record.kind === 'purchase' && !('origin' in selectedPurchase.record) && selectedPurchase.record.settlement === 'unknown';
-  const focusedTransaction = isPurchase || isNewPurchase || isEditing;
+  const focusedTransaction = isSale || isPurchase || isNewPurchase || isEditing;
   const backToHistory = () => {
     if ((location.state as { purchaseFrom?: string } | null)?.purchaseFrom === 'history') void navigate(-1);
     else void navigate({ pathname: '/transactions/history', search: contentLocation.search }, { replace: true });
@@ -109,9 +114,9 @@ function Shell() {
     <header className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
-        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
+        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
         {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
-        <div className="flex shrink-0 gap-1">{focusedTransaction ? <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
+        <div className="flex shrink-0 gap-1">{focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
         </>} </div>
@@ -122,6 +127,9 @@ function Shell() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <SavedSectionRedirect name={name as keyof typeof sections} search={contentLocation.search} /> : <SectionPage name={name} />} />)}
         {Object.entries(sections).flatMap(([name, tabs]) => tabs.map(tab => <Route key={`${name}/${tab}`} path={`/${name}/${tab}`} element={<SectionPage name={name as Destination} />} />))}
+        <Route path="/transactions/new-sale" element={<NewSalePage />} />
+        <Route path="/transactions/sales/:transactionId" element={<SalePage />} />
+        <Route path="/transactions/sales/:transactionId/edit" element={<NewSalePage editing />} />
         <Route path="/transactions/purchases/:transactionId/edit" element={<EditPurchasePage />} />
         <Route path="/transactions/new" element={<Suspense fallback={<LoadingState label={t('loading')} />}><NewPurchasePage key={new URLSearchParams(contentLocation.search).get('transactions') === 'sample' ? 'sample' : 'account'} /></Suspense>} />
         <Route path="/transactions/purchases/:transactionId" element={<Suspense fallback={<LoadingState label={t('loading')} />}><PurchasePage /></Suspense>} />

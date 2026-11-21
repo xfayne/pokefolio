@@ -385,3 +385,29 @@ Transactions sort by purchase date descending and creation time descending on ti
 Tracking/carrier fields can be edited, added and cleared through audited commits.
 Purchase Details omits per-copy shipping/payment-state notes. Header actions use an
 edit icon only where editing works; unsupported delete actions are not shown.
+
+## Issue #9 — sale implementation, 2026-11-21
+
+Owner authorized direct implementation without further mocks and explicitly requires
+reuse of existing components, sizes, colors, spacing and motion. New Sale uses the
+existing purchase-form classes and shared fields/cards/art/buttons; the owned-copy
+selector uses UtilitySheet and received/held copies only. No manual delivery action
+is added: receipt remains #11, as the owner clarified.
+
+`sale.ts` plans per-copy sales, reconciled estimated shipping/expense allocations,
+immutable four-component acquisition-basis snapshots, membership-preserving edits
+and audit-backed reversal. The adapter validates complete sale write sets before
+atomic expected-snapshot checks and immutable retry receipts. Account sale lines
+now reach History/Details. Reversal restores original copy IDs without acquisition,
+Binder/Wishlist or shipment writes; reversed History contribution is zero. The
+header has functional icon-only edit and reverse actions; reversal requires an
+explicit confirmation. Entry/edit uses original transaction currency; read-only
+amounts use the account display preference. Missing historical FX/costs gives
+unavailable P/L, estimated costs stay estimated. No new FX provider is introduced.
+
+The synthetic sample adapter is memory-only and owner-isolated. Ordinary account
+routes never load sample holdings. Existing Firestore policy envelopes support
+these writes without a rules deployment. See docs/SALE_TRANSACTIONS.md for the
+nine-copy atomic edit limit, test scope and remaining live acceptance boundary.
+This entry describes implementation; consult PR/CI and deployment receipts for
+verified release status. No legacy/production data or real-data migration changed.

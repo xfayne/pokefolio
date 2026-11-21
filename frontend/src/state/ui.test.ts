@@ -9,5 +9,5 @@ it('resets transient search state without storing collection data', () => {
   useUIStore.getState().reset();
   expect(useUIStore.getState().searchQuery).toBe('');
   expect(useUIStore.getState().purchaseDrafts).toEqual({});
-  expect(Object.keys(useUIStore.getState()).sort()).toEqual(['purchaseDrafts', 'reset', 'searchQuery', 'setPurchaseDraft', 'setSearchQuery']);
+  expect(Object.keys(useUIStore.getState()).sort()).toEqual(['purchaseDrafts', 'reset', 'saleDrafts', 'searchQuery', 'setPurchaseDraft', 'setSaleDraft', 'setSearchQuery']);
 });

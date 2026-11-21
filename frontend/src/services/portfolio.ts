@@ -12,6 +12,7 @@ import {
   type PortfolioCommit,
   type PortfolioRecord,
 } from '@/domain/persistence';
+import { validateSaleCommit } from '@/domain/sale';
 import { planPurchase } from '@/domain/purchase';
 import { idSchema } from '@/domain/schema';
 
@@ -44,9 +45,10 @@ export async function commitPortfolio(
   const command = prepareCommit(owner, raw, 450);
   if (command.updates.length > 20)
     throw Error('This edit exceeds the atomic audit limit');
+  const saleCommand = validateSaleCommit(owner, command);
   // New financial records must describe complete purchases, not orphan copies.
   const purchases = command.creates.filter(
-    (e) => e.collection === 'transactions',
+    (e) => e.collection === 'transactions' && e.record.kind === 'purchase',
   );
   for (const entry of purchases) {
     if (
@@ -112,7 +114,7 @@ export async function commitPortfolio(
         update.before.record.acquisition,
         update.after.record.acquisition,
       ) ||
-        update.before.record.disposition !== update.after.record.disposition)
+        (!saleCommand && update.before.record.disposition !== update.after.record.disposition))
     )
       throw Error('Copy acquisition and disposition cannot be edited here');
   }

@@ -74,3 +74,32 @@ it('rejects stale edits atomically, even when earlier records could have been wr
   expect(state.store).toEqual(original);
   await expect(commitPortfolio(db, 'foreign', command)).rejects.toThrow();
 });
+
+import { copy } from '@/domain/fixtures.test-support';
+import { newSaleDraft, saleCommit, reverseSaleCommit, editSaleCommit, draftFromSale } from '@/domain/sale';
+import type { PortfolioRecord } from '@/domain/persistence';
+it('atomically sells a received copy once, rejects competing sales, and replays a reversal without duplicating inventory', async () => {
+  state.store.set(`users/owner/copies/${copy.id}`, {record:copy,auditId:null,committedAt:'SERVER_TIME'});
+  const draft={...newSaleDraft(),id:'sale-a',date:'2026-11-21',buyer:'Buyer',currency:'GBP' as const,cards:[{copyId:copy.id,amount:'30'}]};
+  const first=saleCommit('owner',draft,[copy],'2026-11-22T00:00:00Z');
+  const competing=saleCommit('owner',{...draft,id:'sale-b'},[copy],'2026-11-22T00:00:00Z');
+  await commitPortfolio(db,'owner',first);
+  const sold=new Map(state.store);
+  await commitPortfolio(db,'owner',first);
+  expect(state.store).toEqual(sold);
+  await expect(commitPortfolio(db,'owner',competing)).rejects.toThrow('Record changed');
+  expect(state.store).toEqual(sold);
+  const records=[...first.creates,...first.updates.map(u=>u.after)];
+  const edit=editSaleCommit('owner',{...draftFromSale(records,'sale-a'),sellingFees:'1'},records,'2026-11-23T00:00:00Z');
+  await commitPortfolio(db,'owner',edit);
+  await expect(commitPortfolio(db,'owner',reverseSaleCommit('owner','sale-a',records,'2026-11-24T00:00:00Z'))).rejects.toThrow('Record changed');
+  const updated=new Map(records.map(e=>[`${e.collection}/${e.record.id}`,e]));
+  for(const u of edit.updates) updated.set(`${u.after.collection}/${u.after.record.id}`,u.after);
+  const reversal=reverseSaleCommit('owner','sale-a',[...updated.values()] as PortfolioRecord[],'2026-11-24T00:00:00Z');
+  await commitPortfolio(db,'owner',reversal);
+  const restored=new Map(state.store);
+  await commitPortfolio(db,'owner',reversal);
+  expect(state.store).toEqual(restored);
+  expect(state.store.get(`users/owner/copies/${copy.id}`)).toMatchObject({record:{id:copy.id,disposition:'held',dispositionRecordId:null}});
+  expect([...state.store.keys()].filter(k=>k.startsWith('users/owner/copies/'))).toHaveLength(1);
+});

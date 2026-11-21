@@ -1,6 +1,6 @@
 export const transactionTranslations = {
   en: {
-    title: 'Transaction history', new: 'New transaction', search: 'Search transactions', searchShort: 'Search', type: 'Transaction type', all: 'All', purchases: 'Purchases', sales: 'Sales',
+    reversed: 'Reversed', title: 'Transaction history', new: 'New transaction', search: 'Search transactions', searchShort: 'Search', type: 'Transaction type', all: 'All', purchases: 'Purchases', sales: 'Sales',
     purchase: 'Purchase', sale: 'Sale', filters: 'Filter transactions', currency: 'Currency', status: 'Status', any: 'All', reset: 'Reset filters',
     total: 'Transaction total', monthTotal: 'Net transaction total · sales minus purchases · display currency · not cash flow or profit',
     copies_one: '{{count}} copy', copies_other: '{{count}} copies', noCopies: 'No copies linked',
@@ -12,7 +12,7 @@ export const transactionTranslations = {
     open: 'View transaction', demo: 'Demo',
   },
   he: {
-    title: 'היסטוריית עסקאות', new: 'עסקה חדשה', search: 'חיפוש עסקאות', searchShort: 'חיפוש', type: 'סוג עסקה', all: 'הכול', purchases: 'רכישות', sales: 'מכירות',
+    reversed: 'בוטלה', title: 'היסטוריית עסקאות', new: 'עסקה חדשה', search: 'חיפוש עסקאות', searchShort: 'חיפוש', type: 'סוג עסקה', all: 'הכול', purchases: 'רכישות', sales: 'מכירות',
     purchase: 'רכישה', sale: 'מכירה', filters: 'סינון עסקאות', currency: 'מטבע', status: 'סטטוס', any: 'הכול', reset: 'איפוס סינון',
     total: 'סכום העסקה', monthTotal: 'סכום עסקאות נטו · מכירות פחות רכישות · במטבע התצוגה · אינו תזרים או רווח',
     copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_other: '{{count}} עותקים', noCopies: 'אין עותקים מקושרים',

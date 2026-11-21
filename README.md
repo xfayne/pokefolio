@@ -143,3 +143,17 @@ prices, copy costs, purchase details, recent purchases and History share the sam
 reference-rate conversion; History has one converted total per month. Purchase/sale
 forms always retain their original currency. Reference FX does not rewrite costs,
 payments or historical analytics. Missing conversions are shown as unavailable.
+
+## Sale transactions (#9)
+
+The Sale option in New transaction selects specific received, unsold copies from
+account inventory. Each selected copy has its own sale price; buyer shipping,
+fees, seller shipping and taxes reconcile to net proceeds. Sale Details links the
+original acquisitions and displays known/estimated/unavailable realized P/L.
+Read-only amounts use display currency; entry/edit retains transaction currency.
+Sales support audited fixed-membership editing and explicit reversal that restores
+the same copies. Reversed transactions remain visible without affecting monthly
+totals. Pending receipt remains #11; Binder/Wishlist ordering is untouched.
+See [sale contracts and verification](docs/SALE_TRANSACTIONS.md).
+The [sample sale form](https://xfayne.github.io/pokefolio/#/transactions/new-sale?transactions=sample)
+is synthetic and memory-only; sample sale changes reset on reload.

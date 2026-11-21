@@ -11,8 +11,8 @@ import { conditionSchema, currencySchema, type Money } from '@/domain/schema';
 import { previewPurchaseDraft, type PurchaseDraft } from '@/domain/purchase-draft';
 import type { InventoryCatalogCard } from '@/domain/inventory';
 
-export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, editing = false }: {
-  editing?: boolean; draft: PurchaseDraft; catalog: readonly InventoryCatalogCard[]; onChange: (draft: PurchaseDraft) => void;
+export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, onSale, editing = false }: {
+  onSale?: () => void; editing?: boolean; draft: PurchaseDraft; catalog: readonly InventoryCatalogCard[]; onChange: (draft: PurchaseDraft) => void;
   onSave?: () => Promise<void>; onAddCard?: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -52,7 +52,7 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, e
     <fieldset disabled={saving} className="new-purchase-fields">
       <div className="new-purchase-kind" role="group" aria-label={t(editing ? 'newPurchase.editTitle' : 'newPurchase.title')}>
         <button type="button" aria-pressed="true"><LuShoppingCart aria-hidden />{t('newPurchase.purchase')}</button>
-        <button type="button" aria-disabled="true" onClick={() => setNotice(t('newPurchase.saleSoon'))}><LuTag aria-hidden />{t('newPurchase.sale')}</button>
+        <button type="button" disabled={editing} aria-disabled={!onSale} onClick={() => onSale?.()}><LuTag aria-hidden />{t('newPurchase.sale')}</button>
       </div>
       <Card className="new-purchase-meta">
         <label className="new-purchase-field" htmlFor={`${id}-date`}><span>{t('newPurchase.date')}</span><Input {...inputProps('date')} className="new-purchase-input" type="date" value={draft.date} onChange={e => change({ ...draft, date: e.target.value })} />{fieldError('date')}</label>
