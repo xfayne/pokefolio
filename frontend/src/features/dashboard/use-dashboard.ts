@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {useQueries} from '@tanstack/react-query';
+import {useQueries,useQueryClient} from '@tanstack/react-query';
 import {useSearchParams} from 'react-router';
 import {usePortfolio} from '@/hooks/use-portfolio';
 import {catalogCards} from '@/features/catalog/catalog';
@@ -18,6 +18,7 @@ import {useDisplayCurrency} from '@/services/display-currency';
 
 export function useDashboard(month:string){
  const account=usePortfolio(),demo=useDemoTransactionData(),adapter=useDemoPortfolio();
+ const privateClient=useQueryClient();
  const [params]=useSearchParams();
  const preview=params.get('dashboard')==='sample';
  const today=new Date().toISOString().slice(0,10),asOf=new Date().toISOString();
@@ -54,14 +55,15 @@ export function useDashboard(month:string){
   series.set(key,{catalog:copy.catalog,condition:copy.condition.value,currency:variant.currency,current:variant.current!==null&&variant.observedAt?{minor:variant.current,observedAt:variant.observedAt}:null,history:variant.history,source:result.data!.source,stale:result.cache==='stale'});
  }
  const loading=!preview&&(account.loading||!!account.owner&&(audit.isPending||productQueries.some(q=>q.isPending)||market.loading||fx.loading));
- let result:ReturnType<typeof selectPerformance>|null=null,error:unknown=account.error;
- try {if(!loading)result=selectPerformance({owner:preview?demo.history.ownerUid:account.owner??'disconnected',records,catalog:catalogCards,prices:[...series.values()],fx:preview?sampleFx(today):fx.rows,currency,asOf,month});}
+ const portfolioError=preview?null:account.error;
+ let result:ReturnType<typeof selectPerformance>|null=null,error:unknown=portfolioError;
+ try {if(!loading&&!portfolioError)result=selectPerformance({owner:preview?demo.history.ownerUid:account.owner??'disconnected',records,catalog:catalogCards,prices:[...series.values()],fx:preview?sampleFx(today):fx.rows,currency,asOf,month});}
  catch(e){error=e;}
  return {result,currency,preview,owner:account.owner,loading,error,
   priceFailure:!preview&&(market.failed||productQueries.some(q=>q.isError)||market.results.some(r=>r.cache!=='fresh')),
   historyFailure:!preview&&(audit.isError||audit.data?.truncated===true),fxFailure:fx.failed,
   sourceDate:[...series.values()].flatMap(s=>s.current?[s.current.observedAt.slice(0,10)]:[]).sort()[0]??null,
-  retry:async()=>{await Promise.all([market.retry(),fx.retry(),...productQueries.filter(q=>q.isError).map(q=>q.refetch()),...(account.owner?[audit.refetch()]:[])]);},
+  retry:async()=>{await Promise.all([market.retry(),fx.retry(),...productQueries.filter(q=>q.isError).map(q=>q.refetch()),...(account.owner?[privateClient.invalidateQueries({queryKey:['portfolio',account.owner]})]:[])]);},
  };
 }
 function sampleSeries(copy:CardCopy,today:string):PriceSeries {

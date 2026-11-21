@@ -99,5 +99,5 @@ estimated matched-holdings price change and realized sale P/L; missing observati
 break charts. Periods never extrapolate older history. Monthly selection changes
 recorded purchases, not confirmed cash settlements. Exact-copy links preserve the
 purchase's physical ID or open that copy in Collection. The opt-in
-`#/dashboard?dashboard=sample` uses synthetic, memory-only data and makes no
-portfolio or authenticated pricing requests. No user data is written by Dashboard.
+`#/dashboard?dashboard=sample` uses synthetic, memory-only data, with its extra
+revision and authenticated pricing fetches disabled. No user data is written by Dashboard.
