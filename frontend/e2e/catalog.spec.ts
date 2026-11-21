@@ -6,7 +6,7 @@ test('shared catalog picks duplicate copies and global search opens details', as
   await page.getByRole('button',{name:'Add card',exact:true}).click();
   await page.getByRole('searchbox',{name:'Search cards',exact:true}).fill('shining gyarados');
   await expect(page.getByRole('dialog').getByRole('listitem').filter({hasText:'Shining Gyarados'})).toHaveCount(1);
-  if (i===0) { await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true'); await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations({subtree:true}).map(a => a.finished))); await expect(page.getByRole('heading',{name:'Search cards',exact:true})).toBeInViewport(); await page.screenshot({path:test.info().outputPath('catalog-picker.png')}); expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]); }
+  if (i===0) { await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true'); await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations({subtree:true}).filter(a => a.effect?.getComputedTiming().iterations !== Infinity).map(a => a.finished))); await expect(page.getByRole('heading',{name:'Search cards',exact:true})).toBeInViewport(); await page.screenshot({path:test.info().outputPath('catalog-picker.png')}); expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]); }
   await page.getByRole('dialog').getByRole('button',{name:/Shining Gyarados/}).click();
  }
  await expect(page.locator('.new-purchase-copy')).toHaveCount(5);

@@ -9,7 +9,7 @@ Adventure Blue presentation; do not copy inventory JSX or invent new surface col
 | `Button` | Primary/outline actions | Caller handles actions |
 | `Input`, `Field`, `SearchInput`, `Select` | Labelled text/search and native selection | Controlled by caller |
 | `DisclosureButton`, `DisclosureContent`, `DisclosureChevron` | Accessible animated accordion parts | Caller MUST provide `open`, ID and toggle handler |
-| `PokemonArt` | Approved thumbnail/detail framing, crop and image fallback | Presentation only; accepts URL/alt, no catalog dependency |
+| `PokemonArt` | Shared thumbnail/detail/zoom framing, image-loading shimmer and fallback | Presentation only; accepts URL/alt, no catalog dependency |
 | `UtilitySheet` | Modal utility screen, header, entry motion, focus restoration | Caller owns contents/back/close |
 | `EmptyState`, `LoadingState`, `ErrorState` | Shared screen states | Caller supplies copy/actions |
 
@@ -26,13 +26,25 @@ rules belong to inventory consumers and their regression tests, not the UI kit.
 Use stable IDs; a closed disclosure retains its children but makes them inert and
 hidden from assistive technology. Do not nest buttons or place business data in UI state.
 
-Use `PokemonArt` for both sizes so crop and yellow framing stay consistent.
-Full-card inspection remains a separate uncropped image in the feature screen.
+Use `PokemonArt` for thumbnails, Card Details and full-card zoom. Thumbnails retain
+compact cropping; details/zoom reserve a portrait footprint and display the complete
+high-resolution image (with a standard-image fallback) without cropping. The shared
+shimmer, fade-in and error fallback reproduce the Vintage Binder loading behavior.
 Keep all form text at least 16px to prevent iPhone input zoom. Preserve RTL logical
 spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 
 Import directly from each module (for example `@/components/ui/disclosure`).
 No new UI dependency or data/storage behavior is introduced by this extraction.
+
+## Collection card sort keys (2026-11-21)
+
+Collection Cards offers value, name, copy count, newest purchase date and
+set/card number. Date sorting groups all currently held physical copies of one
+catalog card into one row and uses its newest **known** acquisition date.
+An unknown date is sorted last, not replaced with a fabricated date. Set/number
+sorts alphabetically by set, then by the numeric card number (not lexicographically),
+with stable tie-breaking. The existing compact copy rows and disclosure defaults
+are unchanged.
 
 ## Authoritative bold weight (2026-11-20)
 
