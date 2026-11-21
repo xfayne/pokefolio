@@ -26,7 +26,7 @@ test('five destinations, nested sections, catalog focus and back restore', async
   await page.goBack();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await nav.getByRole('link', { name: 'Dashboard' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pokefolio', exact: true })).toBeVisible();
 });
 
 test('mobile English / Hebrew visuals, contrast and narrow safe layout', async ({ page }) => {

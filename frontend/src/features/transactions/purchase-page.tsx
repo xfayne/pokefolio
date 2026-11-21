@@ -39,6 +39,14 @@ export function PurchasePage({onRefresh,refreshing,trackingErrors,trackingFailed
   }, [preview, readMarker, account]);
   const view = useMemo(() => idSchema.safeParse(transactionId).success ? selectPurchaseDetails(preview ? demo.history : account.owner ? account.history : disconnected, transactionId, preview ? demo.shipments : account.shipments) : null, [preview, transactionId, demo, account.history, account.owner, account.shipments]);
   useEffect(() => { document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }, [transactionId]);
+  const focusCopy = params.get('copy');
+  const copyExists = !!view?.copies.some(c => c.copy.id === focusCopy);
+  useEffect(() => {
+    if (!copyExists) return;
+    const target = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-copy-id]')).find(el => el.dataset.copyId === focusCopy);
+    target?.scrollIntoView({ block: 'center' });
+    target?.focus({ preventScroll: true });
+  }, [transactionId, focusCopy, copyExists]);
   const selected = view?.copies.find(c => c.copy.id === inspecting);
   const currency = view?.row.currency ?? 'USD';
   const group: InventoryGroup | null = selected ? {

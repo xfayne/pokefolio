@@ -7,7 +7,7 @@ afterEach(async () => { window.location.hash = ''; window.localStorage.removeIte
 it('opens Dashboard by default and navigates without legacy controllers', async () => {
   window.location.hash = '';
   render(<App />);
-  expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Pokefolio' })).toBeInTheDocument();
   await userEvent.click(screen.getByRole('link', { name: 'Collection' }));
   expect(await screen.findByRole('heading', { name: 'Collection' })).toBeInTheDocument();
   expect(document.querySelector('script[src*="firebase-cloud"]')).toBeNull();

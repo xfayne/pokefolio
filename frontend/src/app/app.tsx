@@ -7,7 +7,7 @@ import { SalePage, SaleActions } from '@/features/transactions/sale-page';
 import {DisplayCurrencyProvider,CurrencySettings} from '@/services/display-currency';
 import { PurchaseActions } from '@/features/transactions/purchase-actions';
 import { usePortfolio } from '@/hooks/use-portfolio';
-import { RecentPurchases } from '@/features/transactions/recent-purchases';
+import { DashboardPage } from '@/features/dashboard/dashboard-page';
 import { EditPurchasePage } from '@/features/transactions/edit-purchase-page';
 import { AccountControls } from '@/features/account-controls';
 import { createSampleCopies } from '@/features/inventory/sample';
@@ -69,7 +69,7 @@ function SectionPage({ name }: { name: Destination }) {
         <LuPlus aria-hidden className="size-5" />
       </button>
     </div> : tabNavigation)}
-    {name === 'dashboard' ? <><RecentPurchases /><EmptyState title={t('comingTitle')} description={t('description')} /></> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -126,8 +126,8 @@ function Shell() {
     <header data-transaction-form={isTransactionForm || undefined} className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
-        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
-        {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
+        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{current==='dashboard'?'Pokefolio':t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
+        {((contentLocation.pathname === '/dashboard'&&new URLSearchParams(contentLocation.search).get('dashboard')==='sample') || (contentLocation.pathname === '/collection/cards' && (new URLSearchParams(contentLocation.search).get('inventory') === 'sample'||new URLSearchParams(contentLocation.search).get('transactions')==='sample')) || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className={`rounded-full px-2 py-1 text-xs font-medium ${current==='dashboard'?'bg-blue-600':'bg-white/15'}`}>{t('inventory.demo')}</span>}
         <div key={`header-actions-${contentLocation.pathname}`} className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : isPurchase ? <><PurchaseReceiptAction onBusy={setReceiptBusy} key={`receipt-${contentLocation.pathname}`} id={purchaseMatch?.params.transactionId ?? ''} preview={contextParams.get('transactions') === 'sample'} /><PurchaseActions disabled={editDisabled} key={`edit-${contentLocation.pathname}`} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /></> : null : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
