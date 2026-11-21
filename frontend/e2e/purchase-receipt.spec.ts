@@ -43,3 +43,20 @@ test('receipt is independent of tracking events and the compact market controls 
   expect(checkbox!.x).toBeGreaterThan(150);
   await page.screenshot({path:test.info().outputPath('compact-market-edition.png')});
 });
+
+test('receipt controls never leak into other headers after repeated section navigation',async({page})=>{
+  await page.goto('#/transactions/purchases/sample-nov-19?transactions=sample');
+  const header=page.locator('header');
+  for(let i=0;i<3;i++) {
+    await expect(header.getByRole('button',{name:'Mark received',exact:true})).toHaveCount(1);
+    await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Wishlist',exact:true}).click();
+    await expect(header.getByRole('button')).toHaveCount(2);
+    await expect(header.getByRole('button',{name:'Search',exact:true})).toHaveCount(1);
+    await expect(header.getByRole('button',{name:'Settings',exact:true})).toHaveCount(1);
+    await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Collection',exact:true}).click();
+    await expect(header.getByRole('button')).toHaveCount(2);
+    await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Transactions',exact:true}).click();
+    await expect(header.getByRole('button')).toHaveCount(2);
+    await page.evaluate(()=>{ location.hash='/transactions/purchases/sample-nov-19?transactions=sample'; });
+  }
+});
