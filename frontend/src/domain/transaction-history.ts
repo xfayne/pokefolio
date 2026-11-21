@@ -3,7 +3,7 @@ import type { InventoryCatalogCard } from './inventory';
 import { safeInteger, sumMoney } from './money';
 
 export type HistoryTransaction = Purchase | Sale | ImportedPurchase;
-export type HistoryStatus = 'inTransit' | 'received' | 'pending' | 'partial' | 'unknown' | 'completed';
+export type HistoryStatus = 'inTransit' | 'received' | 'pending' | 'partial' | 'unknown' | 'completed' | 'reversed';
 export type HistoryData = Readonly<{
   ownerUid: string;
   transactions: readonly HistoryTransaction[];
@@ -60,7 +60,7 @@ export function selectHistory(data: HistoryData): readonly HistoryRow[] {
     const imported = 'origin' in transaction;
     const date = imported ? transaction.transactionOn.status === 'known' ? transaction.transactionOn.value : null : transaction.transactionOn;
     const currency = imported ? transaction.currency.status === 'known' ? transaction.currency.value : null : transaction.currency;
-    const total = transaction.kind === 'sale'
+    const total = transaction.kind === 'sale' && transaction.reversedAt ? {currency: transaction.currency, minor: 0} : transaction.kind === 'sale'
       ? transaction.cardProceeds.status === 'known' && transaction.buyerShipping.status === 'known'
         ? sumMoney([transaction.cardProceeds.value, transaction.buyerShipping.value], transaction.currency) : null
       : imported ? transaction.payable.status === 'known' ? transaction.payable.value : null : transaction.payable;
@@ -68,7 +68,7 @@ export function selectHistory(data: HistoryData): readonly HistoryRow[] {
     const cards = [...new Set(linked.flatMap(c => c.catalog.kind === 'identified' ? [c.catalog.cardId] : []))].flatMap(id => catalog.get(id) ?? []);
     const sourceKind = imported ? 'other' : transaction.source.kind;
     const source = imported ? '' : transaction.source.seller?.trim() ?? '';
-    const status: HistoryStatus = transaction.kind === 'sale' ? 'completed'
+    const status: HistoryStatus = transaction.kind === 'sale' ? transaction.reversedAt ? 'reversed' : 'completed'
       : !linked.length || linked.some(c => c.possession === 'unknown') ? 'unknown'
       : linked.every(c => c.possession === 'received') ? 'received'
       : linked.some(c => c.possession === 'received') ? 'partial'
