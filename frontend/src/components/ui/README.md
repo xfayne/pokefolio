@@ -27,8 +27,11 @@ Use stable IDs; a closed disclosure retains its children but makes them inert an
 hidden from assistive technology. Do not nest buttons or place business data in UI state.
 
 Use `PokemonArt` for thumbnails, Card Details and full-card zoom. Thumbnails retain
-compact cropping; Card Details must keep its original small square frame, with
-the image's TOP edge flush to the frame (no synthetic padding or empty stripe). **Never change the Card Details frame
+compact cropping; Card Details must keep its original small square frame.
+Both Collection thumbnails and Card Details must use the SAME centered, slightly
+top-shifted cover crop to trim the yellow outline already baked into the original
+Pokémon TCG image; never display a double-yellow frame or add synthetic padding.
+Full-card zoom keeps the original source borders for complete inspection. **Never change the Card Details frame
 dimensions to a portrait card shape.** Full-card zoom alone uses a portrait footprint
 and an uncropped image. Both detail and zoom request high-resolution artwork with
 standard-resolution fallback. During the shared Vintage Binder-style shimmer,
