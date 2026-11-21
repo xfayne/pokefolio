@@ -9,9 +9,9 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.getByRole('button',{name:'Photos',exact:true}).click();
  await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABgAAAAgCAIAAACHPC9vAAAAJ0lEQVR4nGO8e2kxAzUAE1VMGTVo1KBRg0YNGjVo1KBRg0YNGnCDAFZAApJq8lFgAAAAAElFTkSuQmCC','base64')});
  await expect(page.getByRole('button',{name:'Inspect photo 1'})).toBeVisible();
+ await page.screenshot({path:'test-results/analyzer-en.png',fullPage:true});
  await page.getByRole('button',{name:'Inspect photo 1'}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
  expect((await new AxeBuilder({page}).include('.pokedex-frame').analyze()).violations).toEqual([]);
- await page.screenshot({path:'test-results/analyzer-en.png',fullPage:true});
  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'עברית'}).click();await page.getByRole('button',{name:'סגירה',exact:true}).click();
  await expect(page.locator('html')).toHaveAttribute('dir','rtl');await expect(page.getByRole('heading',{name:'מצב הקלף'})).toBeVisible();
  await page.setViewportSize({width:320,height:640});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

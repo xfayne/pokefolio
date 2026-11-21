@@ -109,6 +109,7 @@ function Analyzer({owner}:{owner:string|null}) {
       <div className="analyzer-grade analyzer-pixel" dir="auto">{result.analysis.grade} — {a(result.analysis.grade)}</div>
       <div className="analyzer-confidence"><span>{a('confidence',{value:result.analysis.confidencePercent})}</span><span>{a('estimate')}</span></div>
       {cached&&<p className="analyzer-hint">{a('saved')}</p>}
+      {result.analyzedPhotoIndices.length<photos.length&&<p className="analyzer-hint">{a('coverage',{count:result.analyzedPhotoIndices.length,total:photos.length})}</p>}
       <div className="analyzer-gallery">{photos.map((photo,i)=><button type="button" key={photo.url} onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}>{photoView(photo,i)}<span className="analyzer-photo-number">{i+1}</span><LuZoomIn aria-hidden className="analyzer-zoom"/></button>)}</div>
       <h2 className="analyzer-pixel analyzer-subtitle">{a('wear')}</h2>
       <div className="analyzer-findings">{result.analysis.observations.length?result.analysis.observations.map((finding,i)=>{
