@@ -10,7 +10,7 @@ import { initialCatalogSearch } from '@/features/catalog/search-state';
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { CatalogDetails } from '@/features/catalog/catalog-details';
 import type { InventoryCatalogCard } from '@/domain/inventory';
-import { lazy, useState, Suspense } from 'react';
+import { lazy, useEffect, useRef, useState, Suspense } from 'react';
 import { HashRouter, matchPath, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState, LoadingState } from '@/components/ui/surfaces';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { useUIStore } from '@/state/ui';
+import { readSectionTabs, saveSectionTabs, sectionTabFromPath, sections } from '@/state/section-tabs';
 import { createQueryClient } from './query-client';
 import { DemoPortfolioProvider } from '@/features/transactions/demo-provider';
 import { ErrorBoundary } from './error-boundary';
@@ -37,9 +38,6 @@ const destinations = [
   { name: 'dashboard', icon: null }, { name: 'analyze', icon: LuScanLine },
   { name: 'transactions', icon: LuArrowLeftRight },
 ] as const;
-const sections = {
-  collection: ['overview', 'cards', 'binder'], wishlist: ['cards', 'deals'], transactions: ['overview', 'history'],
-} as const;
 type Destination = (typeof destinations)[number]['name'];
 function SectionPage({ name }: { name: Destination }) {
   const { t } = useTranslation();
@@ -68,12 +66,20 @@ function Shell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [catalogUi, setCatalogUi] = useState(initialCatalogSearch);
+  const catalogScrollPosition = useRef(0);
   const [catalogCard, setCatalogCard] = useState<InventoryCatalogCard | null>(null);
+  const [savedSectionTabs, setSavedSectionTabs] = useState(readSectionTabs);
   const query = useUIStore(s => s.searchQuery);
   const setQuery = useUIStore(s => s.setSearchQuery);
   const utility = location.pathname === '/search' ? 'search' : location.pathname === '/settings' ? 'settings' : null;
   const background = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
   const contentLocation = utility ? background ?? { ...location, pathname: '/dashboard' } : location;
+  useEffect(() => {
+    const selected = sectionTabFromPath(contentLocation.pathname);
+    if (!selected) return;
+    setSavedSectionTabs(previous => previous[selected.section] === selected.tab ? previous : { ...previous, [selected.section]: selected.tab });
+  }, [contentLocation.pathname]);
+  useEffect(() => { saveSectionTabs(savedSectionTabs); }, [savedSectionTabs]);
   const demoTransactions = useDemoTransactionData();
   const account = usePortfolio();
   const contextParams = new URLSearchParams(contentLocation.search);
@@ -110,7 +116,7 @@ function Shell() {
     <main id="main-content" tabIndex={-1} className="app-content space-y-6 px-3 pt-3 sm:px-6">
       <Routes location={contentLocation}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={{ pathname: `/${name}/${sections[name as keyof typeof sections][0]}`, search: contentLocation.search }} replace /> : <SectionPage name={name} />} />)}
+        {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={{ pathname: `/${name}/${savedSectionTabs[name as keyof typeof sections]}`, search: contentLocation.search }} replace /> : <SectionPage name={name} />} />)}
         {Object.entries(sections).flatMap(([name, tabs]) => tabs.map(tab => <Route key={`${name}/${tab}`} path={`/${name}/${tab}`} element={<SectionPage name={name as Destination} />} />))}
         <Route path="/transactions/purchases/:transactionId/edit" element={<EditPurchasePage />} />
         <Route path="/transactions/new" element={<Suspense fallback={<LoadingState label={t('loading')} />}><NewPurchasePage key={new URLSearchParams(contentLocation.search).get('transactions') === 'sample' ? 'sample' : 'account'} /></Suspense>} />
@@ -126,7 +132,7 @@ function Shell() {
       </NavLink>)}</div>
     </nav>
     {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPosition={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }
