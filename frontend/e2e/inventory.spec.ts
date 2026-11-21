@@ -50,9 +50,13 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveCSS('font-weight', '700');
-  await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '63 / 88');
-  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'contain');
-  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 50%');
+  await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '1 / 1');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 0%');
+  await expect(dialog.locator('.pokemon-art-large .pokemon-art-window')).toHaveCSS('padding-top', '6px');
+  const detailBox = await dialog.locator('.pokemon-art-large').boundingBox();
+  expect(detailBox).not.toBeNull();
+  expect(Math.abs(detailBox!.width - detailBox!.height)).toBeLessThanOrEqual(1);
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();
   await test.info().attach('card-details', { body: await dialog.screenshot({ path: test.info().outputPath('card-details.png') }), contentType: 'image/png' });
   await dialog.getByLabel('Price condition', { exact: true }).selectOption('LP');
@@ -85,4 +89,28 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
+});
+
+
+test('Card Details loading shimmer has no yellow frame; the original frame appears after loading', async ({ page }) => {
+  let reveal: (() => Promise<void>) | undefined;
+  await page.route('https://images.pokemontcg.io/base1/4_hires.png', route => {
+    reveal = () => route.fulfill({
+      status: 200, contentType: 'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8//8/AwMDEwMDAwMDAwAkBgMB/DXemwAAAABJRU5ErkJggg==', 'base64'),
+    });
+  });
+  await page.goto('./#/collection/cards?inventory=sample');
+  await page.getByRole('button', { name: /^Card details: Charizard/ }).click();
+  const art = page.getByRole('dialog').locator('.pokemon-art-large');
+  await expect(art).toHaveAttribute('data-image-state', 'loading');
+  await expect(art).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+  await expect(art).toHaveCSS('box-shadow', 'none');
+  await expect.poll(() => Boolean(reveal)).toBe(true);
+  await reveal!();
+  await expect(art).toHaveAttribute('data-image-state', 'ready');
+  await expect(art).toHaveCSS('border-top-color', 'rgb(244, 202, 39)');
+  const bounds = await art.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(Math.abs(bounds!.width - bounds!.height)).toBeLessThanOrEqual(1);
 });

@@ -27,9 +27,14 @@ Use stable IDs; a closed disclosure retains its children but makes them inert an
 hidden from assistive technology. Do not nest buttons or place business data in UI state.
 
 Use `PokemonArt` for thumbnails, Card Details and full-card zoom. Thumbnails retain
-compact cropping; details/zoom reserve a portrait footprint and display the complete
-high-resolution image (with a standard-image fallback) without cropping. The shared
-shimmer, fade-in and error fallback reproduce the Vintage Binder loading behavior.
+compact cropping; Card Details must keep its original small square frame and show the
+card's upper edge/name with slight top inset. **Never change the Card Details frame
+dimensions to a portrait card shape.** Full-card zoom alone uses a portrait footprint
+and an uncropped image. Both detail and zoom request high-resolution artwork with
+standard-resolution fallback. During the shared Vintage Binder-style shimmer,
+the yellow frame and image shadow stay hidden; they appear when the image is ready.
+Keep a 220ms reveal and accessible error fallback. The application header keeps
+its **bottom** corners rounded, while main content has square corners throughout.
 Keep all form text at least 16px to prevent iPhone input zoom. Preserve RTL logical
 spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 
