@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it } from 'vitest';
 import { App } from './app';
 import i18n from '@/lib/i18n';
-afterEach(async () => { window.location.hash = ''; await i18n.changeLanguage('en'); });
+afterEach(async () => { window.location.hash = ''; window.localStorage.removeItem('pokefolio:section-tabs:v1'); await i18n.changeLanguage('en'); });
 it('opens Dashboard by default and navigates without legacy controllers', async () => {
   window.location.hash = '';
   render(<App />);
