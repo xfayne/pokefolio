@@ -173,7 +173,7 @@ test('catalog return reveals the same mounted search and ready artwork without r
     body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/omQAAAAASUVORK5CYII=', 'base64'),
   }));
   await page.goto('./#/search');
-  const searchDialog = page.getByRole('dialog', { name: 'Search cards' });
+  const searchDialog = page.locator('.utility-dialog').first();
   await expect(searchDialog).toHaveAttribute('data-entered', 'true');
   const list = page.locator('.catalog-scroll-region');
   const art = page.locator('.catalog-result').nth(14).locator('.pokemon-art');
