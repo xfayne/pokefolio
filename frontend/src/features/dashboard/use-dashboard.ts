@@ -32,14 +32,14 @@ export function useDashboard(month:string){
  ]:[...account.records,...(audit.data?.audits??[]).map(record=>({collection:'revisions' as const,record}))],[preview,demo.history,adapter.saleCommands,account.records,audit.data]);
  const copies=records.flatMap(e=>e.collection==='copies'?[e.record]:[]);
  const states=[...copies,...records.flatMap(e=>e.collection==='revisions'?[e.record.before,e.record.after].flatMap(raw=>{const p=cardCopySchema.safeParse(raw);return p.success?[p.data]:[];}):[])];
- const relevant=states.filter(c=>c.possession==='received'&&c.catalog.kind==='identified'&&c.condition.status==='known'&&c.catalog.kind==='identified'&&c.catalog.edition!=='unknown'&&c.catalog.language.status==='known'&&['en','english'].includes(c.catalog.language.value.toLowerCase())&&c.catalog.finish.status==='known'&&(preview||['normal','holo','shining','reverse'].includes(c.catalog.finish.value)));
+ const relevant=states.filter(c=>c.possession==='received'&&c.disposition==='held'&&c.catalog.kind==='identified'&&c.condition.status==='known'&&c.catalog.kind==='identified'&&c.catalog.edition!=='unknown'&&c.catalog.language.status==='known'&&['en','english'].includes(c.catalog.language.value.toLowerCase())&&c.catalog.finish.status==='known'&&(preview||['normal','holo','shining','reverse'].includes(c.catalog.finish.value)));
  const ids=[...new Set(relevant.flatMap(c=>c.catalog.kind==='identified'?[c.catalog.cardId]:[]))].sort();
  const productQueries=useQueries({queries:ids.map(id=>({queryKey:['catalog-product-id',id],enabled:!preview&&!!account.owner,staleTime:7*86400_000,retry:false,queryFn:async({signal}:{signal:AbortSignal})=>{
   const card=catalogCards.find(c=>c.id===id);return card?resolveMarketProduct(card,signal):null;
  }}))},publicPriceClient);
  const products=new Map(ids.map((id,i)=>[id,productQueries[i]?.data?.productId]));
  const market=useMarketHistory(preview?undefined:account.owner,[...new Set([...products.values()].filter((p):p is string=>!!p))],'1y');
- const dates=[...new Set(copies.flatMap(c=>c.acquiredOn.status==='known'?[c.acquiredOn.value]:[]))];
+ const dates=[...new Set([...copies.flatMap(c=>c.acquiredOn.status==='known'?[c.acquiredOn.value]:[]),...records.flatMap(e=>e.collection==='transactions'?typeof e.record.transactionOn==='string'?[e.record.transactionOn]:e.record.transactionOn.status==='known'?[e.record.transactionOn.value]:[]:[])])];
  const needsFx=currency!=='USD'||records.some(e=>e.collection==='transactions'&&e.record.currency!=='USD')||copies.some(c=>[c.cardCost,c.shippingCost,c.taxCost,c.feeCost].some(v=>(v.status==='exact'||v.status==='estimated')&&v.value.currency!=='USD'));
  const fx=useHistoricalFx(dates,today,!preview&&!!account.owner&&records.length>0&&needsFx);
  const series=new Map<string,PriceSeries>();

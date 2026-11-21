@@ -25,6 +25,7 @@ test('dashboard follows the approved sections and links each physical copy safel
  await expect(page.locator('.dashboard-month .dashboard-kpis bdi').first()).toHaveText('$312');
  await page.evaluate(()=>document.fonts.ready);
  await page.locator('.dashboard img').evaluateAll(imgs=>Promise.all(imgs.map(img=>(img as HTMLImageElement).decode().catch(()=>undefined))));
+ await page.evaluate(()=>{(document.activeElement as HTMLElement)?.blur();window.scrollTo(0,0);});
  await page.screenshot({path:test.info().outputPath('dashboard-top-en.png')});
  await page.locator('.dashboard-month').scrollIntoViewIfNeeded();
  await page.screenshot({path:test.info().outputPath('dashboard-scrolled-en.png')});
@@ -34,7 +35,7 @@ test('dashboard follows the approved sections and links each physical copy safel
  await expect(page.locator('[data-copy-id="sample-nov-19-copy-1"]')).toBeFocused();
  await page.goto('./#/dashboard?dashboard=sample');
  const top=page.locator('.dashboard-holdings li > button').first();
- const copy=(await top.getAttribute('aria-label'))!.split(' · ').at(-1)!;
+ const copy=(await top.getAttribute('data-copy-id'))!;
  await top.click();
  await expect(page).toHaveURL(new RegExp(`collection/cards\\?transactions=sample&copy=${copy}$`));
  await expect(page.getByRole('dialog')).toBeVisible();
