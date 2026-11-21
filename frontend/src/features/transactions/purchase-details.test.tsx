@@ -40,3 +40,12 @@ it('keeps no-shipment purchases honest and translates screen labels for RTL', as
   expect(screen.getByRole('heading', { name: 'פירוט עלויות' })).toBeInTheDocument();
   expect(document.documentElement.dir).toBe('rtl');
 });
+
+it('shows tracking failure as plain text inside its shipment without changing the purchase status', () => {
+  const view = selectPurchaseDetails(sampleHistory, 'sample-nov-19', samplePurchaseShipments)!;
+  render(<PurchaseDetails view={view} onInspect={vi.fn()} trackingErrors={{'DEMO-RM00004821GB':'Provider failed'}} />);
+  const shipment = screen.getByRole('region', {name:'Shipment'});
+  expect(within(shipment).getByText('Tracking error')).toBeInTheDocument();
+  expect(within(shipment).queryByText('In transit')).not.toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});

@@ -21,22 +21,23 @@ export function useTrackingSync(owner: string | undefined, records: readonly Por
       const shipments = current.flatMap(e => e.collection === 'shipments' && e.record.trackingNumber ? [e.record] : []);
       // Share a provider lookup for identical references without mixing private records.
       const unique = [...new Map(shipments.map(s => [s.trackingNumber!.trim().toUpperCase(),s])).values()];
+      const errors: Record<string,string> = {};
       try {
         const results = await registerAndTrack(owner!,unique);
         for (const shipment of shipments) {
           if (services.auth.currentUser?.uid !== owner) throw Error('Account changed');
           const result = results.find(r => r.number === shipment.trackingNumber!.trim().toUpperCase())!;
-          if (result.error) continue;
+          if (result.error) { errors[result.number] = result.error.message; continue; }
           const tracking = trackingState(shipment.tracking, {registered:true,carrier:result.carrier ?? null,status:result.status!,events:result.events!});
           if (JSON.stringify(tracking) === JSON.stringify(shipment.tracking)) continue;
-          await commitPortfolio(services.db,owner!,updateShipment(shipment,{tracking},new Date().toISOString()));
+          try { await commitPortfolio(services.db,owner!,updateShipment(shipment,{tracking},new Date().toISOString())); }
+          catch (error) { errors[result.number] = error instanceof Error ? error.message : 'Tracking save failed'; }
         }
-        const failed = results.find(r => r.error);
-        if (failed?.error) throw Error(failed.error.message);
+
       } finally {
         await client.invalidateQueries({queryKey:['portfolio',owner]});
       }
-      return true;
+      return {errors};
     },
   });
 }

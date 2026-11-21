@@ -8,7 +8,7 @@ import type { CardCopy, Cost } from '@/domain/schema';
 import type { PurchaseDetailsView, PurchaseShipment } from '@/domain/purchase-details';
 import { TransactionStatus } from './transaction-status';
 
-export function PurchaseDetails({ view, onInspect, onRefresh, refreshing }: { view: PurchaseDetailsView; onInspect: (copy: CardCopy) => void; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
+export function PurchaseDetails({ view, onInspect, onRefresh, refreshing, trackingErrors, trackingFailed }: { trackingErrors?: Record<string,string> | undefined; trackingFailed?: boolean | undefined; view: PurchaseDetailsView; onInspect: (copy: CardCopy) => void; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
   const { t, i18n } = useTranslation();
   const id = useId();
   const { transaction, row, copies, shipments } = view;
@@ -51,12 +51,12 @@ export function PurchaseDetails({ view, onInspect, onRefresh, refreshing }: { vi
       </dl>
       {view.cardCostMismatch && <p role="alert" className="text-sm text-amber-800">{t('purchaseDetails.costMismatch')}</p>}
     </Card>
-    {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} onRefresh={onRefresh} refreshing={refreshing} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}
+    {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} trackingError={!!shipment.trackingNumber && (!!trackingFailed || !!trackingErrors?.[shipment.trackingNumber.trim().toUpperCase()])} onRefresh={onRefresh} refreshing={refreshing} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}
     {transaction.notes && <Card><h2>{t('inventory.notes')}</h2><p className="whitespace-pre-wrap break-words text-sm text-slate-600">{transaction.notes}</p></Card>}
   </article>;
 }
 
-function ShipmentDetails({ shipment, onRefresh, refreshing }: { shipment: PurchaseShipment; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
+function ShipmentDetails({ shipment, onRefresh, refreshing, trackingError }: {trackingError?: boolean | undefined;  shipment: PurchaseShipment; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
   const { t, i18n } = useTranslation();
   const [copyResult, setCopyResult] = useState<'idle' | 'copied' | 'failed'>('idle');
   const id = useId();
@@ -67,8 +67,8 @@ function ShipmentDetails({ shipment, onRefresh, refreshing }: { shipment: Purcha
   }
   return <Card className="purchase-shipment" aria-labelledby={`${id}-shipment`}>
     <div className="flex items-center justify-between gap-2"><h2 id={`${id}-shipment`}>{t('purchaseDetails.shipment')}</h2>{shipment.trackingNumber && onRefresh && <button type="button" onClick={onRefresh} disabled={refreshing} aria-label={t('purchaseDetails.refreshTracking')} className="purchase-copy-tracking disabled:opacity-40"><LuRefreshCw aria-hidden className={`size-4 ${refreshing ? 'animate-spin' : ''}`} /></button>}</div>
-    {shipment.providerStatus && <p className="text-sm text-slate-600">{t('purchaseDetails.carrierStatus')}: {t(`purchaseDetails.statuses.${shipment.providerStatus}`, {defaultValue:shipment.providerStatus})}</p>}
-    <TransactionStatus status={shipment.status} className="purchase-status" />
+    {trackingError ? <p role="status" className="text-sm text-slate-600">{t('purchaseDetails.trackingError')}</p> : shipment.providerStatus && <p className="text-sm text-slate-600">{t('purchaseDetails.carrierStatus')}: {t(`purchaseDetails.statuses.${shipment.providerStatus}`, {defaultValue:shipment.providerStatus})}</p>}
+    {!trackingError && <TransactionStatus status={shipment.status} className="purchase-status" />}
     <div className="purchase-tracking"><span>{shipment.carrier}{shipment.trackingNumber && <> · <bdi title={shipment.trackingNumber}>{`…${shipment.trackingNumber.slice(-7)}`}</bdi></>}</span>
       {shipment.trackingNumber && <button type="button" onClick={() => void copyTracking()} aria-label={`${t('purchaseDetails.copyTracking')}: ${shipment.trackingNumber}`} className="purchase-copy-tracking"><LuCopy aria-hidden className="size-4" /></button>}
     </div>

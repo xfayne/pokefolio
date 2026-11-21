@@ -1,6 +1,6 @@
 export const purchaseTranslations = {
   en: {
-    receive: 'Mark received', received: 'Received', receiveFailed: 'Could not mark received. Reload and try again.',
+    trackingError: 'Tracking error', receive: 'Mark received', received: 'Received', receiveFailed: 'Could not mark received. Reload and try again.',
     refreshTracking: 'Refresh tracking', trackingFailed: 'Tracking is unavailable. Your purchase is saved.', carrierStatus: 'Carrier status', unread: '{{count}} unread tracking updates',
     statuses: { InfoReceived:'Information received', InTransit:'In transit', AvailableForPickup:'Available for pickup', OutForDelivery:'Out for delivery', Delivered:'Delivered', DeliveryFailure:'Delivery failed', Exception:'Exception', Expired:'Tracking expired', NotFound:'Awaiting tracking information', Unknown:'Awaiting update' },
     title: 'Purchase details', cards: 'Cards', cardCost: 'Card cost', breakdown: 'Cost breakdown', shipping: 'Shipping', taxes: 'Taxes', fees: 'Fees', totalPaid: 'Total paid',
@@ -13,7 +13,7 @@ export const purchaseTranslations = {
     recordedTotal: 'Recorded total', legacyImport: 'Imported purchase',
   },
   he: {
-    receive: 'התקבל', received: 'התקבל', receiveFailed: 'לא ניתן לסמן כהתקבל. טען מחדש ונסה שוב.',
+    trackingError: 'שגיאה במעקב', receive: 'התקבל', received: 'התקבל', receiveFailed: 'לא ניתן לסמן כהתקבל. טען מחדש ונסה שוב.',
     refreshTracking: 'רענון מעקב', trackingFailed: 'המעקב אינו זמין כרגע. הרכישה שמורה.', carrierStatus: 'סטטוס חברת השילוח', unread: '{{count}} עדכוני מעקב שלא נקראו',
     statuses: { InfoReceived:'פרטי משלוח התקבלו', InTransit:'בדרך', AvailableForPickup:'ממתין לאיסוף', OutForDelivery:'יוצא למסירה', Delivered:'נמסר', DeliveryFailure:'בעיה במסירה', Exception:'חריגה במשלוח', Expired:'המעקב הסתיים', NotFound:'ממתין למידע', Unknown:'ממתין לעדכון' },
     title: 'פרטי רכישה', cards: 'קלפים', cardCost: 'מחיר הקלף', breakdown: 'פירוט עלויות', shipping: 'משלוח', taxes: 'מיסים', fees: 'עמלות', totalPaid: 'סך הכול שולם',
