@@ -1,3 +1,4 @@
+import { initialCatalogSearch } from '@/features/catalog/search-state';
 import { useDemoTransactionData } from './demo-data';
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { catalogCards, catalogReference } from '@/features/catalog/catalog';
@@ -15,6 +16,7 @@ import { createPurchaseDraft } from './purchase-draft-seed';
 export function NewPurchasePage() {
   const [params] = useSearchParams();
   const { t } = useTranslation();
+  const [catalogUi, setCatalogUi] = useState(initialCatalogSearch);
   const [picking, setPicking] = useState(false);
   const [query, setQuery] = useState('');
   const preview = params.get('transactions') === 'sample';
@@ -39,5 +41,5 @@ export function NewPurchasePage() {
     setDraft(mode, createPurchaseDraft(preview));
     await navigate({ pathname: `/transactions/purchases/${draft.id}`, search: params.toString() }, { replace: true, state: { demoSaved: true } });
   }
-  return <><NewPurchaseForm key={mode} draft={draft} catalog={catalogCards} onAddCard={() => setPicking(true)} onChange={next => setDraft(mode, next)} {...(preview ? { onSave: save } : {})} />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)}><CatalogSearch owned={owned} query={query} onQuery={setQuery} onSelect={card => { setDraft(mode, { ...draft, cards: [...draft.cards, { id: `demo-copy-${crypto.randomUUID()}`, catalog: catalogReference(card.id), condition: 'unknown', amount: '' }] }); setPicking(false); }} /></UtilitySheet>}</>;
+  return <><NewPurchaseForm key={mode} draft={draft} catalog={catalogCards} onAddCard={() => setPicking(true)} onChange={next => setDraft(mode, next)} {...(preview ? { onSave: save } : {})} />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)}><CatalogSearch state={catalogUi} onState={setCatalogUi} owned={owned} query={query} onQuery={setQuery} onSelect={card => { setDraft(mode, { ...draft, cards: [...draft.cards, { id: `demo-copy-${crypto.randomUUID()}`, catalog: catalogReference(card.id), condition: 'unknown', amount: '' }] }); setPicking(false); }} /></UtilitySheet>}</>;
 }

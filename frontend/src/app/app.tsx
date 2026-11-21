@@ -1,3 +1,4 @@
+import { initialCatalogSearch } from '@/features/catalog/search-state';
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { CatalogDetails } from '@/features/catalog/catalog-details';
 import type { InventoryCatalogCard } from '@/domain/inventory';
@@ -45,6 +46,7 @@ function Shell() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const [catalogUi, setCatalogUi] = useState(initialCatalogSearch);
   const [catalogCard, setCatalogCard] = useState<InventoryCatalogCard | null>(null);
   const query = useUIStore(s => s.searchQuery);
   const setQuery = useUIStore(s => s.setSearchQuery);
@@ -92,7 +94,7 @@ function Shell() {
       </NavLink>)}</div>
     </nav>
     {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
-      {utility === 'search' ? <CatalogSearch query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }

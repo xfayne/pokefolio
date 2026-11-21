@@ -11,3 +11,10 @@ it('matches exact card, English, edition, finish and condition without mixing pr
  expect(await fetchMarketQuotes(card,catalogReference(card.id),new AbortController().signal)).toEqual([]);
  expect(fetcher).toHaveBeenCalledTimes(3);
 });
+it('uses standard WoTC promo identity and its actual finish, excluding alternate editions',async()=>{
+ const fetcher=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({sets:[{id:1418,name:'WoTC Promo'}]})}).mockResolvedValueOnce({ok:true,json:async()=>({products:[{id:87395,name:'Mew (9)',number:'09/53'},{id:999,name:'Mew',number:'09/53'}]})}).mockResolvedValueOnce({ok:true,json:async()=>({products:{87395:{a:{lng:'EN',cnd:'LP',var:'Holofoil',mkt:75}},999:{a:{lng:'EN',cnd:'LP',var:'Normal',mkt:1}}}})});
+ vi.stubGlobal('fetch',fetcher);const card=catalogCards.find(c=>c.id==='basep-9')!;const ref=catalogMarketReference(card.id);
+ expect(ref.kind==='identified' && ref.finish.status==='known' && ref.finish.value).toBe('holo');
+ expect(await fetchMarketQuotes(card,ref,new AbortController().signal)).toMatchObject([{money:{minor:7500}}]);
+ expect(catalogMarketReference('basep-34')).toMatchObject({finish:{value:'reverse'}});
+});

@@ -117,3 +117,7 @@ Catalog Card Details loads condition-specific USD market quotes through the
 existing TCGTracking source with exact printing matching, loading/error/retry and
 no invented prices. Catalog entry alone uses a subtle transition; other Card
 Details entry points retain the original slide animation.
+
+Catalog filters accept multiple sets and retain selection when returning from
+Card Details. WoTC Promo price matching uses verified standard product IDs and
+actual SKU finishes, keeping alternate printings separate.

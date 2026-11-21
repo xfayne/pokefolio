@@ -314,3 +314,15 @@ English, edition, finish and condition; ambiguous/missing matches remain unprice
 USD catalog display defaults to Unlimited (Machamp deck exception); draft copy
 edition/finish remain unknown. Loading/error/retry are explicit, and no quote is
 converted or inferred. Tests stub public responses; no private data is sent.
+
+## Promo prices and retained multi-set search — 2026-11-21
+
+The owner reported missing WoTC promo prices and filters resetting after details.
+Verified all 53 standard WoTC Promo product IDs and English SKU finishes against
+provider data; explicitly exclude misprints, glossy, stamp-rally and NY printings.
+Catalog display now uses their actual normal/holo/reverse finish, with exact ID
+lookup for promo prices. Missing SKU prices still remain unavailable.
+Search supports union-of-selected-set checkboxes combined with the existing text
+query. Global Search and purchase picker each retain their own transient filter,
+List/Grid and pagination state in their parent while results unmount for details.
+No account state, Wishlist or Binder data is changed.

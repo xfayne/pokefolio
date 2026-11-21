@@ -10,7 +10,7 @@ it('shares selection, set filtering and list/grid modes', async () => {
  await user.click(screen.getByRole('button', {name:'Grid'}));
  expect(screen.getByRole('button',{name:'Grid'})).toHaveAttribute('aria-pressed','true');
  await user.click(screen.getByRole('button',{name:'Filters'}));
- await user.selectOptions(screen.getByRole('combobox'), 'Fossil');
+ await user.click(screen.getByRole('checkbox', {name:'Fossil'}));
  expect(screen.getAllByRole('listitem')).toHaveLength(2);
  await user.click(screen.getAllByRole('listitem')[0]!.querySelector('button')!);
  expect(select.mock.calls[0]?.[0].id).toBe('base3-5');
