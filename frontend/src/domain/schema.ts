@@ -133,6 +133,8 @@ export const lotSchema = z.strictObject({
 export type Lot = z.infer<typeof lotSchema>;
 export const saleSchema = z.strictObject({
   ...transactionFields, kind: z.literal('sale'),
+  copyIds: z.array(idSchema).min(1).max(9).optional(),
+  reversedAt: timestampSchema.optional(),
   cardProceeds: amountEvidenceSchema, buyerShipping: amountEvidenceSchema,
   sellingFees: amountEvidenceSchema, sellerShipping: amountEvidenceSchema,
   sellingTaxes: amountEvidenceSchema,
@@ -141,6 +143,7 @@ export type Sale = z.infer<typeof saleSchema>;
 export const saleLineSchema = z.strictObject({
   ...metadata, transactionId: idSchema, copyId: idSchema,
   proceeds: costSchema, expenses: costSchema,
+  basisCosts: z.array(costSchema).length(4).optional(),
 });
 export type SaleLine = z.infer<typeof saleLineSchema>;
 export const cashMovementSchema = z.strictObject({
