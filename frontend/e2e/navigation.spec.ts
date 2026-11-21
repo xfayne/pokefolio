@@ -133,3 +133,24 @@ test('catalog controls remain reachable in a short viewport', async ({ page }) =
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page).toHaveURL(/dashboard$/);
 });
+
+test('each section remembers its last tab after switching sections and reloading', async ({ page }) => {
+  await page.goto('./#/collection/binder');
+  await page.getByRole('link', { name: 'Wishlist', exact: true }).click();
+  await page.getByRole('link', { name: 'Deals', exact: true }).click();
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
+  await page.getByRole('link', { name: 'History', exact: true }).click();
+  await page.getByRole('link', { name: 'Collection', exact: true }).click();
+  await expect(page).toHaveURL(/collection\/binder$/);
+  await page.getByRole('link', { name: 'Wishlist', exact: true }).click();
+  await expect(page).toHaveURL(/wishlist\/deals$/);
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
+  await expect(page).toHaveURL(/transactions\/history$/);
+  await page.reload();
+  await page.getByRole('link', { name: 'Collection', exact: true }).click();
+  await expect(page).toHaveURL(/collection\/binder$/);
+  await page.getByRole('link', { name: 'Wishlist', exact: true }).click();
+  await expect(page).toHaveURL(/wishlist\/deals$/);
+  await page.goto('./#/transactions');
+  await expect(page).toHaveURL(/transactions\/history$/);
+});
