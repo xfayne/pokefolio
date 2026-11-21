@@ -157,3 +157,14 @@ totals. Pending receipt remains #11; Binder/Wishlist ordering is untouched.
 See [sale contracts and verification](docs/SALE_TRANSACTIONS.md).
 The [sample sale form](https://xfayne.github.io/pokefolio/#/transactions/new-sale?transactions=sample)
 is synthetic and memory-only; sample sale changes reset on reload.
+
+## Purchase receipt and tracking (#11)
+
+One purchase has at most one optional shipment, entered through the existing
+purchase form. Purchase Details uses the existing 17TRACK Worker for registration,
+refresh and events. The Transactions badge counts unread events; viewing the
+purchase marks them read. Initial provider history is a read baseline.
+The header Received action manually receives the same physical copies, with or
+without tracking. It stays visible and disabled after receipt. Provider delivery
+never confirms receipt automatically. Costs, Binder and Wishlist are untouched.
+See [receipt and tracking contracts](docs/PURCHASE_TRACKING.md).

@@ -9,6 +9,7 @@ export const purchaseShipmentSchema = z.strictObject({
   copyIds: z.array(idSchema).min(1), carrier: z.string().min(1).max(200),
   trackingNumber: z.string().min(1).max(100).nullable(),
   status: z.enum(['inTransit', 'received', 'pending', 'unknown']),
+  providerStatus: z.string().max(40).optional(), unreadCount: z.number().int().nonnegative().optional(),
   events: z.array(z.strictObject({
     id: idSchema, code: z.enum(['departed', 'accepted', 'registered', 'other']),
     description: z.string().min(1).max(1000), occurredAt: z.iso.datetime().nullable(),

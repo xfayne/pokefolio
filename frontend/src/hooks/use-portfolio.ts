@@ -1,4 +1,4 @@
-import type { PurchaseShipment } from '@/domain/purchase-details';
+import { shipmentSnapshots } from '@/domain/shipment-tracking';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './use-auth';
 import { getFirebaseServices } from '@/services/firebase';
@@ -17,6 +17,7 @@ export function usePortfolio() {
     retry: 1,
   });
   const records = owner ? (query.data ?? []) : [];
+  const shipments = shipmentSnapshots(records);
   const history: HistoryData = {
     ownerUid: owner ?? 'disconnected',
     catalog: catalogCards,
@@ -28,31 +29,8 @@ export function usePortfolio() {
     ),
     saleLines: records.flatMap(e => e.collection === 'lines' && 'copyId' in e.record ? [e.record] : []),
     // A private tracking number is not evidence that the carrier has the parcel.
-    inTransit: [],
+    inTransit: shipments.filter(s => s.status === 'inTransit').map(s => ({ownerUid: s.ownerUid, transactionId: s.transactionId})),
   };
-  const shipments: PurchaseShipment[] = records.flatMap((e) => {
-    if (e.collection !== 'shipments') return [];
-    const members = records.flatMap((m) =>
-      m.collection === 'memberships' && m.record.shipmentId === e.record.id
-        ? [m.record]
-        : [],
-    );
-    const transactionId = members[0]?.transactionId;
-    return transactionId
-      ? [
-          {
-            id: e.record.id,
-            ownerUid: owner!,
-            transactionId,
-            copyIds: members.map((m) => m.copyId),
-            carrier: e.record.carrier ?? '—',
-            trackingNumber: e.record.trackingNumber,
-            status: 'pending' as const,
-            events: [],
-          },
-        ]
-      : [];
-  });
   async function save(command: PortfolioCommit) {
     if (!owner || getFirebaseServices()?.auth.currentUser?.uid !== owner)
       throw Error('Sign in before saving');

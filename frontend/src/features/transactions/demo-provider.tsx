@@ -1,3 +1,4 @@
+import { validateReceiptCommit } from '@/domain/receipt';
 import { prepareCommit, recordKey, type PortfolioCommit, type PortfolioRecord } from '@/domain/persistence';
 import { validateSaleCommit } from '@/domain/sale';
 import { purchaseRecords } from '@/domain/purchase-commit';
@@ -25,7 +26,7 @@ export function DemoPortfolioProvider({ children }: { children: ReactNode }) {
   }, []);
   const commitSale = useCallback(async (raw: PortfolioCommit) => {
     const command = prepareCommit(demoTransactionOwner, raw, 450);
-    if (!validateSaleCommit(demoTransactionOwner, command)) throw Error('Only synthetic sale commands allowed');
+    if (!validateReceiptCommit(command) && !validateSaleCommit(demoTransactionOwner, command)) throw Error('Only synthetic lifecycle commands allowed');
     const fingerprint = JSON.stringify(command);
     const receipt = receipts.current.get(command.idempotencyKey);
     if (receipt) { if (receipt !== fingerprint) throw Error('Conflicting save'); return; }

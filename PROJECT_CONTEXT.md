@@ -421,3 +421,25 @@ canvas, header action sizing and unchanged submit/validation/retry handlers.
 Creation and purchase/sale editing share the behavior; tabs disable during saves.
 The tab backing is opaque and part of the sticky header, preserving the rounded
 content boundary without scroll bleed. No financial, storage or lifecycle change.
+
+## Issue #11 — owner-approved simplified receipt/tracking, 2026-11-21
+
+At most one optional shipment per purchase, containing all copies. Reuse the
+existing tracking/carrier fields and Purchase Details; no split/combine, parcel
+editor or new lists/screens. The owner approved direct implementation and deferred
+#10. Received is an icon next to Edit and remains visible/disabled once received;
+manual receipt works without tracking or provider events. Exact copy IDs/costs and
+Binder/Wishlist remain intact. Large receipts respect the existing 20-audit commit
+limit and resume only pending copies after interruption.
+
+The React shell connects the existing authenticated 17TRACK endpoints, persists
+optional shipment tracking/read state with audits, shares lookups, polls every two
+minutes and exposes refresh/retry in the existing timeline. Provider Delivered
+never automatically receives inventory. Transactions shows an unread badge;
+opening Purchase Details marks displayed events read. Initial history is a read
+baseline. Purchase edits preserve tracking unless number/carrier changes, and
+preserve receipt/notes. Samples are synthetic/session-only without provider IO.
+Market First Edition now occupies the right column beneath condition, removing
+the standalone bottom row (PR #100). See docs/PURCHASE_TRACKING.md. Check PR/CI
+and deployment receipts for verified release state. No real-data migration,
+legacy/production changes, Worker deployment or rules deployment is included.

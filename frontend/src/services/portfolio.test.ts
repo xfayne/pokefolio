@@ -103,3 +103,20 @@ it('atomically sells a received copy once, rejects competing sales, and replays 
   expect(state.store.get(`users/owner/copies/${copy.id}`)).toMatchObject({record:{id:copy.id,disposition:'held',dispositionRecordId:null}});
   expect([...state.store.keys()].filter(k=>k.startsWith('users/owner/copies/'))).toHaveLength(1);
 });
+
+import { receivePurchase } from '@/domain/receipt';
+it('persists manual receipt with immutable audits, stable copy IDs, retry receipts and stale-write rejection', async()=>{
+  const draft=createPurchaseDraft(true);
+  const created=purchaseCommit('owner',draft,'2026-11-21T01:00:00Z');
+  await commitPortfolio(db,'owner',created);
+  const command=receivePurchase('owner',draft.id,created.creates,'2026-11-21T02:00:00Z')[0]!;
+  await commitPortfolio(db,'owner',command);
+  const received=new Map(state.store);
+  await commitPortfolio(db,'owner',command);
+  expect(state.store).toEqual(received);
+  await expect(commitPortfolio(db,'owner',{...command,idempotencyKey:'competing-receipt'})).rejects.toThrow('Record changed');
+  expect([...state.store.keys()].filter(p=>p.includes('/copies/'))).toHaveLength(3);
+  for(const copy of created.creates.filter(e=>e.collection==='copies')) expect(state.store.get(`users/owner/copies/${copy.record.id}`)).toMatchObject({record:{...copy.record,possession:'received',revision:2,updatedAt:'2026-11-21T02:00:00Z'}});
+  const noCopies=created.creates.filter(e=>e.collection!=='copies');
+  for(const e of noCopies) if(e.collection==='transactions') expect(state.store.get(`users/owner/transactions/${e.record.id}`)).toMatchObject({record:e.record});
+});
