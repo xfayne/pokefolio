@@ -168,7 +168,7 @@ export const refundSchema = z.strictObject({
 });
 export type Refund = z.infer<typeof refundSchema>;
 export const shipmentSchema = z.strictObject({
-  ...metadata, trackingNumber: z.string().max(100).nullable(),
+  ...metadata, carrier: z.string().max(200).nullable().optional(), trackingNumber: z.string().max(100).nullable(),
   deliveredOn: evidenceSchema(dateSchema), notes: z.string().max(2000),
 });
 export type Shipment = z.infer<typeof shipmentSchema>;

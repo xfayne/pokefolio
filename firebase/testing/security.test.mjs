@@ -247,3 +247,43 @@ test('public binder policy permits only opt-in single-link reads of a strict pro
   });
  }finally{await env.cleanup();}
 });
+
+test('portfolio ownership, atomic audit revisions and immutable receipts', async t => {
+ const env=await environment('firestore.private.rules');
+ try {
+  await env.clearFirestore();
+  const db=env.authenticatedContext(alice).firestore();
+  const other=env.authenticatedContext(bob).firestore();
+  const anonymous=env.unauthenticatedContext().firestore();
+  const record={schemaVersion:1,id:'purchase-one',ownerUid:alice,revision:1,createdAt:'2026-11-21T00:00:00Z',updatedAt:'2026-11-21T00:00:00Z',kind:'purchase'};
+  const envelope=record=>({record,auditId:null,committedAt:serverTimestamp()});
+  const path=`users/${alice}/transactions/purchase-one`;
+  await t.test('only the owner can create/read/list',async()=>{
+   await assertFails(setDoc(doc(other,path),envelope(record)));
+   await assertFails(setDoc(doc(anonymous,path),envelope(record)));
+   await assertSucceeds(setDoc(doc(db,path),envelope(record)));
+   await assertSucceeds(getDocs(collection(db,`users/${alice}/transactions`)));
+   await assertFails(getDoc(doc(other,path)));
+   await assertFails(getDocs(collection(other,`users/${alice}/transactions`)));
+   await assertFails(setDoc(doc(db,`users/${alice}/transactions/foreign`),envelope({...record,id:'foreign',ownerUid:bob})));
+  });
+  const next={...record,revision:2,updatedAt:'2026-11-21T01:00:00Z'};
+  await t.test('updates need matching immutable audit and expected revision',async()=>{
+   await assertFails(setDoc(doc(db,path),envelope(next)));
+   const audit={schemaVersion:1,id:'audit-one',ownerUid:alice,actorUid:alice,revision:1,createdAt:next.updatedAt,updatedAt:next.updatedAt,recordId:record.id,before:record,after:next};
+   const batch=writeBatch(db);
+   batch.set(doc(db,`users/${alice}/revisions/audit-one`),envelope(audit));
+   batch.set(doc(db,path),{...envelope(next),auditId:'audit-one'});
+   await assertSucceeds(batch.commit());
+   await assertFails(setDoc(doc(db,`users/${alice}/revisions/audit-one`),envelope(audit)));
+   await assertFails(setDoc(doc(db,path),{...envelope(next),auditId:'audit-one'}));
+   await assertFails(deleteDoc(doc(db,path)));
+  });
+  await t.test('receipts cannot be changed or deleted',async()=>{
+   const receipt=doc(db,`users/${alice}/receipts/save-one`);
+   await assertSucceeds(setDoc(receipt,{fingerprint:'synthetic',committedAt:serverTimestamp()}));
+   await assertFails(setDoc(receipt,{fingerprint:'different',committedAt:serverTimestamp()}));
+   await assertFails(deleteDoc(receipt));
+  });
+ } finally {await env.cleanup();}
+});

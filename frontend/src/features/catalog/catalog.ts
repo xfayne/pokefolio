@@ -8,7 +8,7 @@ export const catalogCards: readonly InventoryCatalogCard[] = source.SETS.flatMap
   const total = set.id === 'basep' ? null : ({base5:82, neo3:64, neo4:105} as Record<string, number>)[set.id] ?? set.count;
   return names.filter(Boolean).map((name, index) => ({ id: `${set.id}-${index + 1}`, name, setName: set.name, number: total ? `${index + 1}/${total}` : String(index + 1), imageUrl: `https://images.pokemontcg.io/${set.id}/${index + 1}.png` }));
 }).concat([{ id: 'movie2000-ancient-mew', name: 'Ancient Mew', setName: 'Movie Promo 2000', number: '—', imageUrl: `${import.meta.env.BASE_URL}assets/ancient-mew.jpg` }]);
-export const catalogReference = (cardId: string): CatalogRef => ({ kind: 'identified', cardId, edition: 'unknown', language: { status: 'known', value: 'en', source: 'provider' }, finish: { status: 'unknown', reason: 'Not selected' } });
+export const catalogReference = (cardId: string): CatalogRef => ({ kind: 'identified', cardId, edition: 'unlimited', language: { status: 'known', value: 'en', source: 'provider' }, finish: { status: 'unknown', reason: 'Not selected' } });
 export function searchCatalog(query: string, selectedSets: string | readonly string[] = [], filters: {excludeEnergy?: boolean; excludeTrainers?: boolean; holoOnly?: boolean} = {}) {
   const sets = typeof selectedSets === 'string' ? selectedSets ? [selectedSets] : [] : selectedSets;
   const terms = query.toLocaleLowerCase().normalize('NFKC').trim().split(/\s+/).filter(Boolean);
@@ -36,3 +36,5 @@ export function catalogTraits(cardId: string): {kind:'Pokemon'|'Trainer'|'Energy
  const holo=reference.kind==='identified' && reference.finish.status==='known' && ['holo','shining','reverse'].includes(reference.finish.value);
  return {kind,holo};
 }
+
+export function purchaseCatalogReference(cardId: string): CatalogRef { const ref=catalogMarketReference(cardId); return ref.kind==='identified' ? {...ref,edition:'unlimited'} : ref; }

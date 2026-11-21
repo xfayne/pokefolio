@@ -25,3 +25,12 @@ it('works with no owned copies and defaults to LP without inferring ownership', 
   expect(screen.getByLabelText('Price condition')).toHaveValue('LP');
   expect(screen.getByText('22000')).toBeInTheDocument();
 });
+it('uses the selected edition only, without falling back to Unlimited prices', async () => {
+ const first = {...catalog,edition:'first-edition' as const};
+ render(<CardMarketPrice catalog={catalog} copies={[]} quotes={[...sampleQuotes,{catalog:first,condition:'LP',money:{currency:'USD',minor:99999},observedAt:'2026-11-21T00:00:00Z',source:'fixture'}]} currency="USD" money={money} />);
+ expect(screen.getByText('22000')).toBeInTheDocument();
+ await userEvent.click(screen.getByRole('checkbox',{name:'First Edition'}));
+ expect(screen.getByText('99999')).toBeInTheDocument();
+ await userEvent.selectOptions(screen.getByLabelText('Price condition'),'HP');
+ expect(screen.getByText('Unpriced')).toBeInTheDocument();
+});
