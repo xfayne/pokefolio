@@ -55,7 +55,7 @@ export function useDashboard(month:string){
  }
  const loading=!preview&&(account.loading||!!account.owner&&(audit.isPending||productQueries.some(q=>q.isPending)||market.loading||fx.loading));
  let result:ReturnType<typeof selectPerformance>|null=null,error:unknown=account.error;
- try {result=selectPerformance({owner:preview?demo.history.ownerUid:account.owner??'disconnected',records,catalog:catalogCards,prices:[...series.values()],fx:preview?sampleFx(today):fx.rows,currency,asOf,month});}
+ try {if(!loading)result=selectPerformance({owner:preview?demo.history.ownerUid:account.owner??'disconnected',records,catalog:catalogCards,prices:[...series.values()],fx:preview?sampleFx(today):fx.rows,currency,asOf,month});}
  catch(e){error=e;}
  return {result,currency,preview,owner:account.owner,loading,error,
   priceFailure:!preview&&(market.failed||productQueries.some(q=>q.isError)||market.results.some(r=>r.cache!=='fresh')),
