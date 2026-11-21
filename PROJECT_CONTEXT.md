@@ -451,3 +451,14 @@ a failed parcel no longer raises a misleading error on unrelated purchases.
 Purchase Details renders plain Tracking error text inside the affected Shipment
 status area, without the top-page alert. Header action siblings now have distinct
 React keys to prevent duplicate Received controls during reconciliation.
+
+## Pending purchase additions and receipt edit lock — 2026-11-21
+
+Owner requested that Edit remains visible but disabled whenever manual receipt is
+unavailable, including after receipt and while saving receipt. Direct edit routes
+and the purchase command reject non-pending/disposed purchases. Pending purchases
+can append copies through the existing catalog picker; complete costs/totals and
+equal shipping shares are recalculated, existing copy IDs retained, and new copies
+join the same optional shipment. Removal remains unchanged. The atomic adapter
+validates the combined created/updated purchase, lines and copy allocation before
+writing new copies, avoiding orphan records or unverified cost allocations.

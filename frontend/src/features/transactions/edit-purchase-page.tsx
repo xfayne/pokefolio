@@ -1,3 +1,7 @@
+import { CatalogSearch } from '@/features/catalog/catalog-search';
+import { initialCatalogSearch } from '@/features/catalog/search-state';
+import { UtilitySheet } from '@/components/ui/utility-sheet';
+import { purchaseCatalogReference } from '@/features/catalog/catalog';
 import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +23,9 @@ export function EditPurchasePage() {
   } catch {
     /* Invalid or unavailable purchase. */
   }
-  return draft ? (
+  const copies = account.records.filter(e => e.collection === 'copies' && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === transactionId);
+  const editable = copies.length > 0 && copies.every(e => e.collection === 'copies' && e.record.possession === 'pending' && e.record.disposition === 'held');
+  return draft && editable ? (
     <Editor key={`${account.owner}-${transactionId}`} initial={draft} account={account} />
   ) : (
     <EmptyState
@@ -36,6 +42,10 @@ function Editor({
   account: ReturnType<typeof usePortfolio>;
 }) {
   const [draft, setDraft] = useState(initial);
+  const [picking,setPicking] = useState(false);
+  const [query,setQuery] = useState('');
+  const [catalogUi,setCatalogUi] = useState(initialCatalogSearch);
+  const {t} = useTranslation();
   // Freeze the revision observed when editing began; query refreshes must not rebase a stale draft.
   const [baseline] = useState(account.records);
   const navigate = useNavigate();
@@ -43,7 +53,8 @@ function Editor({
     null,
   );
   return (
-    <NewPurchaseForm
+    <><NewPurchaseForm
+      onAddCard={() => setPicking(true)}
       editing
       draft={draft}
       catalog={catalogCards}
@@ -65,6 +76,6 @@ function Editor({
           replace: true,
         });
       }}
-    />
+    />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)} contentMode="contained"><CatalogSearch state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={card => {setDraft({...draft,cards:[...draft.cards,{id:`copy-${crypto.randomUUID()}`,catalog:purchaseCatalogReference(card.id),condition:'unknown',amount:''}]});setPicking(false);}} /></UtilitySheet>}</>
   );
 }

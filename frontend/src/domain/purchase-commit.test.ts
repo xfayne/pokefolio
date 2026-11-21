@@ -58,21 +58,7 @@ it('rejects foreign owners and preserves per-copy possession during edits', () =
       ? { ...e, record: { ...e.record, possession: 'received' as const } }
       : e,
   );
-  const edited = purchaseCommit(
-    'owner',
-    draft,
-    '2026-11-21T09:00:00Z',
-    records,
-  );
-  expect(
-    edited.updates
-      .filter((e) => e.after.collection === 'copies')
-      .every(
-        (e) =>
-          e.after.collection === 'copies' &&
-          e.after.record.possession === 'received',
-      ),
-  ).toBe(true);
+  expect(() => purchaseCommit('owner', draft, '2026-11-21T09:00:00Z', records)).toThrow('received');
   expect(() => prepareCommit('foreign', initial, 450)).toThrow();
 });
 it('edits tracking atomically and supports adding and clearing tracking evidence',()=>{
