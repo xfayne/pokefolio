@@ -25,3 +25,10 @@ it('reports individual registration failures without inventing progress',async()
   expect(await registerAndTrack('owner',[parcel('one')])).toEqual([{number:'TEST-ONE',error:{code:1,message:'Quota exceeded'}}]);
   expect(mocks.post).toHaveBeenCalledTimes(1);
 });
+
+it('isolates a registration transport failure from another parcel',async()=>{
+  mocks.post.mockRejectedValueOnce(Error('Rejected parcel')).mockResolvedValueOnce({data:{shipments:[{number:'TEST-TWO',registered:true}]}}).mockResolvedValueOnce({data:{shipments:[{number:'TEST-TWO',status:'InTransit',events:[]}]}});
+  const results=await registerAndTrack('owner',[parcel('one'),parcel('two')]);
+  expect(results.find(r=>r.number==='TEST-ONE')?.error?.message).toBe('Rejected parcel');
+  expect(results.find(r=>r.number==='TEST-TWO')?.status).toBe('InTransit');
+});

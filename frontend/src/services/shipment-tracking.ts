@@ -31,9 +31,11 @@ export async function registerAndTrack(owner: string, shipments: readonly Shipme
   for (const shipment of shipments) {
     if (shipment.tracking?.registered) continue;
     const number = shipment.trackingNumber!.trim().toUpperCase();
+    try {
     const response = responseSchema.parse((await client.post('/api/shipments/register', { number, carrier: providerCarrier(shipment) })).data);
     const registered = response.shipments.find(s => s.number === number);
     if (!registered?.registered) results.push({number,error:registered?.error ?? {code:0,message:'Could not register tracking'}});
+    } catch (error) { results.push({number,error:{code:0,message:error instanceof Error ? error.message : 'Tracking unavailable'}}); }
   }
   const trackable = shipments.filter(s => !results.some(r => r.number === s.trackingNumber!.trim().toUpperCase()));
   for (let offset = 0; offset < trackable.length; offset += 12) {
