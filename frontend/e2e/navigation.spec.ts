@@ -60,8 +60,9 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
     expect(corner.background).toContain('radial-gradient(');
     expect(corner.pointerEvents).toBe('none');
   }
-  expect(corners[0]!.background).toContain('right');
-  expect(corners[1]!.background).toContain('left');
+  // Chromium normalizes "bottom right/left" into percentage coordinates.
+  expect(corners[0]!.background).toContain('at 100% 100%');
+  expect(corners[1]!.background).toContain('at 0% 100%');
   await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   await expect(page.locator('header')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
