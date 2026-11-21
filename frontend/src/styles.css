@@ -56,11 +56,30 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   background-color: var(--adventure-navy);
   background-image: radial-gradient(ellipse at 20% 0%, #0d395780, transparent 70%), linear-gradient(120deg, #03283f, #061b39);
 }
-/* Reference layout: keep the header edge square; the light content ends in
-   rounded bottom corners against the dark shell above the bottom navigation. */
-.app-shell > header { border-radius: 0; }
+/* Inverted *bottom* header corners, as in the approved History mock.
+   The light panel curves inward at its TOP, so the navy header extends outward
+   into both corner cutouts. Sticky pseudo-elements preserve those cutouts while
+   the document scrolls beneath the header (the main panel itself scrolls). */
+.app-shell > header { --header-inverted-radius: 1.25rem; border-radius: 0; }
+.app-shell > header::before,
+.app-shell > header::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: var(--header-inverted-radius);
+  height: var(--header-inverted-radius);
+  pointer-events: none;
+}
+.app-shell > header::before {
+  left: 0;
+  background: radial-gradient(circle at bottom right, transparent calc(var(--header-inverted-radius) - 1px), #03283f var(--header-inverted-radius));
+}
+.app-shell > header::after {
+  right: 0;
+  background: radial-gradient(circle at bottom left, transparent calc(var(--header-inverted-radius) - 1px), #061b39 var(--header-inverted-radius));
+}
 .brand-title { position: relative; border-inline-start: 2px solid #1683f8; padding-inline-start: 0.75rem; }
-.app-content { position: relative; min-height: calc(100dvh - 4rem - env(safe-area-inset-top)); background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); border-radius: 0 0 1.25rem 1.25rem; }
+.app-content { position: relative; min-height: calc(100dvh - 4rem - env(safe-area-inset-top)); background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); border-radius: 1.25rem 1.25rem 0 0; }
 .section-tabs { padding: 0; }
 .section-tabs a { min-height: 2rem; font-size: 1rem; font-weight: var(--font-weight-bold); }
 .section-tabs { box-shadow: inset 0 1px 4px #3b82f60a; }

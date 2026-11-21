@@ -34,10 +34,13 @@ and an uncropped image. Both detail and zoom request high-resolution artwork wit
 standard-resolution fallback. During the shared Vintage Binder-style shimmer,
 **all thumbnails and detail frames have transparent borders and no frame shadow**;
 the yellow frame and detail shadow appear only with a successfully loaded image.
-Keep a 220ms reveal and accessible error fallback. Follow the owner's reference
-screenshot: the sticky application header has **square corners**; the light main
-content has **rounded bottom corners only**, revealing the dark shell background
-immediately above the rounded top corners of the bottom navigation.
+Keep a 220ms reveal and accessible error fallback. The owner's History reference
+shows **inverted bottom header corners**: the header's navy color curves OUTWARD
+into the left and right cutouts at the top of the light content panel.
+Implement using sticky header corner overlays plus **rounded top corners of the
+light main content**, and keep the main content bottom corners square. Do not
+substitute ordinary bottom-left/right border-radius on the header; that produces
+the opposite shape. The corner overlays must remain in view on scroll.
 Keep all form text at least 16px to prevent iPhone input zoom. Preserve RTL logical
 spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 
