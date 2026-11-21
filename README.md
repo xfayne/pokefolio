@@ -168,3 +168,13 @@ The header Received action manually receives the same physical copies, with or
 without tracking. It stays visible and disabled after receipt. Provider delivery
 never confirms receipt automatically. Costs, Binder and Wishlist are untouched.
 See [receipt and tracking contracts](docs/PURCHASE_TRACKING.md).
+
+## Card condition analyzer (#16)
+
+Analyze now has the approved Classic Red Pokédex frame, tactile controls, scoped
+pixel typography and request-driven lens/indicator animations. Upload/capture up
+to eight photos or load an eBay listing, then explicitly start analysis. Results
+are unified in one numbered photo gallery with linked defect markers, confidence,
+grade distribution and limitations. The existing Worker grader is reused;
+eBay evidence caches are owner-scoped, uploaded photos remain in memory, and
+save-only retry does not call AI again. See [analyzer contracts](docs/ANALYZER.md).

@@ -494,3 +494,19 @@ See `docs/MARKET_PRICE_CACHE.md` for contracts, bounded retention, provider term
 local/runtime tests and release configuration. Consult PR/CI/deployment receipts
 for activation status; this context entry is implementation scope, not a claim of
 completed rollout. No production/legacy data, rules or migration were changed.
+
+## Issue #16 — React analyzer, 2026-11-22
+
+Owner approved the actual Classic Red SVG frame prototype, unified output without
+Front/Back result sections, pixel headings/status and analyzer-specific tactile
+Pokédex controls. `features/analyze/` adapts the existing upload/eBay endpoints
+and private condition-analysis cache to React with strict response validation,
+manual-only requests, preserved 1-based evidence geometry, numbered gallery/zoom,
+cache reuse, explicit reanalysis, save-only retry and owner/unmount cancellation.
+The existing rubric/model, Worker, rules and legacy production remain unchanged.
+Local uploads are reduced and held in memory only, with object URL cleanup.
+The frame retains lens/end-cap proportions while sidewalls fit variable content;
+request lights respect reduced motion. Pixelify Sans is self-hosted/scoped, with
+existing Hebrew/body fonts for legibility. See docs/ANALYZER.md and PR/CI receipts
+for validation/deployment status. This does not complete other catalog/Wishlist
+acceptance items in #16 or change collection/transaction data.

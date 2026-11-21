@@ -1,3 +1,4 @@
+import { AnalyzePage } from '@/features/analyze/analyze-page';
 import {StagingYearLoader} from '@/features/staging/year-loader';
 import { PurchaseReceiptAction } from '@/features/transactions/purchase-receipt-action';
 import { useTrackingSync } from '@/hooks/use-tracking-sync';
@@ -70,7 +71,7 @@ function SectionPage({ name }: { name: Destination }) {
         <LuPlus aria-hidden className="size-5" />
       </button>
     </div> : tabNavigation)}
-    {name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
