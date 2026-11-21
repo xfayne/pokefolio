@@ -69,7 +69,7 @@ export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
         <h2 id={`${id}-${month.month ?? 'undated'}`}>{month.month ? date(month.month, true) : t('transactionHistory.undated')}</h2>
         <div className="history-month-totals" title={t('transactionHistory.monthTotal')}>
           <span className="sr-only">{t('transactionHistory.monthTotal')}: </span>
-          {display ? <bdi>{monthlyTotal(month)===null?'—':new Intl.NumberFormat(locale,{style:'currency',currency:display.currency,signDisplay:'exceptZero'}).format(monthlyTotal(month)!/100)}</bdi> : month.totals.map(total => <bdi key={total.currency}>{money(total.minor, total.currency, true)}</bdi>)}
+          {display ? <bdi>{monthlyTotal(month)===null?'—':new Intl.NumberFormat(locale,{style:'currency',currency:display.currency,signDisplay:'exceptZero'}).format(monthlyTotal(month)!/100).replace('-', '−')}</bdi> : month.totals.map(total => <bdi key={total.currency}>{money(total.minor, total.currency, true)}</bdi>)}
           {month.missingCount > 0 && <span className="text-xs text-amber-800">{t('transactionHistory.missing')}</span>}
         </div>
       </div>
