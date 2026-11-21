@@ -9,6 +9,7 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.getByRole('button',{name:'Photos',exact:true}).click();
  await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABgAAAAgCAIAAACHPC9vAAAAJ0lEQVR4nGO8e2kxAzUAE1VMGTVo1KBRg0YNGjVo1KBRg0YNGnCDAFZAApJq8lFgAAAAAElFTkSuQmCC','base64')});
  await expect(page.getByRole('button',{name:'Inspect photo 1'})).toBeVisible();
+ await expect(page.locator('.pokedex-bottom')).toHaveCSS('overflow','hidden');
  await page.screenshot({path:'test-results/analyzer-en.png',fullPage:true});
  await page.getByRole('button',{name:'Inspect photo 1'}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
  expect((await new AxeBuilder({page}).include('.pokedex-frame').analyze()).violations).toEqual([]);
@@ -19,5 +20,6 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  // Simulate only the visual state to verify CSS; no request is triggered.
  await page.locator('.pokedex-frame').evaluate(el=>el.setAttribute('data-status','busy'));
  expect(await page.locator('.pokedex-top .pokedex-lens').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ await page.locator('#main-content').focus();await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:'test-results/analyzer-he-320.png',fullPage:true});expect(failures).toEqual([]);
 });

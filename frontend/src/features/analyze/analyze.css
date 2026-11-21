@@ -24,3 +24,6 @@
 .pokedex-display button:disabled{cursor:default}
 /* Keep removal in its own touch row: a 44px overlay would intercept thumbnail taps. */
 .analyzer-remove{position:static;width:100%;min-height:44px;margin-top:2px}
+/* Each SVG view must clip its unused artwork, especially the bottom end cap. */
+.pokedex-top,.pokedex-middle,.pokedex-bottom{overflow:hidden}
+.analyzer-findings button>div{min-width:0;overflow-wrap:anywhere}
