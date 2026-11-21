@@ -155,14 +155,16 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .transactions-nav-sticky {
   position: sticky; top: calc(4rem + env(safe-area-inset-top)); z-index: 18;
   display: flex; align-items: center; gap: 0.375rem;
-  height: 2.75rem; padding-block: 0.25rem; background: #e5f1ff;
+  height: 2.75rem; padding: 0.25rem 0.375rem;
+  border-radius: 0.875rem; background: #e9f3ff;
 }
 .transactions-add { width: var(--compact-control-height); height: var(--compact-control-height); box-shadow: 0 2px 4px #0064ff20; }
 .transaction-history { display: flex; flex-direction: column; gap: 0.875rem; padding-top: 0.5rem; }
 .history-tools {
   position: sticky; top: calc(6.75rem + env(safe-area-inset-top)); z-index: 17;
   display: flex; flex-direction: column; gap: 0.5rem;
-  padding: 0.25rem 0; background: #e5f1ff;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.875rem; background: #e9f3ff;
 }
 .history-search-row { display: grid; grid-template-columns: minmax(0,1fr) 6.25rem var(--compact-control-height); gap: 0.375rem; align-items: center; }
 .history-search-row > div { min-width: 0; }

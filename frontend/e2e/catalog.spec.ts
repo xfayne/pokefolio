@@ -146,3 +146,22 @@ test('First Edition checkbox selects exact printing prices without a fallback',a
  await page.getByLabel('Price condition').selectOption('NM');
  await expect(page.getByText('Unpriced',{exact:true})).toBeVisible();
 });
+
+test('returning from catalog card details restores the exact scroll offset', async ({ page }) => {
+  await page.goto('./#/search');
+  const results = page.locator('.catalog-scroll-region');
+  await expect(results.locator('.catalog-result')).toHaveCount(60);
+  await results.evaluate(el => { el.scrollTop = 850; });
+  await expect.poll(() => results.evaluate(el => el.scrollTop)).toBeGreaterThan(600);
+  const selected = results.locator('.catalog-result').nth(14);
+  await selected.scrollIntoViewIfNeeded();
+  const before = await results.evaluate(el => el.scrollTop);
+  await selected.click();
+  await page.getByRole('button', { name: 'Back to card', exact: true }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search cards', exact: true })).toBeVisible();
+  await expect.poll(() => results.evaluate(el => el.scrollTop)).toBeGreaterThan(600);
+  expect(Math.abs((await results.evaluate(el => el.scrollTop)) - before)).toBeLessThanOrEqual(2);
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect.poll(() => page.locator('.catalog-scroll-region').evaluate(el => el.scrollTop)).toBeGreaterThanOrEqual(before - 2);
+});
