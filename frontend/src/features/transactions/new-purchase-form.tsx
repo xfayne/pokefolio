@@ -39,7 +39,7 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, e
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy.current || !onSave) return;
     setSubmitted(true); setFailed(false);
-    if (preview.issues.length) { requestAnimationFrame(() => document.getElementById(`${id}-${preview.issues[0]!.field}`)?.focus()); return; }
+    if (preview.issues.length) { document.getElementById(`${id}-${preview.issues[0]!.field}`)?.focus(); return; }
     busy.current = true; setSaving(true);
     try { await onSave(); } catch { setFailed(true); } finally { busy.current = false; setSaving(false); }
   }
