@@ -141,6 +141,13 @@ service cloud.firestore {
           && request.resource.data.fingerprint is string && request.resource.data.fingerprint.size() <= 700000
           && request.resource.data.committedAt == request.time;
       }
+      match /preferences/{id} {
+        allow read: if isOwner(uid) && id == 'display';
+        allow create, update: if isOwner(uid) && id == 'display'
+          && request.resource.data.keys().hasOnly(['currency','updatedAt'])
+          && request.resource.data.currency in ['USD','ILS','EUR','GBP']
+          && request.resource.data.updatedAt == request.time;
+      }
       match /sharing/{documentId} {
         allow read: if isOwner(uid) && documentId == 'settings';
         allow create, update: if isOwner(uid) && documentId == 'settings'

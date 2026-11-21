@@ -14,7 +14,7 @@ export type HistoryData = Readonly<{
   inTransit: readonly Readonly<{ ownerUid: string; transactionId: string }>[];
 }>;
 export type HistoryRow = Readonly<{
-  id: string; kind: 'purchase' | 'sale'; date: string | null; currency: Currency | null;
+  createdAt?: string; id: string; kind: 'purchase' | 'sale'; date: string | null; currency: Currency | null;
   minor: number | null; source: string; sourceKind: 'manual' | 'ebay' | 'other';
   cards: readonly InventoryCatalogCard[]; copyCount: number; status: HistoryStatus; search: string;
 }>;
@@ -73,11 +73,11 @@ export function selectHistory(data: HistoryData): readonly HistoryRow[] {
       : linked.every(c => c.possession === 'received') ? 'received'
       : linked.some(c => c.possession === 'received') ? 'partial'
       : inTransit.has(transaction.id) ? 'inTransit' : 'pending';
-    return { id: transaction.id, kind: transaction.kind, date, currency, minor: total?.minor ?? null,
+    return { createdAt: transaction.createdAt, id: transaction.id, kind: transaction.kind, date, currency, minor: total?.minor ?? null,
       source, sourceKind, cards, copyCount: linked.length, status,
       search: [transaction.id, source, sourceKind, transaction.notes, imported ? transaction.sourceParcelId : transaction.source.itemReference,
         ...cards.map(c => `${c.name} ${c.setName} ${c.number}`), ...linked.flatMap(c => c.catalog.kind === 'unidentified' ? [c.catalog.description] : [])].join(' ').toLowerCase() };
-  }).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.id.localeCompare(b.id));
+  }).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || a.id.localeCompare(b.id));
 }
 
 export function groupHistory(rows: readonly HistoryRow[], filters: HistoryFilters): readonly HistoryMonth[] {

@@ -11,7 +11,7 @@ export const inventoryTranslations = {
     copy: 'Copy {{number}}', edit: 'Edit copy', condition: 'Condition', edition: 'Edition', unlimited: 'Unlimited', 'first-edition': '1st Edition', notes: 'Notes', paid: 'Card price', basis: 'Total cost', market: 'Market', priced: 'priced', unpriced: 'Unpriced', estimated: 'Estimated', unallocated: 'Unallocated lot cost',
     purchase: 'View purchase', purchaseRef: 'Purchase reference', transactionId: 'Transaction ID', lineId: 'Purchase line', acquired: 'Acquired', 'opening-inventory': 'Opening inventory', gift: 'Gift', adjustment: 'Adjustment',
     purchaseNext: 'The full transaction screen is being connected in the next update.', ownCopies: 'Your copies', save: 'Save copy', saving: 'Saving…', cancel: 'Cancel', saved: 'Copy updated', saveFailed: 'Could not save this copy. Your changes are still here. Try again.', back: 'Back to card', noCatalog: 'Catalog details unavailable', unidentified: 'Unidentified card',
-    samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Original purchase currency; shipping shown in total cost.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
+    samplePrices: 'Illustrative prices · USD', source: 'Acquisition', nativePrice: 'Display currency; original purchase costs are preserved.', unavailable: 'Unknown cost', noteLimit: 'Up to 2,000 characters',
   },
   he: {
     demo: 'הדגמה', listCounts: '{{cards}} קלפים · {{copies}} עותקים', owned: '{{count}} באוסף', cost: 'עלות', paidShort: 'שולם', holo: 'הולו', copyCondition: 'עותק / מצב', marketValue: 'שווי שוק',
@@ -25,6 +25,6 @@ export const inventoryTranslations = {
     copy: 'עותק {{number}}', edit: 'עריכת עותק', condition: 'מצב', edition: 'מהדורה', unlimited: 'ללא הגבלה', 'first-edition': 'מהדורה ראשונה', notes: 'הערות', paid: 'מחיר הקלף', basis: 'עלות כוללת', market: 'מחיר שוק', priced: 'עם מחיר', unpriced: 'ללא מחיר', estimated: 'משוער', unallocated: 'עלות לוט שלא חולקה',
     purchase: 'הצגת רכישה', purchaseRef: 'קישור לרכישה', transactionId: 'מזהה עסקה', lineId: 'שורת רכישה', acquired: 'תאריך קבלה לאוסף', 'opening-inventory': 'מלאי פתיחה', gift: 'מתנה', adjustment: 'התאמה',
     purchaseNext: 'מסך העסקה המלא יחובר בעדכון הבא.', ownCopies: 'העותקים שלך', save: 'שמירת עותק', saving: 'שומרת…', cancel: 'ביטול', saved: 'העותק עודכן', saveFailed: 'שמירת העותק נכשלה. השינויים עדיין כאן, אפשר לנסות שוב.', back: 'חזרה לקלף', noCatalog: 'פרטי הקטלוג אינם זמינים', unidentified: 'קלף לא מזוהה',
-    samplePrices: 'מחירי הדגמה · USD', source: 'מקור רכישה', nativePrice: 'מטבע הרכישה המקורי; המשלוח מופיע בעלות הכוללת.', unavailable: 'עלות לא ידועה', noteLimit: 'עד 2,000 תווים',
+    samplePrices: 'מחירי הדגמה · USD', source: 'מקור רכישה', nativePrice: 'מטבע התצוגה; עלויות הרכישה המקוריות נשמרות.', unavailable: 'עלות לא ידועה', noteLimit: 'עד 2,000 תווים',
   },
 };

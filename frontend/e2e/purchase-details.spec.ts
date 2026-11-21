@@ -16,7 +16,7 @@ test('purchase details match the approved mock and preserve exact copy costs and
   await expect(nav).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Transactions', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'eBay · cardcorner' })).toBeVisible();
-  await expect(page.getByText('Shipping: $4.00 per copy')).toBeVisible();
+  await expect(page.getByText('Shipping: $4.00 per copy')).toHaveCount(0);
   await expect(page.getByText('$142.00', { exact: true })).toBeVisible();
   await expect(page.locator('.purchase-card-name').first()).toHaveCSS('font-weight', '700');
   await expect(page.locator('.purchase-total')).toHaveCSS('font-weight', '700');

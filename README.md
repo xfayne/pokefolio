@@ -137,3 +137,9 @@ checkboxes select copy editions and exact printing prices. Listing URL/order
 references are optional. No legacy import, destructive migration or production
 cutover is included. See [persistence and staging acceptance](docs/PURCHASE_PERSISTENCE.md)
 for the verified live journey, paths, safeguards and atomic edit limits.
+
+Display currency is selected in Settings and saved per owner. Read-only market
+prices, copy costs, purchase details, recent purchases and History share the same
+reference-rate conversion; History has one converted total per month. Purchase/sale
+forms always retain their original currency. Reference FX does not rewrite costs,
+payments or historical analytics. Missing conversions are shown as unavailable.

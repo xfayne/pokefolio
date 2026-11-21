@@ -43,3 +43,9 @@ it('rejects foreign/duplicate records and invalid sale references before present
   expect(() => selectHistory({ ...sampleHistory, saleLines: sampleHistory.saleLines.map(l => ({ ...l, copyId: 'absent' })) })).toThrow('Missing sale copy');
   expect(() => selectHistory({ ...sampleHistory, inTransit: [{ ownerUid: 'foreign', transactionId: 'sample-nov-19' }] })).toThrow('Foreign tracking evidence');
 });
+it('orders purchases with the same purchase date by newest creation first',()=>{
+ const purchase=sampleHistory.transactions.find(t=>t.kind==='purchase' && !('origin' in t))!;
+ const older={...purchase,id:'aaa-older',createdAt:'2026-11-20T01:00:00Z',updatedAt:'2026-11-20T01:00:00Z'};
+ const newer={...purchase,id:'zzz-newer',createdAt:'2026-11-20T02:00:00Z',updatedAt:'2026-11-20T02:00:00Z'};
+ expect(selectHistory({...sampleHistory,transactions:[older,newer],copies:[],saleLines:[],inTransit:[]}).map(r=>r.id)).toEqual(['zzz-newer','aaa-older']);
+});

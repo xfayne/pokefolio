@@ -1,3 +1,4 @@
+import {useDisplayCurrency,useDisplayMoney} from '@/services/display-currency';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronRight, LuFilter, LuPlus, LuShoppingCart, LuTag } from 'react-icons/lu';
@@ -24,8 +25,10 @@ export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
   const id = useId();
   const rows = useMemo(() => selectHistory(data), [data]);
   const months = useMemo(() => groupHistory(rows, filters), [rows, filters]);
+  const display=useDisplayCurrency(); const formatDisplay=useDisplayMoney();
+  const monthlyTotal=(month:ReturnType<typeof groupHistory>[number])=>{const values=month.rows.map(r=>r.minor!==null&&r.currency?display!.convert(r.minor,r.currency):null);return values.some(v=>v===null)?null:values.reduce<number>((sum,v,i)=>sum+v!*(month.rows[i]!.kind==='sale'?1:-1),0);};
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
-  const money = (minor: number, currency: NonNullable<HistoryRow['currency']>, signed = false) => new Intl.NumberFormat(locale, {
+  const money = (minor: number, currency: NonNullable<HistoryRow['currency']>, signed = false) => display ? formatDisplay({minor,currency}) : new Intl.NumberFormat(locale, {
     style: 'currency', currency, ...(signed ? { signDisplay: 'exceptZero' as const } : {}),
   }).format(minor / 100).replace('-', '−');
   const date = (value: string, monthOnly = false) => new Intl.DateTimeFormat(locale, {
@@ -66,7 +69,7 @@ export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
         <h2 id={`${id}-${month.month ?? 'undated'}`}>{month.month ? date(month.month, true) : t('transactionHistory.undated')}</h2>
         <div className="history-month-totals" title={t('transactionHistory.monthTotal')}>
           <span className="sr-only">{t('transactionHistory.monthTotal')}: </span>
-          {month.totals.map(total => <bdi key={total.currency}>{money(total.minor, total.currency, true)}</bdi>)}
+          {display ? <bdi>{monthlyTotal(month)===null?'—':new Intl.NumberFormat(locale,{style:'currency',currency:display.currency,signDisplay:'exceptZero'}).format(monthlyTotal(month)!/100)}</bdi> : month.totals.map(total => <bdi key={total.currency}>{money(total.minor, total.currency, true)}</bdi>)}
           {month.missingCount > 0 && <span className="text-xs text-amber-800">{t('transactionHistory.missing')}</span>}
         </div>
       </div>

@@ -1,19 +1,20 @@
+import {useDisplayMoney} from '@/services/display-currency';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronRight, LuCopy, LuShoppingCart } from 'react-icons/lu';
 import { Card } from '@/components/ui/surfaces';
 import { PokemonArt } from '@/components/ui/pokemon-art';
-import type { CardCopy, Cost, Money } from '@/domain/schema';
+import type { CardCopy, Cost } from '@/domain/schema';
 import type { PurchaseDetailsView, PurchaseShipment } from '@/domain/purchase-details';
 import { TransactionStatus } from './transaction-status';
 
 export function PurchaseDetails({ view, onInspect }: { view: PurchaseDetailsView; onInspect: (copy: CardCopy) => void }) {
   const { t, i18n } = useTranslation();
   const id = useId();
-  const { transaction, row, copies, shippingRange, shipments } = view;
+  const { transaction, row, copies, shipments } = view;
   const imported = 'origin' in transaction;
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
-  const money = (m: Money) => new Intl.NumberFormat(locale, { style: 'currency', currency: m.currency }).format(m.minor / 100);
+  const money = useDisplayMoney();
   const cost = (c: Cost) => c.status === 'exact' ? money(c.value) : c.status === 'estimated' ? `${money(c.value)} · ${t('purchaseDetails.estimated')}` : t(`purchaseDetails.${c.status === 'unallocated' ? 'unallocated' : 'unknownCost'}`);
   const amount = (value: typeof transaction.shipping) => value.status === 'known' ? money(value.value) : t('purchaseDetails.unknownCost');
   const source = imported ? t('purchaseDetails.legacyImport') : [t(`transactionHistory.${row.sourceKind}`), row.source].filter((s, index, all) => s && all.indexOf(s) === index && !(row.sourceKind === 'manual' && index === 0 && row.source)).join(' · ');
@@ -48,11 +49,6 @@ export function PurchaseDetails({ view, onInspect }: { view: PurchaseDetailsView
       <dl>{([['cards', transaction.subtotal], ['shipping', transaction.shipping], ['taxes', transaction.taxes], ['fees', transaction.fees]] as const).filter(([key, value]) => key === 'cards' || key === 'shipping' || value.status === 'unknown' || value.value.minor !== 0).map(([key, value]) => <div key={key}><dt>{t(`purchaseDetails.${key}`)}</dt><dd><bdi>{amount(value)}</bdi></dd></div>)}
         <div className="purchase-total"><dt>{t(imported ? 'purchaseDetails.recordedTotal' : transaction.settlement === 'paid' ? 'purchaseDetails.totalPaid' : 'transactionHistory.total')}</dt><dd><bdi>{row.currency && row.minor !== null ? money({ currency: row.currency, minor: row.minor }) : t('purchaseDetails.unknownCost')}</bdi></dd></div>
       </dl>
-      <p className="purchase-shipping-note">{shippingRange ? shippingRange.min === shippingRange.max
-        ? t('purchaseDetails.perCopy', { amount: money({ currency: shippingRange.currency, minor: shippingRange.min }) })
-        : t('purchaseDetails.roundedShipping', { min: money({ currency: shippingRange.currency, minor: shippingRange.min }), max: money({ currency: shippingRange.currency, minor: shippingRange.max }) })
-        : t('purchaseDetails.allocationUnknown')}</p>
-      {transaction.settlement !== 'paid' && <p className="text-xs text-slate-600">{t(`purchaseDetails.${transaction.settlement === 'partial' ? 'partialPayment' : transaction.settlement === 'unpaid' ? 'unpaid' : 'settlementUnknown'}`)}</p>}
       {view.cardCostMismatch && <p role="alert" className="text-sm text-amber-800">{t('purchaseDetails.costMismatch')}</p>}
     </Card>
     {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}

@@ -1,3 +1,4 @@
+import {useDisplayMoney} from '@/services/display-currency';
 import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronRight, LuPencil, LuArrowLeft, LuFilter, LuZoomIn, LuHeart, LuTag, LuPlus, LuSparkles, LuLayers } from 'react-icons/lu';
@@ -29,7 +30,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const [notice, setNotice] = useState('');
   const id = useId();
   const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
-  const money = (m: Money) => new Intl.NumberFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', { style: 'currency', currency: m.currency }).format(m.minor / 100);
+  const money = useDisplayMoney();
   const cost = (v: CopyView['paid']) => v.status === 'exact' ? money(v.value) : v.status === 'estimated' ? `${money(v.value)} · ${t('inventory.estimated')}` : t(`inventory.${v.status === 'unallocated' ? 'unallocated' : 'unavailable'}`);
   const metric = (v: CopyView['market']) => v.status === 'unavailable' ? t(pricesLoading ? 'loading' : 'inventory.unpriced') : money(v);
   const title = (g: InventoryGroup) => g.card?.name ?? (g.copies[0]?.copy.catalog.kind === 'unidentified' ? g.copies[0].copy.catalog.description : g.key);

@@ -1,9 +1,11 @@
+import {useDisplayMoney} from '@/services/display-currency';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { Card } from '@/components/ui/surfaces';
 import { PortfolioStatus } from '@/features/portfolio-status';
 export function RecentPurchases() {
+  const money=useDisplayMoney();
   const account = usePortfolio();
   const navigate = useNavigate();
   const { i18n } = useTranslation();
@@ -38,10 +40,7 @@ export function RecentPurchases() {
               </span>
               <bdi>
                 {p.kind === 'purchase' && !('origin' in p)
-                  ? new Intl.NumberFormat(i18n.language, {
-                      style: 'currency',
-                      currency: p.currency,
-                    }).format(p.payable.minor / 100)
+                  ? money(p.payable)
                   : ''}
               </bdi>
             </button>

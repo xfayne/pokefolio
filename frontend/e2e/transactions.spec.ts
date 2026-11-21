@@ -64,3 +64,16 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await expect(page.getByRole('listitem')).toHaveCount(0);
   expect(writes).toEqual([]);
 });
+
+test('one saved display currency converts monthly totals while purchase entry keeps its currency',async({page})=>{
+ await page.route('https://api.frankfurter.dev/**',route=>route.fulfill({json:[{base:'USD',quote:'EUR',rate:0.8,date:'2026-11-20'},{base:'USD',quote:'GBP',rate:0.5,date:'2026-11-20'},{base:'USD',quote:'ILS',rate:4,date:'2026-11-20'}]}));
+ await page.goto('./#/settings');
+ await page.getByRole('combobox',{name:'Display currency'}).selectOption('ILS');
+ await page.reload();await expect(page.getByRole('combobox',{name:'Display currency'})).toHaveValue('ILS');
+ await page.goto('./#/transactions/history?transactions=sample');
+ await expect(page.locator('.history-month-totals').first()).toContainText('₪');
+ for(const heading of await page.locator('.history-month-totals').all()) await expect(heading.locator('bdi')).toHaveCount(1);
+ await page.goto('./#/transactions/new?transactions=sample');
+ await expect(page.getByRole('combobox',{name:'Currency',exact:true})).toHaveValue('USD');
+ await expect(page.getByRole('textbox',{name:'Card cost 1',exact:true})).toHaveValue('52.00');
+});

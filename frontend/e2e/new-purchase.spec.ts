@@ -51,7 +51,7 @@ test('new purchase follows the mock and saves only pending demo copies with reco
   await expect(page.getByRole('heading', { name: 'Purchase details', exact: true })).toBeVisible();
   await expect(page.getByText('$140.00', { exact: true })).toBeVisible();
   await expect(page.getByText('Pending', { exact: true })).toBeVisible();
-  await expect(page.getByText('Payment status unknown', { exact: true })).toBeVisible();
+  await expect(page.getByText('Payment status unknown', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back to History' }).click();
   await expect(page.getByRole('listitem')).toHaveCount(5);
   await page.goto('./#/transactions/new');

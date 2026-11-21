@@ -372,3 +372,16 @@ button and open Edit purchase from the header ellipsis. Connect account Collecti
 rows to exact printing/condition quotes, including pending-copy row prices while
 retaining received-only financial totals. Public set/SKU responses and printing
 queries are shared/cached; no invented FX prices or provider account-data writes.
+
+## Unified display currency and purchase refinements — 2026-11-21
+
+The owner requires one account display currency throughout all read-only prices
+and monthly totals. Only acquisition/sale entry/edit forms use original transaction
+currency. Settings persists the preference under users/{uid}/preferences/display;
+reference FX uses the retained legacy Frankfurter USD-base approach, with dated
+rates, rounding for display and explicit unavailable conversions. Historical DTOs
+and original costs remain untouched. Month headings render one converted total.
+Transactions sort by purchase date descending and creation time descending on ties.
+Tracking/carrier fields can be edited, added and cleared through audited commits.
+Purchase Details omits per-copy shipping/payment-state notes. Header actions use an
+edit icon only where editing works; unsupported delete actions are not shown.

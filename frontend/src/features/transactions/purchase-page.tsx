@@ -1,3 +1,4 @@
+import {useDisplayMoney} from '@/services/display-currency';
 import { PortfolioStatus } from '@/features/portfolio-status';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { useEffect, useMemo, useState } from 'react';
@@ -8,14 +9,14 @@ import { EmptyState } from '@/components/ui/surfaces';
 import { selectPurchaseDetails } from '@/domain/purchase-details';
 import type { HistoryData } from '@/domain/transaction-history';
 import type { InventoryGroup } from '@/domain/inventory';
-import { idSchema, type Money } from '@/domain/schema';
+import { idSchema } from '@/domain/schema';
 import { CardDetailsSheet } from '@/features/inventory/collection-cards';
 import { PurchaseDetails } from './purchase-details';
 import { useDemoTransactionData } from './demo-data';
 
 const disconnected: HistoryData = { ownerUid: 'disconnected', transactions: [], copies: [], catalog: [], saleLines: [], inTransit: [] };
 export function PurchasePage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { transactionId = '' } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export function PurchasePage() {
     receivedCount: Number(selected.copy.possession === 'received'), pendingCount: Number(selected.copy.possession === 'pending'), unknownPossessionCount: Number(selected.copy.possession === 'unknown'),
     market: { currency, minor: 0, pricedCount: 0, missingCount: 1 },
   } : null;
-  const money = (m: Money) => new Intl.NumberFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', { style: 'currency', currency: m.currency }).format(m.minor / 100);
+  const money = useDisplayMoney();
   if (!preview && (account.loading || account.error)) return <PortfolioStatus loading={account.loading} error={account.error} />;
   if (!view) return <EmptyState title={t('purchaseDetails.notFound')} description={t('purchaseDetails.notFoundDetail')} action={<Button variant="outline" onClick={() => { void navigate({ pathname: '/transactions/history', search: params.toString() }); }}>{t('purchaseDetails.back')}</Button>} />;
   return <>
