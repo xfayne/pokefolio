@@ -24,7 +24,7 @@ export function PurchasePage() {
   const demo = useDemoTransactionData();
   const account = usePortfolio();
   const preview = params.get('transactions') === 'sample';
-  const view = useMemo(() => idSchema.safeParse(transactionId).success ? selectPurchaseDetails(preview ? demo.history : account.owner ? account.history : disconnected, transactionId, preview ? demo.shipments : []) : null, [preview, transactionId, demo, account.history, account.owner]);
+  const view = useMemo(() => idSchema.safeParse(transactionId).success ? selectPurchaseDetails(preview ? demo.history : account.owner ? account.history : disconnected, transactionId, preview ? demo.shipments : account.shipments) : null, [preview, transactionId, demo, account.history, account.owner, account.shipments]);
   useEffect(() => { document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }, [transactionId]);
   const selected = view?.copies.find(c => c.copy.id === inspecting);
   const currency = view?.row.currency ?? 'USD';

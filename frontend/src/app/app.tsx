@@ -1,3 +1,4 @@
+import { usePortfolio } from '@/hooks/use-portfolio';
 import { RecentPurchases } from '@/features/transactions/recent-purchases';
 import { EditPurchasePage } from '@/features/transactions/edit-purchase-page';
 import { AccountControls } from '@/features/account-controls';
@@ -59,8 +60,9 @@ function Shell() {
   const background = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
   const contentLocation = utility ? background ?? { ...location, pathname: '/dashboard' } : location;
   const demoTransactions = useDemoTransactionData();
+  const account = usePortfolio();
   const contextParams = new URLSearchParams(contentLocation.search);
-  const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : [];
+  const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : account.history.copies;
   const catalogOwned: Record<string,number> = {};
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
   const isEditing = contentLocation.pathname.endsWith('/edit');

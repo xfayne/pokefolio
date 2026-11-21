@@ -25,6 +25,10 @@ export function PurchaseDetails({ view, onInspect }: { view: PurchaseDetailsView
       </div>
       <TransactionStatus status={row.status} className="purchase-status" />
     </Card>
+    {!imported && (transaction.source.listingUrl || transaction.source.itemReference) && <Card className="space-y-2 text-sm">
+      {transaction.source.itemReference && <p><span className="text-slate-600">{t('newPurchase.itemReference')}: </span><bdi>{transaction.source.itemReference}</bdi></p>}
+      {transaction.source.listingUrl && <a className="break-all text-blue-700 underline" href={transaction.source.listingUrl} target="_blank" rel="noopener noreferrer">{t('newPurchase.listingUrl')}</a>}
+    </Card>}
     <Card className="purchase-cards" aria-labelledby={`${id}-cards`}>
       <div className="purchase-section-heading"><h2 id={`${id}-cards`}>{t('purchaseDetails.cards')}</h2><span>{t('purchaseDetails.cardCost')}</span></div>
       {!copies.length && <p className="text-sm text-slate-600">{t('transactionHistory.noCopies')}</p>}

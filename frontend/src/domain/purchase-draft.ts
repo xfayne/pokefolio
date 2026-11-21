@@ -60,7 +60,7 @@ export function preparePurchaseDraft(ownerUid: string, input: PurchaseDraft, at:
   const plan = planPurchase(ownerUid, purchase, lines, seeds, null);
   const lot = lotId ? lotSchema.parse({ ...metadata, id: lotId, transactionId: draft.id, subtotal: known(preview.subtotal), totalCopyCount: { status: 'known', value: draft.cards.length, source: 'user' }, allocation: 'unallocated', description: '' }) : null;
   const trackingNumber = draft.trackingNumber.trim();
-  const shipment = trackingNumber || draft.carrier.trim() ? shipmentSchema.parse({ ...metadata, id: `${draft.id}-shipment`, trackingNumber: trackingNumber || null, deliveredOn: { status: 'unknown', reason: 'Not delivered' }, notes: '' }) : null;
+  const shipment = trackingNumber || draft.carrier.trim() ? shipmentSchema.parse({ ...metadata, id: `${draft.id}-shipment`, carrier: draft.carrier.trim() || null, trackingNumber: trackingNumber || null, deliveredOn: { status: 'unknown', reason: 'Not delivered' }, notes: '' }) : null;
   const memberships = shipment ? plan.copies.map((copy, ordinal) => shipmentMembershipSchema.parse({ ...metadata, id: `${copy.id}-membership`, shipmentId: shipment.id, transactionId: draft.id, copyId: copy.id, ordinal })) : [];
   const snapshot = shipment ? purchaseShipmentSchema.parse({ id: shipment.id, ownerUid, transactionId: draft.id, copyIds: plan.copies.map(c => c.id), carrier: draft.carrier.trim() || '—', trackingNumber: shipment.trackingNumber, status: 'pending', events: [] }) : null;
   return { plan, lot, shipment, memberships, snapshot };
