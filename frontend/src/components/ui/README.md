@@ -36,6 +36,16 @@ spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 Import directly from each module (for example `@/components/ui/disclosure`).
 No new UI dependency or data/storage behavior is introduced by this extraction.
 
+## Collection card sort keys (2026-11-21)
+
+Collection Cards offers value, name, copy count, newest purchase date and
+set/card number. Date sorting groups all currently held physical copies of one
+catalog card into one row and uses its newest **known** acquisition date.
+An unknown date is sorted last, not replaced with a fabricated date. Set/number
+sorts alphabetically by set, then by the numeric card number (not lexicographically),
+with stable tie-breaking. The existing compact copy rows and disclosure defaults
+are unchanged.
+
 ## Authoritative bold weight (2026-11-20)
 
 All emphasized UI text uses `--font-weight-bold: 700`, matching card names in

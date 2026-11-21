@@ -127,3 +127,14 @@ it('keeps a copy editor based on its opening snapshot when query data refreshes'
  expect(await screen.findByRole('alert')).toHaveTextContent('Could not save');
  expect(onSave).toHaveBeenCalledWith(original.copies[1],expect.objectContaining({notes:'My draft'}));
 });
+
+it('offers date and catalog ordering in the existing compact sort select', async () => {
+  render(<CollectionCards data={data()} onSave={vi.fn()} />);
+  const sorter = screen.getByLabelText('Sort cards');
+  expect(within(sorter).getByRole('option', { name: 'Purchase date ↓' })).toBeInTheDocument();
+  expect(within(sorter).getByRole('option', { name: 'Set / number' })).toBeInTheDocument();
+  await userEvent.selectOptions(sorter, 'acquired');
+  expect(sorter).toHaveValue('acquired');
+  await userEvent.selectOptions(sorter, 'setNumber');
+  expect(sorter).toHaveValue('setNumber');
+});

@@ -13,6 +13,7 @@ import { Card, EmptyState } from '@/components/ui/surfaces';
 import { selectInventory, visibleCopyMarket, type CopyMetadataEdit, type CopyView, type InventoryCatalogCard, type CopyQuote, type InventoryGroup } from '@/domain/inventory';
 import { CardMarketPrice } from './card-market-price';
 import { bestCopy } from './copy-condition';
+import { compareCollectionGroups, type CollectionSort } from './sort-collection';
 import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/domain/schema';
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
@@ -21,7 +22,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [sort, setSort] = useState('value');
+  const [sort, setSort] = useState<CollectionSort>('value');
   const [filter, setFilter] = useState('all');
   const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
   const [initialInspection, setInitialInspection] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const groups = inventory.groups.filter(g => `${title(g)} ${g.card?.setName ?? ''} ${g.card?.number ?? ''}`.toLocaleLowerCase(i18n.language).includes(needle) && (filter === 'all' || g.copies.some(v => v.copy.possession === filter)));
   const quotedGroups = new Map(groups.map(g => [g.key,visibleCopyMarket(g.copies,data.currency)]));
   const visibleMarket = (g: InventoryGroup) => quotedGroups.get(g.key)!;
-  groups.sort((a, b) => sort === 'value' ? Number(visibleMarket(b).pricedCount > 0) - Number(visibleMarket(a).pricedCount > 0) || visibleMarket(b).minor - visibleMarket(a).minor || title(a).localeCompare(title(b)) : sort === 'copies' ? b.copies.length - a.copies.length || title(a).localeCompare(title(b)) : title(a).localeCompare(title(b), i18n.language));
+  groups.sort((a, b) => compareCollectionGroups(a, b, sort, visibleMarket, i18n.language));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
   const isExpanded = (group: InventoryGroup) => expansionOverrides.get(group.key) ?? false;
   const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !(previous.get(group.key) ?? false)); return next; });
@@ -47,7 +48,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
       <SearchInput id={`${id}-search`} label={t('inventory.search')} placeholder={t('inventory.search')} value={search} onChange={e => setSearch(e.target.value)} />
       <div className="collection-list-controls flex min-w-0 items-center gap-2 py-2">
         <p className="min-w-0 flex-1 text-sm font-extrabold text-slate-600">{t('inventory.listCounts', { cards: groups.length, copies: groups.reduce((count, group) => count + group.copies.length, 0) })}</p>
-        <label className="min-w-0 border-s border-blue-200 ps-2"><span className="sr-only">{t('inventory.sort')}</span><Select aria-label={t('inventory.sort')} className="max-w-32 font-semibold text-blue-700" value={sort} onChange={e => setSort(e.target.value)}><option value="value">{t('inventory.value')} ↓</option><option value="name">{t('inventory.name')}</option><option value="copies">{t('inventory.quantity')}</option></Select></label>
+        <label className="min-w-0 border-s border-blue-200 ps-2"><span className="sr-only">{t('inventory.sort')}</span><Select aria-label={t('inventory.sort')} className="max-w-36 font-semibold text-blue-700" value={sort} onChange={e => setSort(e.target.value as CollectionSort)}><option value="value">{t('inventory.value')} ↓</option><option value="name">{t('inventory.name')}</option><option value="copies">{t('inventory.quantity')}</option><option value="acquired">{t('inventory.purchaseDate')} ↓</option><option value="setNumber">{t('inventory.setNumber')}</option></Select></label>
         <button type="button" onClick={() => setOptionsOpen(v => !v)} aria-label={t('inventory.options')} aria-expanded={optionsOpen} aria-controls={`${id}-options`} className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-blue-300 bg-white/80 text-blue-700 shadow-sm"><LuFilter aria-hidden className="size-5" /></button>
       </div>
       <div id={`${id}-options`} className="collection-options" data-open={optionsOpen} aria-hidden={!optionsOpen} inert={!optionsOpen}>
