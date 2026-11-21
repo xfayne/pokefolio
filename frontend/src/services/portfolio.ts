@@ -49,7 +49,8 @@ export async function commitPortfolio(
   const receiptCommand = validateReceiptCommit(command);
   const saleCommand = receiptCommand ? false : validateSaleCommit(owner, command);
   // New financial records must describe complete purchases, not orphan copies.
-  const purchases = command.creates.filter(
+  const writes = [...command.creates, ...command.updates.map(u => u.after)];
+  const purchases = writes.filter(
     (e) => e.collection === 'transactions' && e.record.kind === 'purchase',
   );
   for (const entry of purchases) {
@@ -60,12 +61,12 @@ export async function commitPortfolio(
     )
       throw Error('Only ordinary purchases can be created here');
     const purchase = entry.record;
-    const lines = command.creates.flatMap((e) =>
+    const lines = writes.flatMap((e) =>
       e.collection === 'lines' && e.record.transactionId === purchase.id
         ? [e.record]
         : [],
     );
-    const copies = command.creates.flatMap((e) =>
+    const copies = writes.flatMap((e) =>
       e.collection === 'copies' &&
       e.record.acquisition.kind === 'purchase' &&
       e.record.acquisition.transactionId === purchase.id
@@ -74,8 +75,8 @@ export async function commitPortfolio(
     );
     const plan = planPurchase(
       owner,
-      purchase,
-      lines,
+      {...purchase, revision:1},
+      lines.map(l => ({...l,revision:1})),
       copies.map((c) => {
         if (c.acquisition.kind !== 'purchase' || c.possession !== 'pending')
           throw Error('New purchases must be pending');
@@ -90,7 +91,7 @@ export async function commitPortfolio(
       }),
       null,
     );
-    if (!same(plan.copies, copies))
+    if (!same([...plan.copies].sort((a,b)=>a.id.localeCompare(b.id)), copies.map(c => ({...c,revision:1,createdAt:purchase.createdAt,updatedAt:purchase.updatedAt})).sort((a,b)=>a.id.localeCompare(b.id))))
       throw Error('Purchase copy costs or references do not reconcile');
   }
   if (

@@ -12,3 +12,12 @@ it('shows an edit icon only when editing is functional', async () => {
   expect(edit).toHaveBeenCalledOnce();
   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 });
+
+it('retains the edit action visibly disabled when receipt locks the purchase', async()=>{
+ const edit=vi.fn();
+ render(<PurchaseActions onEdit={edit} disabled />);
+ const button=screen.getByRole('button',{name:'Edit purchase'});
+ expect(button).toBeDisabled();
+ await userEvent.click(button);
+ expect(edit).not.toHaveBeenCalled();
+});

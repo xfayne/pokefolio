@@ -120,3 +120,19 @@ it('persists manual receipt with immutable audits, stable copy IDs, retry receip
   const noCopies=created.creates.filter(e=>e.collection!=='copies');
   for(const e of noCopies) if(e.collection==='transactions') expect(state.store.get(`users/owner/transactions/${e.record.id}`)).toMatchObject({record:e.record});
 });
+
+it('adds an exact copy to a pending purchase, reallocates shipping and retains identities on retry',async()=>{
+ const draft={...createPurchaseDraft(true),trackingNumber:'TEST123456',shipping:'12.00'};
+ const initial=purchaseCommit('owner',draft,'2026-11-21T00:00:00Z');
+ await commitPortfolio(db,'owner',initial);
+ const next={...draft,cards:[...draft.cards,{...draft.cards[0]!,id:'added-copy',amount:'10.00'}]};
+ const edit=purchaseCommit('owner',next,'2026-11-21T01:00:00Z',initial.creates);
+ await commitPortfolio(db,'owner',edit);
+ const saved=new Map(state.store);
+ await commitPortfolio(db,'owner',edit);
+ expect(state.store).toEqual(saved);
+ expect([...state.store.keys()].filter(p=>p.includes('/copies/'))).toHaveLength(4);
+ for(const c of next.cards) expect(state.store.get(`users/owner/copies/${c.id}`)).toMatchObject({record:{possession:'pending',shippingCost:{value:{minor:300}}}});
+ expect(state.store.get(`users/owner/shipments/${draft.id}-shipment/memberships/added-copy-membership`)).toMatchObject({record:{copyId:'added-copy',transactionId:draft.id}});
+ expect(state.store.get(`users/owner/transactions/${draft.id}`)).toMatchObject({record:{payable:{minor:15200}}});
+});

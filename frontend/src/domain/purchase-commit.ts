@@ -1,7 +1,7 @@
 import type { PreparedPurchaseDraft, PurchaseDraft } from './purchase-draft';
 import { preparePurchaseDraft } from './purchase-draft';
 import type { PortfolioCommit, PortfolioRecord } from './persistence';
-import { revisionSchema } from './schema';
+import { revisionSchema, shipmentMembershipSchema } from './schema';
 export function purchaseRecords(
   value: PreparedPurchaseDraft,
 ): PortfolioRecord[] {
@@ -56,19 +56,23 @@ export function purchaseCommit(
       e.record.acquisition.transactionId === draft.id,
   );
   if (
-    oldCopies.length !== draft.cards.length ||
     oldCopies.some(
       (e) =>
         !draft.cards.some((c) => c.id === e.record.id) ||
         e.collection !== 'copies' ||
-        e.record.disposition !== 'held',
+        (e.record.disposition !== 'held' || e.record.possession !== 'pending'),
     )
   )
-    throw Error('Cannot add/remove copies or edit disposed purchases');
+    throw Error('Cannot remove copies or edit received purchases');
   if (previous.record.pricingMode !== draft.pricingMode)
     throw Error('Cannot change pricing mode on an existing purchase');
   const oldShipment = existing.find(e => e.collection === 'shipments' && e.record.id === `${draft.id}-shipment`);
   if (oldShipment?.collection === 'shipments' && !records.some(e => e.collection === 'shipments')) records.push({collection:'shipments',record:{...oldShipment.record,trackingNumber:null,carrier:null,revision:1,updatedAt:at}});
+  if (oldShipment?.collection === 'shipments') {
+    for (const [ordinal,copy] of draft.cards.entries()) {
+      if (!records.some(e => e.collection === 'memberships' && e.record.copyId === copy.id)) records.push({collection:'memberships',record:shipmentMembershipSchema.parse({schemaVersion:1,id:`${copy.id}-membership`,ownerUid:owner,revision:1,createdAt:at,updatedAt:at,shipmentId:oldShipment.record.id,transactionId:draft.id,copyId:copy.id,ordinal})});
+    }
+  }
   const command: PortfolioCommit = {
     ownerUid: owner,
     idempotencyKey: `edit-${crypto.randomUUID()}`,
@@ -81,7 +85,7 @@ export function purchaseCommit(
         e.collection === entry.collection && e.record.id === entry.record.id,
     );
     if (!before) {
-      if (entry.collection === 'shipments' || entry.collection === 'memberships') { command.creates.push(entry); continue; }
+      if (entry.collection === 'shipments' || entry.collection === 'memberships' || entry.collection === 'copies' || entry.collection === 'lines') { command.creates.push(entry); continue; }
       throw Error('Purchase references changed');
     }
     const after = {

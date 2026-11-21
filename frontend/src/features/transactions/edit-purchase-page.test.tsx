@@ -57,3 +57,14 @@ it('keeps the opening revision after a query refresh rather than overwriting new
     '1.00',
   );
 });
+
+it('opens the existing catalog picker in edit mode and retains a newly selected copy',async()=>{
+ const draft=createPurchaseDraft(true);state.id=draft.id;
+ state.records=purchaseCommit('owner',draft,'2026-11-21T00:00:00Z').creates;
+ render(<EditPurchasePage />,{wrapper:TransactionFormTestFrame});
+ await userEvent.click(screen.getByRole('button',{name:'Add card'}));
+ await userEvent.type(screen.getByRole('searchbox',{name:'Search cards'}),'Gengar');
+ const results=document.querySelectorAll<HTMLButtonElement>('.catalog-result');
+ await userEvent.click(results[0]!);
+ expect(document.querySelectorAll('.new-purchase-copy')).toHaveLength(4);
+});

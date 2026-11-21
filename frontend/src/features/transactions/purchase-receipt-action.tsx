@@ -8,7 +8,7 @@ import type { PortfolioCommit, PortfolioRecord } from '@/domain/persistence';
 import { useDemoTransactionData } from './demo-data';
 import { useDemoPortfolio } from './demo-context';
 
-export function PurchaseReceiptAction({ id, preview }: { id: string; preview: boolean }) {
+export function PurchaseReceiptAction({ id, preview, onBusy }: { id: string; preview: boolean; onBusy?: (busy:boolean) => void }) {
   const account = usePortfolio();
   const demo = useDemoTransactionData();
   const adapter = useDemoPortfolio();
@@ -27,13 +27,13 @@ export function PurchaseReceiptAction({ id, preview }: { id: string; preview: bo
   const eligible = copies.some(c => c.possession === 'pending' && c.disposition === 'held') && copies.every(c => c.possession !== 'unknown');
   async function receive() {
     if (lock.current || received || !eligible) return;
-    lock.current = true; setBusy(true); setFailed(false);
+    lock.current = true; setBusy(true); onBusy?.(true); setFailed(false);
     try {
       prepared.current ??= receivePurchase(preview ? demo.history.ownerUid : account.owner!,id,records,new Date().toISOString());
       for (const command of prepared.current) await (preview ? adapter.commitSale : account.save)(command);
       prepared.current = null;
     } catch { setFailed(true); prepared.current = null; }
-    finally { lock.current = false; setBusy(false); }
+    finally { lock.current = false; setBusy(false); onBusy?.(false); }
   }
   return <><button type="button" aria-label={t(received ? 'purchaseDetails.received' : 'purchaseDetails.receive')} title={t(received ? 'purchaseDetails.received' : 'purchaseDetails.receive')} disabled={received || busy || !eligible} onClick={() => void receive()} className="flex size-11 items-center justify-center rounded-xl text-white focus-visible:outline-white disabled:opacity-40">
     {busy ? <LuLoaderCircle aria-hidden className="size-6 animate-spin" /> : <LuPackageCheck aria-hidden className="size-6" />}
