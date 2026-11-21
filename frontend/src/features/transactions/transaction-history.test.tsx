@@ -30,6 +30,7 @@ it('searches and filters together, retains collapsed filters and resets empty re
   expect(screen.getAllByRole('listitem')).toHaveLength(4);
   const kind = screen.getByRole('combobox', { name: 'Transaction type' });
   expect(kind).toHaveValue('all');
+  expect(screen.getByRole('searchbox', { name: 'Search transactions' })).toHaveAttribute('placeholder', 'Search');
   await userEvent.selectOptions(kind, 'sale');
   expect(screen.getByText('+$85.00')).toBeInTheDocument();
 });

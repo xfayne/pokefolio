@@ -56,8 +56,8 @@ function SectionPage({ name }: { name: Destination }) {
   return <div className={['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
     {tabNavigation && (isTransactions ? <div className="transactions-nav-sticky">
       {tabNavigation}
-      <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white focus-visible:outline-blue-800">
-        <LuPlus aria-hidden className="size-6" />
+      <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800">
+        <LuPlus aria-hidden className="size-5" />
       </button>
     </div> : tabNavigation)}
     {name === 'dashboard' ? <><RecentPurchases /><EmptyState title={t('comingTitle')} description={t('description')} /></> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
@@ -125,7 +125,7 @@ function Shell() {
         {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-5 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-10" /></span>}<span className="break-words">{t(name)}</span>
       </NavLink>)}</div>
     </nav>
-    {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
+    {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
       {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
