@@ -13,3 +13,8 @@ it('combines search terms and set filters without changing the catalog', () => {
  expect(searchCatalog('gengar #5/62')).toHaveLength(1);
  expect(searchCatalog('nonexistent')).toHaveLength(0);
 });
+it('supports multi-set union combined with text search', () => {
+ const results=searchCatalog('gengar',['Fossil','Legendary Collection']);
+ expect(new Set(results.map(c=>c.setName))).toEqual(new Set(['Fossil','Legendary Collection']));
+ expect(searchCatalog('gengar',[])).toEqual(searchCatalog('gengar'));
+});

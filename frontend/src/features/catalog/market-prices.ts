@@ -1,3 +1,4 @@
+import { promoProducts } from './promo-products';
 import { z } from 'zod';
 import type { InventoryCatalogCard, CopyQuote } from '@/domain/inventory';
 import type { CatalogRef } from '@/domain/schema';
@@ -10,7 +11,8 @@ const skusSchema = z.object({updated:z.string().optional(),products:z.record(z.s
 async function json(path: string, signal: AbortSignal) { const response = await fetch(`${BASE}${path}`, {signal: AbortSignal.any([signal, AbortSignal.timeout(13000)]), credentials:'omit'}); if (!response.ok) throw Error('Price provider unavailable'); return response.json() as Promise<unknown>; }
 export async function fetchMarketQuotes(card: InventoryCatalogCard, catalog: CatalogRef, signal: AbortSignal): Promise<CopyQuote[]> {
  if (catalog.kind !== 'identified' || catalog.edition === 'unknown' || catalog.finish.status !== 'known') return [];
- const special = overrides[card.id];
+ const promo = card.id.startsWith('basep-') ? promoProducts[Number(card.id.slice(6))] : undefined;
+ const special = promo ? {set:'WoTC Promo',product:promo.product} : overrides[card.id];
  const wanted = special?.set ?? (card.setName === 'Wizards Black Star Promos' ? 'WoTC Promo' : card.setName);
  const groups = setsSchema.parse(await json('/sets',signal));
  const group = groups.sets.find(g => key(g.name) === key(wanted));

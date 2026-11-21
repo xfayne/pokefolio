@@ -37,3 +37,18 @@ test('catalog density, subtle detail entry and condition prices', async ({page})
  await page.getByRole('button',{name:/Card details: Gengar/}).click();
  await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','slide');
 });
+test('multiple sets survive opening details and returning to catalog',async({page})=>{
+ await page.goto('./#/search');
+ await page.getByRole('button',{name:'Filters',exact:true}).click();
+ await page.getByRole('checkbox',{name:'Fossil',exact:true}).check();
+ await page.getByRole('checkbox',{name:'Jungle',exact:true}).check();
+ await page.getByRole('searchbox').fill('jolteon');
+ await expect(page.getByRole('listitem')).toHaveCount(2);
+ await page.getByRole('button',{name:/Jolteon/}).first().click();
+ await page.getByRole('button',{name:'Back to card',exact:true}).click();
+ await expect(page.getByRole('checkbox',{name:'Fossil',exact:true})).toBeChecked();
+ await expect(page.getByRole('checkbox',{name:'Jungle',exact:true})).toBeChecked();
+ await expect(page.getByRole('searchbox')).toHaveValue('jolteon');
+ await expect(page.getByRole('listitem')).toHaveCount(2);
+ await page.screenshot({path:test.info().outputPath('catalog-multiple-sets.png')});
+});
