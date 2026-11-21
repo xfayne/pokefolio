@@ -50,6 +50,20 @@ spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 Import directly from each module (for example `@/components/ui/disclosure`).
 No new UI dependency or data/storage behavior is introduced by this extraction.
 
+## Pinned mobile search controls (2026-11-21)
+
+Transactions puts the two-tab selector and icon-only New transaction action in
+one sticky row below the global header, in Overview and History. History pins
+a one-line Search + type Select (All/Purchases/Sales) + advanced filter toggle
+directly below it. The expanded advanced filter stays connected to this row;
+the results scroll underneath. Sticky retains document flow and keyboard
+navigation without overlaying the last transaction above bottom navigation.
+
+Catalog Search pins its input and results/filter/List/Grid controls at the top
+of the UtilitySheet scrollport. The expanded set filters and results scroll
+beneath the control block. Keep English and RTL labels, 44px touch targets,
+and avoid horizontal overflow at 320px.
+
 ## Collection card sort keys (2026-11-21)
 
 Collection Cards offers value, name, copy count, newest purchase date and
