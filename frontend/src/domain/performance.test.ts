@@ -71,7 +71,7 @@ it('isolates new additions from matched-price appreciation',()=>{
  expect(result.points[1]?.matchedCount).toBe(1);expect(result.points[1]?.matchedChange).toBeCloseTo(100/3);
 });
 it('uses the actual historical condition from the audit instead of todays condition',()=>{
- const before={...current,condition:known('MP')};
+ const before={...current,condition:known('MP' as const)};
  const after={...current,revision:2,updatedAt:'2026-11-21T01:00:00Z'};
  const audit:PortfolioRecord={collection:'revisions',record:{...metadata,id:'edit',actorUid:'owner',recordId:current.id,operation:'edit',reason:'Condition corrected',createdAt:after.updatedAt,updatedAt:after.updatedAt,before,after}};
  const mp={...price,condition:'MP' as const,current:{minor:1000,observedAt:price.current!.observedAt},history:[{date:'2026-11-20',minor:900}]};
