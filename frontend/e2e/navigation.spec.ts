@@ -38,12 +38,31 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   const content = page.locator('#main-content');
   await expect(header).toHaveCSS('border-top-left-radius', '0px');
   await expect(header).toHaveCSS('border-top-right-radius', '0px');
+  // Inverted navy corners are an overlay at the header's BOTTOM, not regular
+  // downward-rounded header edges or rounded corners at the content's bottom.
   await expect(header).toHaveCSS('border-bottom-left-radius', '0px');
   await expect(header).toHaveCSS('border-bottom-right-radius', '0px');
-  await expect(content).toHaveCSS('border-top-left-radius', '0px');
-  await expect(content).toHaveCSS('border-top-right-radius', '0px');
-  await expect(content).toHaveCSS('border-bottom-left-radius', '20px');
-  await expect(content).toHaveCSS('border-bottom-right-radius', '20px');
+  await expect(content).toHaveCSS('border-top-left-radius', '20px');
+  await expect(content).toHaveCSS('border-top-right-radius', '20px');
+  await expect(content).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(content).toHaveCSS('border-bottom-right-radius', '0px');
+  const corners = await header.evaluate(el => ['::before', '::after'].map(which => {
+    const style = getComputedStyle(el, which);
+    return { which, width: style.width, height: style.height, top: style.top,
+      position: style.position, background: style.backgroundImage, pointerEvents: style.pointerEvents };
+  }));
+  expect(corners).toHaveLength(2);
+  for (const corner of corners) {
+    expect(corner.width).toBe('20px');
+    expect(corner.height).toBe('20px');
+    expect(corner.top).toBe('64px');
+    expect(corner.position).toBe('absolute');
+    expect(corner.background).toContain('radial-gradient(');
+    expect(corner.pointerEvents).toBe('none');
+  }
+  // Chromium normalizes "bottom right/left" into percentage coordinates.
+  expect(corners[0]!.background).toContain('at 100% 100%');
+  expect(corners[1]!.background).toContain('at 0% 100%');
   await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   await expect(page.locator('header')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -62,9 +81,21 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await expect(header).toHaveCSS('border-bottom-left-radius', '0px');
   await expect(header).toHaveCSS('border-bottom-right-radius', '0px');
   await expect(header).toHaveCSS('border-top-left-radius', '0px');
-  await expect(content).toHaveCSS('border-top-left-radius', '0px');
-  await expect(content).toHaveCSS('border-bottom-left-radius', '20px');
-  await expect(content).toHaveCSS('border-bottom-right-radius', '20px');
+  await expect(content).toHaveCSS('border-top-left-radius', '20px');
+  await expect(content).toHaveCSS('border-top-right-radius', '20px');
+  await expect(content).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(content).toHaveCSS('border-bottom-right-radius', '0px');
+  // Pseudo-element corners remain anchored to the viewport-sticky header.
+  const position = await header.evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    const left = getComputedStyle(el, '::before');
+    const right = getComputedStyle(el, '::after');
+    return { headerY: rect.y, leftTop: left.top, rightTop: right.top, leftBg: left.backgroundImage, rightBg: right.backgroundImage };
+  });
+  expect(position.headerY).toBeGreaterThanOrEqual(-1);
+  expect(position.headerY).toBeLessThanOrEqual(1);
+  expect(position.leftBg).toContain('radial-gradient(');
+  expect(position.rightBg).toContain('radial-gradient(');
   await test.info().attach('scrolled-header', { body: await page.screenshot(), contentType: 'image/png' });
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 844 });

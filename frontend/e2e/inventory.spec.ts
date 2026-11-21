@@ -52,8 +52,18 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveCSS('font-weight', '700');
   await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '1 / 1');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
-  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 0%');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 10%');
   await expect(dialog.locator('.pokemon-art-large .pokemon-art-window')).toHaveCSS('padding-top', '0px');
+  // Both UI sizes must crop away the native yellow image border consistently.
+  const detailCrop = await dialog.locator('.pokemon-art-large img').evaluate(el => {
+    const style = getComputedStyle(el);
+    return { position: style.objectPosition, transform: style.transform };
+  });
+  const thumbCrop = await page.locator('.inventory-card').first().locator('.pokemon-art img').evaluate(el => {
+    const style = getComputedStyle(el);
+    return { position: style.objectPosition, transform: style.transform };
+  });
+  expect(thumbCrop).toEqual(detailCrop);
   const artTop = await dialog.locator('.pokemon-art-large .pokemon-art-window').boundingBox();
   const imageTop = await dialog.locator('.pokemon-art-large img').boundingBox();
   expect(artTop).not.toBeNull();

@@ -27,17 +27,23 @@ Use stable IDs; a closed disclosure retains its children but makes them inert an
 hidden from assistive technology. Do not nest buttons or place business data in UI state.
 
 Use `PokemonArt` for thumbnails, Card Details and full-card zoom. Thumbnails retain
-compact cropping; Card Details must keep its original small square frame, with
-the image's TOP edge flush to the frame (no synthetic padding or empty stripe). **Never change the Card Details frame
+compact cropping; Card Details must keep its original small square frame.
+Both Collection thumbnails and Card Details must use the SAME centered, slightly
+top-shifted cover crop to trim the yellow outline already baked into the original
+Pokémon TCG image; never display a double-yellow frame or add synthetic padding.
+Full-card zoom keeps the original source borders for complete inspection. **Never change the Card Details frame
 dimensions to a portrait card shape.** Full-card zoom alone uses a portrait footprint
 and an uncropped image. Both detail and zoom request high-resolution artwork with
 standard-resolution fallback. During the shared Vintage Binder-style shimmer,
 **all thumbnails and detail frames have transparent borders and no frame shadow**;
 the yellow frame and detail shadow appear only with a successfully loaded image.
-Keep a 220ms reveal and accessible error fallback. Follow the owner's reference
-screenshot: the sticky application header has **square corners**; the light main
-content has **rounded bottom corners only**, revealing the dark shell background
-immediately above the rounded top corners of the bottom navigation.
+Keep a 220ms reveal and accessible error fallback. The owner's History reference
+shows **inverted bottom header corners**: the header's navy color curves OUTWARD
+into the left and right cutouts at the top of the light content panel.
+Implement using sticky header corner overlays plus **rounded top corners of the
+light main content**, and keep the main content bottom corners square. Do not
+substitute ordinary bottom-left/right border-radius on the header; that produces
+the opposite shape. The corner overlays must remain in view on scroll.
 Keep all form text at least 16px to prevent iPhone input zoom. Preserve RTL logical
 spacing and keyboard focus indicators. Existing mobile CI covers both languages.
 
