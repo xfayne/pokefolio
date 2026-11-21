@@ -18,7 +18,8 @@
   --color-ring: var(--color-blue-600);
 }
 :root { color-scheme: light; font-family: var(--font-sans); background: var(--color-blue-50); color: var(--color-slate-950); }
-body { margin: 0; min-width: 320px; }
+html { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; }
+body { margin: 0; min-width: 320px; width: 100%; overflow-x: clip; overscroll-behavior-x: none; }
 @layer base {
   button, input, select, textarea { font: inherit; }
   body { -webkit-font-smoothing: antialiased; }
@@ -52,7 +53,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 :root { --content-background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); --adventure-blue: #0064ff; --adventure-navy: #03233e; --surface-panel: #f2f7fd; --surface-border: #b3ccec; --surface-field: #f3f6fd; --compact-control-height: 2.25rem; background: #d9eafa; }
 :root { --dashboard-mint: #00cdb4; --dashboard-positive: #008532; --dashboard-negative: #bd3154; }
 @theme inline { --color-primary: var(--adventure-blue); }
-.app-shell { background: var(--adventure-navy); }
+.app-shell { background: var(--adventure-navy); width: 100%; min-width: 0; overflow-x: clip; }
 .app-shell > header, .bottom-bar, .sheet-header {
   background-color: var(--adventure-navy);
   background-image: radial-gradient(ellipse at 20% 0%, #0d395780, transparent 70%), linear-gradient(120deg, #03283f, #061b39);
@@ -414,6 +415,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 @media (max-width:359px) { .catalog-toolbar { gap: 0.375rem; } .catalog-filter-button { min-width: 4.5rem; } .catalog-toolbar > button, .catalog-view button { padding-inline: 0.375rem; font-size: 0.75rem; } .catalog-view button { min-width: 3.25rem; } }
 
 /* Dashboard follows the approved top/scrolled mock. Shared surfaces/weights remain authoritative. */
+.dashboard > * { min-width: 0; }
 .dashboard { display: flex; flex-direction: column; gap: 1.125rem; padding-bottom: 1rem; }
 .dashboard-banner { margin: -0.75rem -0.75rem 0; overflow: hidden; border-radius: 1.25rem 1.25rem 0 0; }
 .dashboard-banner svg { display: block; width: 100%; aspect-ratio: 486 / 92; }
