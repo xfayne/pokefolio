@@ -7,7 +7,7 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await expect(page.getByRole('button',{name:'Analyze card'})).toBeDisabled();
  await page.getByRole('button',{name:'eBay',exact:true}).click();await expect(page.getByRole('textbox',{name:'eBay listing URL'})).toBeVisible();
  await page.getByRole('button',{name:'Photos',exact:true}).click();
- await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
+ await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABgAAAAgCAIAAACHPC9vAAAAJ0lEQVR4nGO8e2kxAzUAE1VMGTVo1KBRg0YNGjVo1KBRg0YNGnCDAFZAApJq8lFgAAAAAElFTkSuQmCC','base64')});
  await expect(page.getByRole('button',{name:'Inspect photo 1'})).toBeVisible();
  await page.getByRole('button',{name:'Inspect photo 1'}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
  expect((await new AxeBuilder({page}).include('.pokedex-frame').analyze()).violations).toEqual([]);
