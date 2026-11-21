@@ -443,3 +443,11 @@ Market First Edition now occupies the right column beneath condition, removing
 the standalone bottom row (PR #100). See docs/PURCHASE_TRACKING.md. Check PR/CI
 and deployment receipts for verified release state. No real-data migration,
 legacy/production changes, Worker deployment or rules deployment is included.
+
+## Tracking error scope correction — 2026-11-21
+
+Tracking registration failures are isolated per number, including transport errors;
+a failed parcel no longer raises a misleading error on unrelated purchases.
+Purchase Details renders plain Tracking error text inside the affected Shipment
+status area, without the top-page alert. Header action siblings now have distinct
+React keys to prevent duplicate Received controls during reconciliation.

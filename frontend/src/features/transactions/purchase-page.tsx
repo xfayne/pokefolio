@@ -17,7 +17,7 @@ import { PurchaseDetails } from './purchase-details';
 import { useDemoTransactionData } from './demo-data';
 
 const disconnected: HistoryData = { ownerUid: 'disconnected', transactions: [], copies: [], catalog: [], saleLines: [], inTransit: [] };
-export function PurchasePage({onRefresh,refreshing}: {onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined}) {
+export function PurchasePage({onRefresh,refreshing,trackingErrors,trackingFailed}: {trackingErrors?: Record<string,string> | undefined; trackingFailed?: boolean | undefined; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined}) {
   const { t } = useTranslation();
   const { transactionId = '' } = useParams();
   const [params] = useSearchParams();
@@ -52,7 +52,7 @@ export function PurchasePage({onRefresh,refreshing}: {onRefresh?: (() => void) |
   if (!view) return <EmptyState title={t('purchaseDetails.notFound')} description={t('purchaseDetails.notFoundDetail')} action={<Button variant="outline" onClick={() => { void navigate({ pathname: '/transactions/history', search: params.toString() }); }}>{t('purchaseDetails.back')}</Button>} />;
   return <>
     {(location.state as { demoSaved?: boolean } | null)?.demoSaved && <p role="status" className="text-sm text-slate-600">{t('newPurchase.demoSaved')}</p>}
-    <PurchaseDetails view={view} onInspect={copy => setInspecting(copy.id)} {...(!preview ? {onRefresh,refreshing} : {})} />
+    <PurchaseDetails view={view} onInspect={copy => setInspecting(copy.id)} {...(!preview ? {onRefresh,refreshing,trackingErrors,trackingFailed} : {})} />
     {selected && group && <CardDetailsSheet key={selected.copy.id} group={group} catalog={selected.copy.catalog} quotes={[]} currency={currency} initialCopy={null} initialInspection={selected.copy.id} onClose={() => setInspecting(null)} onViewPurchase={() => setInspecting(null)} money={money}
       cost={c => c.status === 'exact' ? money(c.value) : c.status === 'estimated' ? `${money(c.value)} · ${t('inventory.estimated')}` : t(c.status === 'unallocated' ? 'inventory.unallocated' : 'inventory.unavailable')}
       metric={() => t('inventory.unpriced')} />}
