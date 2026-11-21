@@ -7,7 +7,7 @@ import { selectHistory, type HistoryData } from './transaction-history';
 
 export const saleCopyLimit = 9; // Keep create/edit/reverse within the existing verified atomic audit limit.
 export const saleDraftSchema = z.strictObject({
-  id: idSchema, date: dateSchema, source: z.enum(['manual', 'ebay', 'other']), buyer: z.string().trim().min(1).max(200),
+  id: idSchema, date: dateSchema, source: z.enum(['manual', 'ebay', 'other']), buyer: z.string().trim().max(200),
   currency: currencySchema, listingUrl: z.union([z.literal(''), z.url().max(2000).refine(s => /^https?:\/\//.test(s))]), itemReference: z.string().max(200),
   cards: z.array(z.strictObject({ copyId: idSchema, amount: z.string().min(1) })).min(1).max(saleCopyLimit),
   buyerShipping: z.string(), sellingFees: z.string(), sellerShipping: z.string(), sellingTaxes: z.string(),
@@ -39,7 +39,7 @@ export function prepareSale(owner: string, raw: SaleDraft, copies: readonly Card
   const sale = saleSchema.parse({ ...metadata, id: draft.id, kind: 'sale', transactionOn: draft.date, currency: draft.currency,
     source: { kind: draft.source, seller: draft.buyer, listingUrl: draft.listingUrl || null, itemReference: draft.itemReference || null }, notes: draft.notes,
     copyIds: draft.cards.map(c => c.copyId), cardProceeds: known(sumMoney(amounts, draft.currency)),
-    ...Object.fromEntries((['buyerShipping', 'sellingFees', 'sellerShipping', 'sellingTaxes'] as const).map(key => [key, known(parseMoney(draft[key], draft.currency))])),
+    ...Object.fromEntries((['buyerShipping', 'sellingFees', 'sellerShipping', 'sellingTaxes'] as const).map(key => [key, known(parseMoney(draft[key] || '0', draft.currency))])),
   });
   const lines = allocateSaleLines(sale, draft.cards.map((c,i) => ({ ...metadata, id: `${draft.id}-line-${i}`, transactionId: sale.id, copyId: c.copyId,
     proceeds: exact(amounts[i]!.minor, sale.currency, sale.id), expenses: exact(0, sale.currency, sale.id), basisCosts: costsOf(ordered[i]!),
@@ -121,6 +121,7 @@ export function validateSaleCommit(owner: string, command: PortfolioCommit): boo
   if (!header) return false;
   if (header.collection !== 'transactions' || header.record.kind !== 'sale') return false;
   const sale = header.record;
+  if ([sale.cardProceeds, sale.buyerShipping, sale.sellingFees, sale.sellerShipping, sale.sellingTaxes].some(a => a.status !== 'known')) throw Error('Complete sale amounts required');
   const txBefore = command.updates.find(u => u.before.collection === 'transactions');
   const before = txBefore?.before;
   if (!sale.copyIds || new Set(sale.copyIds).size !== sale.copyIds.length) throw Error('Explicit distinct sale membership required');
@@ -139,6 +140,7 @@ export function validateSaleCommit(owner: string, command: PortfolioCommit): boo
     if (!same({ ...sale, reversedAt: undefined, revision: before.record.revision, updatedAt: before.record.updatedAt }, before.record)) throw Error('Reversal cannot rewrite sale');
   } else {
     const lines = lineEntries.map(e => { if (e.collection !== 'lines' || !('copyId' in e.record)) throw Error('Invalid sale line'); return e.record; });
+    if (lines.some(l => !['exact','estimated'].includes(l.proceeds.status) || !['exact','estimated'].includes(l.expenses.status))) throw Error('Complete sale line allocations required');
     const originalCopies = copyUpdates.map(u => { if (u.before.collection !== 'copies') throw Error('Invalid copy'); return u.before.record; });
     const eligible = originalCopies.map(c => isNew ? c : { ...c, disposition: 'held' as const, dispositionRecordId: null });
     planSale(owner, { ...sale, revision: 1 }, lines.map(l => ({ ...l, revision: 1 })), eligible, sale.updatedAt);

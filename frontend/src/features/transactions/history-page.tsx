@@ -18,7 +18,7 @@ export function HistoryPage() {
   const account = usePortfolio();
   const preview = params.get('transactions') === 'sample';
   if (!preview && (account.loading || account.error)) return <PortfolioStatus loading={account.loading} error={account.error} />;
-  return <TransactionHistory data={preview ? demo.history : account.owner ? account.history : disconnected} canOpen={row => row.kind === 'purchase'} onOpen={id => { void navigate({ pathname: `/transactions/purchases/${id}`, search: location.search }, { state: { purchaseFrom: 'history' } }); }} empty={account.owner ? <EmptyState title={t('newPurchase.cards')} description={t('transactionHistory.noCopies')} /> : <EmptyState title={t('transactionHistory.disconnected')} description={t('transactionHistory.connectionDetail')} action={<Button onClick={() => {
+  return <TransactionHistory data={preview ? demo.history : account.owner ? account.history : disconnected} onOpen={id => { void navigate({ pathname: `/transactions/${(preview ? demo.history : account.history).transactions.find(t => t.id === id)?.kind === 'sale' ? 'sales' : 'purchases'}/${id}`, search: location.search }, { state: { purchaseFrom: 'history' } }); }} empty={account.owner ? <EmptyState title={t('newPurchase.cards')} description={t('transactionHistory.noCopies')} /> : <EmptyState title={t('transactionHistory.disconnected')} description={t('transactionHistory.connectionDetail')} action={<Button onClick={() => {
     const next = new URLSearchParams(params); next.set('transactions', 'sample'); setParams(next);
   }}>{t('transactionHistory.explore')}</Button>} />} />;
 }

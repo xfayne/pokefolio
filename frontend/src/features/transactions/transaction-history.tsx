@@ -14,7 +14,7 @@ import { currencySchema } from '@/domain/schema';
 import { groupHistory, selectHistory, type HistoryData, type HistoryFilters, type HistoryRow } from '@/domain/transaction-history';
 
 const initialFilters: HistoryFilters = { query: '', kind: 'all', currency: 'all', status: 'all' };
-const statuses = ['inTransit', 'received', 'pending', 'partial', 'unknown', 'completed'] as const;
+const statuses = ['inTransit', 'received', 'pending', 'partial', 'unknown', 'completed', 'reversed'] as const;
 export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   data: HistoryData; empty?: ReactNode; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
 }) {
