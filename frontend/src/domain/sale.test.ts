@@ -78,3 +78,8 @@ it('retains sale-time acquisition costs even if the restored copy basis later ch
   const changed=records.map(e=>e.collection==='copies'?{...e,record:{...e.record,cardCost:{status:'exact',value:gbp(99999),evidenceRef:'correction'}}}:e) as PortfolioRecord[];
   expect(selectSaleDetails(history(changed),'sale-one')!.basis).toEqual(selectSaleDetails(history(records),'sale-one')!.basis);
 });
+it('allows an unknown buyer and blank optional expenses without inventing card prices',()=>{
+  const plan=prepareSale('owner',{...draft(),buyer:'',buyerShipping:'',sellingFees:'',sellerShipping:'',sellingTaxes:''},[copy],at);
+  expect(plan.sale.sellingFees).toMatchObject({status:'known',value:{minor:0}});
+  expect(()=>prepareSale('owner',{...draft(),cards:[{copyId:copy.id,amount:''}]},[copy],at)).toThrow();
+});

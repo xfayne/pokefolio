@@ -300,3 +300,35 @@ test('display currency preferences are private, bounded and use server time',asy
   await assertFails(setDoc(doc(db,path),{currency:'FAKE',updatedAt:serverTimestamp()}));
  }finally{await env.cleanup();}
 });
+
+test('nine-copy sale edits fit the atomic audit policy and lifecycle writes remain owner-only',async()=>{
+ const env=await environment('firestore.private.rules');
+ try {
+  await env.clearFirestore();
+  const db=env.authenticatedContext(alice).firestore();
+  const foreign=env.authenticatedContext(bob).firestore();
+  const envelope=record=>({record,auditId:null,committedAt:serverTimestamp()});
+  const stamp='2026-11-21T00:00:00Z';
+  const metadata={schemaVersion:1,ownerUid:alice,revision:1,createdAt:stamp,updatedAt:stamp};
+  const copyIds=Array.from({length:9},(_,i)=>`copy-${i}`);
+  const sale={...metadata,id:'sale-nine',kind:'sale',copyIds};
+  const originals=[{path:`users/${alice}/transactions/${sale.id}`,record:sale},
+   ...copyIds.map((id,i)=>({path:`users/${alice}/transactions/${sale.id}/lines/line-${i}`,record:{...metadata,id:`line-${i}`,transactionId:sale.id,copyId:id}})),
+   ...copyIds.map(id=>({path:`users/${alice}/copies/${id}`,record:{...metadata,id,disposition:'sold',dispositionRecordId:sale.id}}))];
+  const create=writeBatch(db);
+  for(const {path,record} of originals)create.set(doc(db,path),envelope(record));
+  await assertSucceeds(create.commit());
+  const edit=writeBatch(db);
+  for(const [i,{path,record}] of originals.entries()){
+   const next={...record,revision:2,updatedAt:'2026-11-22T00:00:00Z'};
+   const auditId=`sale-edit-${i}`;
+   const audit={...metadata,id:auditId,actorUid:alice,recordId:record.id,before:record,after:next,operation:'edit',reason:'Synthetic sale edit'};
+   edit.set(doc(db,`users/${alice}/revisions/${auditId}`),envelope(audit));
+   edit.set(doc(db,path),{...envelope(next),auditId});
+  }
+  await assertSucceeds(edit.commit());
+  await assertFails(getDoc(doc(foreign,`users/${alice}/transactions/${sale.id}`)));
+  await assertFails(setDoc(doc(foreign,`users/${alice}/copies/copy-0`),envelope({...originals[10].record,disposition:'held'})));
+  await assertFails(deleteDoc(doc(db,`users/${alice}/copies/copy-0`)));
+ }finally{await env.cleanup();}
+});
