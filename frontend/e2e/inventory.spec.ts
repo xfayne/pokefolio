@@ -41,7 +41,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog).toHaveCSS('border-top-left-radius', '0px');
   await dialog.getByLabel('Condition', { exact: true }).selectOption('MP');
   await dialog.getByLabel('Notes', { exact: true }).fill('Second copy only');
-  await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+  await dialog.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).filter(a => a.effect?.getComputedTiming().iterations !== Infinity).map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole('button', { name: 'Save copy' }).click();
   await expect(dialog.getByRole('button', { name: /Your copies/ })).toHaveAttribute('aria-expanded', 'false');

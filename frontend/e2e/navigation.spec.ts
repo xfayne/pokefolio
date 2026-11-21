@@ -43,7 +43,7 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveAttribute('data-entered', 'true');
-  await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+  await page.getByRole('dialog').evaluate(el => Promise.all(el.getAnimations({ subtree: true }).filter(a => a.effect?.getComputedTiming().iterations !== Infinity).map(a => a.finished)));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
