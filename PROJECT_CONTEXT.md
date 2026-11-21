@@ -411,3 +411,13 @@ these writes without a rules deployment. See docs/SALE_TRANSACTIONS.md for the
 nine-copy atomic edit limit, test scope and remaining live acceptance boundary.
 This entry describes implementation; consult PR/CI and deployment receipts for
 verified release status. No legacy/production data or real-data migration changed.
+
+## Transaction header refinements — 2026-11-21
+
+Owner requested fixed Purchase/Sale tabs and replacement of the bottom Save bar
+with an icon-only Save action at the end of the New transaction header. The shell
+now hosts both through TransactionFormHeader, using the existing form controls,
+canvas, header action sizing and unchanged submit/validation/retry handlers.
+Creation and purchase/sale editing share the behavior; tabs disable during saves.
+The tab backing is opaque and part of the sticky header, preserving the rounded
+content boundary without scroll bleed. No financial, storage or lifecycle change.

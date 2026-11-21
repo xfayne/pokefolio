@@ -1,3 +1,4 @@
+import { TransactionHeaderContext } from '@/features/transactions/transaction-header-context';
 import { NewSalePage } from '@/features/transactions/new-sale-page';
 import { SalePage, SaleActions } from '@/features/transactions/sale-page';
 import {DisplayCurrencyProvider,CurrencySettings} from '@/services/display-currency';
@@ -92,8 +93,11 @@ function Shell() {
   const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : account.history.copies;
   const catalogOwned: Record<string,number> = {};
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
+  const [saveTarget, setSaveTarget] = useState<HTMLDivElement | null>(null);
+  const [kindTarget, setKindTarget] = useState<HTMLDivElement | null>(null);
   const isEditing = contentLocation.pathname.endsWith('/edit');
   const isNewPurchase = ['/transactions/new', '/transactions/new-sale'].includes(contentLocation.pathname);
+  const isTransactionForm = isNewPurchase || isEditing;
   const purchaseMatch = matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
   const saleMatch = matchPath('/transactions/sales/:transactionId', contentLocation.pathname);
   const isSale = !!saleMatch;
@@ -111,18 +115,20 @@ function Shell() {
   const closeUtility = () => { if (background) void navigate(-1); else void navigate('/dashboard', { replace: true }); };
   return <div className="app-shell mx-auto min-h-dvh max-w-3xl bg-blue-50">
     <a href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }} className="skip-link rounded-xl bg-white p-3 text-blue-700">{t('skip')}</a>
-    <header className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
+    <header data-transaction-form={isTransactionForm || undefined} className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
         <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
         {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
-        <div className="flex shrink-0 gap-1">{focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
+        <div className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
         </>} </div>
       </div>
+      {isTransactionForm && <div ref={setKindTarget} className="transaction-kind-slot px-3 pt-3 pb-1.5 sm:px-6" />}
     </header>
-    <main id="main-content" tabIndex={-1} className="app-content space-y-6 px-3 pt-3 sm:px-6">
+    <main data-transaction-form={isTransactionForm || undefined} id="main-content" tabIndex={-1} className="app-content space-y-6 px-3 pt-3 sm:px-6">
+      <TransactionHeaderContext value={{ actions: saveTarget, tabs: kindTarget }}>
       <Routes location={contentLocation}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <SavedSectionRedirect name={name as keyof typeof sections} search={contentLocation.search} /> : <SectionPage name={name} />} />)}
@@ -137,6 +143,7 @@ function Shell() {
         <Route path="/deals" element={<Navigate to="/wishlist/deals" replace />} />
         <Route path="*" element={<EmptyState title={t('missing')} description={t('missingDescription')} />} />
       </Routes>
+      </TransactionHeaderContext>
     </main>
     <nav aria-label={t('navigation')} hidden={!!utility} className="bottom-bar fixed inset-x-0 bottom-0 z-30 mx-auto max-w-3xl bg-slate-900 text-white">
       <div className="grid grid-cols-5 px-1">{destinations.map(({ name, icon: Icon }) => <NavLink key={name} to={`/${name}`} className={({ isActive }) => `flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1 pb-1 text-center text-xs leading-4 transition-colors duration-150 focus-visible:outline-white ${isActive ? 'font-semibold text-sky-400' : 'text-slate-100 hover:bg-slate-800'}`}>

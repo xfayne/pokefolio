@@ -1,3 +1,4 @@
+import { TransactionFormTestFrame } from './transaction-header.test-support';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -12,7 +13,7 @@ function Harness({ save }: { save: () => Promise<void> }) {
   return <NewPurchaseForm draft={draft} catalog={sampleHistory.catalog} onChange={setDraft} onSave={save} />;
 }
 it('matches the example, recomputes after removal and keeps shipment fields collapsed initially', async () => {
-  render(<Harness save={vi.fn()} />);
+  render(<Harness save={vi.fn()} />, {wrapper:TransactionFormTestFrame});
   expect(screen.getByText('$142.00', { exact: true })).toBeInTheDocument();
   expect(screen.getByText('Split equally: $4.00 per copy')).toBeInTheDocument();
   const shipment = screen.getByRole('button', { name: 'Shipment details (optional)' });
@@ -24,7 +25,7 @@ it('matches the example, recomputes after removal and keeps shipment fields coll
   expect(screen.getByLabelText('Tracking number')).toBeInTheDocument();
 });
 it('never silently relabels entered currency amounts and supports immediate undo', async () => {
-  render(<Harness save={vi.fn()} />);
+  render(<Harness save={vi.fn()} />, {wrapper:TransactionFormTestFrame});
   await userEvent.selectOptions(screen.getByLabelText('Currency'), 'GBP');
   expect(screen.getByLabelText('Card cost 1')).toHaveValue('');
   expect(screen.getByRole('status')).toHaveTextContent('no conversion was applied');
@@ -35,7 +36,7 @@ it('never silently relabels entered currency amounts and supports immediate undo
 it('prevents invalid and concurrent submissions, and retains the draft on failure', async () => {
   let reject: (error: Error) => void = () => {};
   const save = vi.fn(() => new Promise<void>((_, no) => { reject = no; }));
-  render(<Harness save={save} />);
+  render(<Harness save={save} />, {wrapper:TransactionFormTestFrame});
   await userEvent.clear(screen.getByLabelText('Card cost 1'));
   await userEvent.click(screen.getByRole('button', { name: 'Save purchase' }));
   expect(save).not.toHaveBeenCalled();

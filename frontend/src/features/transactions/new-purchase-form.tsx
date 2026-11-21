@@ -1,3 +1,4 @@
+import { TransactionFormHeader } from './transaction-form-header';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronDown, LuPlus, LuShoppingCart, LuTag, LuX } from 'react-icons/lu';
@@ -48,12 +49,14 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, o
   const amountInput = (field: string, label: string, value: string, update: (value: string) => void, disabled = false, accessibleLabel = label) => <label className="new-purchase-field" htmlFor={`${id}-${field}`}>
     <span>{label}</span><span className="new-purchase-money" dir="ltr"><span aria-hidden>{symbol}</span><Input {...inputProps(field)} aria-label={accessibleLabel} className="new-purchase-input" inputMode="decimal" maxLength={20} value={disabled ? '' : value} placeholder={disabled ? t('newPurchase.unallocated') : '0.00'} disabled={disabled} onChange={e => update(e.target.value)} /></span>{fieldError(field)}
   </label>;
-  return <form className="new-purchase-form" aria-label={t(editing ? 'newPurchase.editTitle' : 'newPurchase.title')} noValidate onSubmit={e => void submit(e)}>
+  return <form id={id} className="new-purchase-form" aria-label={t(editing ? 'newPurchase.editTitle' : 'newPurchase.title')} noValidate onSubmit={e => void submit(e)}>
     <fieldset disabled={saving} className="new-purchase-fields">
+      <TransactionFormHeader formId={id} disabled={saving || !onSave} saving={saving} label={t(saving ? 'newPurchase.saving' : editing ? 'newPurchase.saveChanges' : 'newPurchase.save')}>
       <div className="new-purchase-kind" role="group" aria-label={t(editing ? 'newPurchase.editTitle' : 'newPurchase.title')}>
         <button type="button" aria-pressed="true"><LuShoppingCart aria-hidden />{t('newPurchase.purchase')}</button>
         <button type="button" disabled={editing} aria-disabled={!onSale} onClick={() => onSale?.()}><LuTag aria-hidden />{t('newPurchase.sale')}</button>
       </div>
+      </TransactionFormHeader>
       <Card className="new-purchase-meta">
         <label className="new-purchase-field" htmlFor={`${id}-date`}><span>{t('newPurchase.date')}</span><Input {...inputProps('date')} className="new-purchase-input" type="date" value={draft.date} onChange={e => change({ ...draft, date: e.target.value })} />{fieldError('date')}</label>
         <label className="new-purchase-field"><span>{t('newPurchase.source')}</span><Select aria-label={t('newPurchase.source')} className="new-purchase-input" value={draft.source} onChange={e => change({ ...draft, source: e.target.value as PurchaseDraft['source'] })}>{(['ebay', 'manual', 'other'] as const).map(source => <option value={source} key={source}>{t(`transactionHistory.${source}`)}</option>)}</Select></label>
@@ -90,6 +93,5 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, o
     {submitted && preview.issues.length > 0 && <p role="alert" className="new-purchase-error">{t('newPurchase.invalid')}</p>}
     {failed && <p role="alert" className="new-purchase-error">{t('newPurchase.failed')}</p>}
     {!onSave && <p className="new-purchase-notice">{t('newPurchase.unavailable')}</p>}
-    <div className="new-purchase-save"><Button type="submit" disabled={saving || !onSave}>{t(saving ? 'newPurchase.saving' : editing ? 'newPurchase.saveChanges' : 'newPurchase.save')}</Button></div>
   </form>;
 }

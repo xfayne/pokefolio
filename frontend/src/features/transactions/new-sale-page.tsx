@@ -1,5 +1,6 @@
+import { TransactionFormHeader } from './transaction-form-header';
 import { saleCopyNumber } from './sale-copy-number';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { LuPlus, LuShoppingCart, LuTag, LuX } from 'react-icons/lu';
@@ -64,17 +65,20 @@ export function SaleForm({ draft, copies, owner, onChange, editing, onPick, onPu
   const [failed, setFailed] = useState(false);
   const [undo, setUndo] = useState<SaleDraft | null>(null);
   const busy = useRef(false);
+  const formId = useId();
   let plan: ReturnType<typeof prepareSale> | null = null;
   try { plan = prepareSale(owner ?? 'disconnected', draft, editing ? copies.map(c => c.dispositionRecordId === draft.id ? { ...c, disposition: 'held', dispositionRecordId: null } : c) : copies, new Date().toISOString()); } catch { /* Incomplete draft. */ }
   const net = plan ? netSaleProceeds(plan.sale) : null;
   const money = (minor: number) => new Intl.NumberFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', { style: 'currency', currency: draft.currency }).format(minor/100);
   const change = (next: SaleDraft) => { setFailed(false); setUndo(null); onChange(next); };
   const amount = (key: 'buyerShipping' | 'sellingFees' | 'sellerShipping' | 'sellingTaxes') => <label className="new-purchase-field"><span>{t(`sale.${key}`)}</span><Input className="new-purchase-input" inputMode="decimal" maxLength={20} value={draft[key]} onChange={e => change({ ...draft, [key]: e.target.value })} /></label>;
-  return <form className="new-purchase-form" aria-label={t(editing ? 'sale.edit' : 'sale.new')} noValidate onSubmit={event => { event.preventDefault(); if (busy.current || !onSave) return; setSubmitted(true); if (!plan) return; busy.current = true; setSaving(true); setFailed(false); void onSave().catch(() => setFailed(true)).finally(() => { busy.current = false; setSaving(false); }); }}>
+  return <form id={formId} className="new-purchase-form" aria-label={t(editing ? 'sale.edit' : 'sale.new')} noValidate onSubmit={event => { event.preventDefault(); if (busy.current || !onSave) return; setSubmitted(true); if (!plan) return; busy.current = true; setSaving(true); setFailed(false); void onSave().catch(() => setFailed(true)).finally(() => { busy.current = false; setSaving(false); }); }}>
     <fieldset disabled={saving} className="new-purchase-fields">
+      <TransactionFormHeader formId={formId} disabled={saving || !onSave} saving={saving} label={t(saving ? 'newPurchase.saving' : editing ? 'newPurchase.saveChanges' : 'sale.save')}>
       <div className="new-purchase-kind" role="group" aria-label={t('newPurchase.title')}>
         <button type="button" disabled={editing} onClick={onPurchase}><LuShoppingCart aria-hidden />{t('newPurchase.purchase')}</button><button type="button" aria-pressed="true"><LuTag aria-hidden />{t('newPurchase.sale')}</button>
       </div>
+      </TransactionFormHeader>
       <Card className="new-purchase-meta">
         <label className="new-purchase-field"><span>{t('newPurchase.date')}</span><Input className="new-purchase-input" type="date" value={draft.date} onChange={e => change({ ...draft, date: e.target.value })} /></label>
         <label className="new-purchase-field"><span>{t('newPurchase.source')}</span><Select className="new-purchase-input" value={draft.source} onChange={e => change({ ...draft, source: e.target.value as SaleDraft['source'] })}>{(['manual','ebay','other'] as const).map(k => <option key={k} value={k}>{t(`transactionHistory.${k}`)}</option>)}</Select></label>
@@ -101,7 +105,6 @@ export function SaleForm({ draft, copies, owner, onChange, editing, onPick, onPu
     {submitted && !plan && <p role="alert" className="new-purchase-error">{t('sale.invalid')}</p>}
     {failed && <p role="alert" className="new-purchase-error">{t('sale.failed')}</p>}
     {!onSave && <p className="new-purchase-notice">{t('newPurchase.unavailable')}</p>}
-    <div className="new-purchase-save"><Button type="submit" disabled={saving || !onSave}>{t(saving ? 'newPurchase.saving' : editing ? 'newPurchase.saveChanges' : 'sale.save')}</Button></div>
   </form>;
 }
 function CopyPicker({ copies, owner, selected, onSelect, onClose, title }: { copies: readonly CardCopy[]; owner: string; selected: readonly string[]; onSelect: (ids: string[]) => void; onClose: () => void; title: string }) {
