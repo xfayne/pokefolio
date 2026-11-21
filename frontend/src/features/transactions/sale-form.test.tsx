@@ -16,7 +16,7 @@ it('validates before saving, blocks duplicate submits, and retains failed sale d
   render(<Harness save={save} />);
   expect(screen.getByText('£27.00',{exact:true})).toBeVisible();
   await userEvent.clear(screen.getByLabelText('Sale price 1'));
-  await userEvent.click(screen.getByRole('button',{name:'Save sale',exact:true}));
+  await userEvent.click(screen.getByRole('button',{name:'Save sale'}));
   expect(save).not.toHaveBeenCalled();
   await userEvent.type(screen.getByLabelText('Sale price 1'),'30');
   const form=screen.getByRole('form',{name:'New sale'});
@@ -30,7 +30,7 @@ it('clears currency amounts with undo and leaves copy identity intact',async()=>
   render(<Harness save={vi.fn()} />);
   await userEvent.selectOptions(screen.getByLabelText('Currency'),'USD');
   expect(screen.getByLabelText('Sale price 1')).toHaveValue('');
-  await userEvent.click(screen.getByRole('button',{name:'Undo',exact:true}));
+  await userEvent.click(screen.getByRole('button',{name:'Undo'}));
   expect(screen.getByLabelText('Currency')).toHaveValue('GBP');
   expect(screen.getByLabelText('Sale price 1')).toHaveValue('30');
 });
