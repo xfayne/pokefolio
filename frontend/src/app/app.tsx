@@ -1,3 +1,6 @@
+import { RecentPurchases } from '@/features/transactions/recent-purchases';
+import { EditPurchasePage } from '@/features/transactions/edit-purchase-page';
+import { AccountControls } from '@/features/account-controls';
 import { createSampleCopies } from '@/features/inventory/sample';
 import { useDemoTransactionData } from '@/features/transactions/demo-data';
 import { initialCatalogSearch } from '@/features/catalog/search-state';
@@ -41,7 +44,7 @@ function SectionPage({ name }: { name: Destination }) {
   const tabs = name in sections ? sections[name as keyof typeof sections] : null;
   return <div className={['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
     {tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex gap-1 rounded-full bg-blue-100/80 p-1">{tabs.map(tab => <NavLink key={tab} to={{ pathname: `/${name}/${tab}`, search: name === 'transactions' ? location.search : '' }} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
-    {location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {name === 'dashboard' ? <><RecentPurchases /><EmptyState title={t('comingTitle')} description={t('description')} /></> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -60,9 +63,10 @@ function Shell() {
   const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : [];
   const catalogOwned: Record<string,number> = {};
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
+  const isEditing = contentLocation.pathname.endsWith('/edit');
   const isNewPurchase = contentLocation.pathname === '/transactions/new';
   const isPurchase = !!matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
-  const focusedTransaction = isPurchase || isNewPurchase;
+  const focusedTransaction = isPurchase || isNewPurchase || isEditing;
   const backToHistory = () => {
     if ((location.state as { purchaseFrom?: string } | null)?.purchaseFrom === 'history') void navigate(-1);
     else void navigate({ pathname: '/transactions/history', search: contentLocation.search }, { replace: true });
@@ -75,7 +79,7 @@ function Shell() {
     <header className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
-        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isNewPurchase ? 'newPurchase.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
+        <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
         {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
         <div className="flex shrink-0 gap-1">{focusedTransaction ? <button type="button" disabled aria-label={t('purchaseDetails.more')} title={t('purchaseDetails.moreDetail')} className="flex size-11 items-center justify-center rounded-xl text-white"><LuEllipsis aria-hidden className="size-6" /></button> : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
@@ -88,6 +92,7 @@ function Shell() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <Navigate to={{ pathname: `/${name}/${sections[name as keyof typeof sections][0]}`, search: contentLocation.search }} replace /> : <SectionPage name={name} />} />)}
         {Object.entries(sections).flatMap(([name, tabs]) => tabs.map(tab => <Route key={`${name}/${tab}`} path={`/${name}/${tab}`} element={<SectionPage name={name as Destination} />} />))}
+        <Route path="/transactions/purchases/:transactionId/edit" element={<EditPurchasePage />} />
         <Route path="/transactions/new" element={<Suspense fallback={<LoadingState label={t('loading')} />}><NewPurchasePage key={new URLSearchParams(contentLocation.search).get('transactions') === 'sample' ? 'sample' : 'account'} /></Suspense>} />
         <Route path="/transactions/purchases/:transactionId" element={<Suspense fallback={<LoadingState label={t('loading')} />}><PurchasePage /></Suspense>} />
         <Route path="/transactions/shipments" element={<Navigate to={{ pathname: "/transactions/overview", search: contentLocation.search }} replace />} />
@@ -101,7 +106,7 @@ function Shell() {
       </NavLink>)}</div>
     </nav>
     {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }

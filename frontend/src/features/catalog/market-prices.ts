@@ -22,9 +22,9 @@ export async function fetchMarketQuotes(card: InventoryCatalogCard, catalog: Cat
  const matches = products.filter(p => special ? p.id === special.product : String(p.number).replace(/^0+/,'').split('/')[0] === card.number.split('/')[0] && key(p.name.replace(/\s*\(\d{1,3}\)\s*$/,'')) === key(card.name));
  if (matches.length !== 1) return [];
  const skus = skusSchema.parse(rawSkus); const rows = Object.values(skus.products[String(matches[0]!.id)] ?? {});
- const isFirst = catalog.edition === 'first-edition' || card.id === 'base1-8';
+ const isFirst = catalog.edition === 'first-edition';
  const finish = catalog.finish.value;
  const accepted = rows.filter(row => { const variant = (row.var ?? row.var_a ?? '').toLowerCase(); return row.lng === 'EN' && /1st|first edition/.test(variant) === isFirst && (finish === 'holo' || finish === 'shining' ? /holo/.test(variant) && !/reverse/.test(variant) : finish === 'reverse' ? /reverse/.test(variant) : !/holo|foil/.test(variant)); });
  const observedAt = skus.updated && Number.isFinite(Date.parse(skus.updated)) ? new Date(skus.updated).toISOString() : new Date().toISOString();
- return accepted.flatMap(row => ['NM','LP','MP','HP','DMG'].includes(row.cnd) && typeof row.mkt === 'number' && Number.isSafeInteger(Math.round(row.mkt * 100)) ? [{catalog,condition:row.cnd as CopyQuote['condition'],money:{currency:'USD' as const,minor:Math.round(row.mkt*100)},observedAt,source:'TCGTracking / TCGplayer'}] : []);
+ return accepted.flatMap(row => ['NM','LP','MP','HP','DMG'].includes(row.cnd) && typeof row.mkt === 'number' && Number.isSafeInteger(Math.round(row.mkt * 100)) ? [{catalog,condition:(row.cnd === 'DMG' ? 'DAMAGED' : row.cnd) as CopyQuote['condition'],money:{currency:'USD' as const,minor:Math.round(row.mkt*100)},observedAt,source:'TCGTracking / TCGplayer'}] : []);
 }

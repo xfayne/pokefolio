@@ -79,11 +79,68 @@ service cloud.firestore {
         && enabledShareAfter(resource.data.ownerUid, shareId, request.resource.data.includeWish);
       allow delete: if false;
     }
+    // Private portfolio records are independent of the retained progress root.
+    // Updates require a matching immutable audit in the same atomic commit.
+    function validPortfolio(uid, id) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['record', 'auditId', 'committedAt'])
+        && d.keys().hasAll(['record', 'auditId', 'committedAt'])
+        && d.committedAt == request.time && d.record is map
+        && d.record.ownerUid == uid && d.record.id == id
+        && d.record.schemaVersion == 1 && d.record.revision is int
+        && d.record.createdAt is string && d.record.updatedAt is string;
+    }
+    function portfolioCreate(uid, id) {
+      return isOwner(uid) && validPortfolio(uid,id)
+        && request.resource.data.record.revision == 1
+        && request.resource.data.auditId == null;
+    }
+    function portfolioUpdate(uid, id) {
+      let next = request.resource.data.record;
+      let previous = resource.data.record;
+      let audit = getAfter(/databases/$(database)/documents/users/$(uid)/revisions/$(request.resource.data.auditId)).data.record;
+      return isOwner(uid) && validPortfolio(uid,id)
+        && next.ownerUid == previous.ownerUid && next.id == previous.id
+        && next.createdAt == previous.createdAt
+        && next.revision == previous.revision + 1
+        && audit.before == previous && audit.after == next
+        && audit.ownerUid == uid && audit.actorUid == uid && audit.recordId == id;
+    }
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;
       allow create, update: if isOwner(uid) && validProgress(request.resource.data);
       allow delete: if false;
+      match /{bucket}/{id} {
+        allow read: if isOwner(uid) && bucket in ['transactions','copies','lots','shipments','revisions'];
+        allow create: if bucket in ['transactions','copies','lots','shipments'] && portfolioCreate(uid,id);
+        allow update: if bucket in ['transactions','copies','lots','shipments'] && portfolioUpdate(uid,id);
+      }
+      match /transactions/{parent}/lines/{id} {
+        allow read: if isOwner(uid);
+        allow create: if portfolioCreate(uid,id) && request.resource.data.record.transactionId == parent;
+        allow update: if portfolioUpdate(uid,id) && request.resource.data.record.transactionId == parent;
+      }
+      match /shipments/{parent}/memberships/{id} {
+        allow read: if isOwner(uid);
+        allow create: if portfolioCreate(uid,id) && request.resource.data.record.shipmentId == parent;
+        allow update: if portfolioUpdate(uid,id) && request.resource.data.record.shipmentId == parent;
+      }
+      match /revisions/{id} {
+        allow create: if portfolioCreate(uid,id)
+          && request.resource.data.record.actorUid == uid
+          && request.resource.data.record.before.ownerUid == uid
+          && request.resource.data.record.after.ownerUid == uid
+          && request.resource.data.record.before.id == request.resource.data.record.recordId
+          && request.resource.data.record.after.id == request.resource.data.record.recordId
+          && request.resource.data.record.after.revision == request.resource.data.record.before.revision + 1;
+      }
+      match /receipts/{id} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && request.resource.data.keys().hasOnly(['fingerprint','committedAt'])
+          && request.resource.data.fingerprint is string && request.resource.data.fingerprint.size() <= 700000
+          && request.resource.data.committedAt == request.time;
+      }
       match /sharing/{documentId} {
         allow read: if isOwner(uid) && documentId == 'settings';
         allow create, update: if isOwner(uid) && documentId == 'settings'

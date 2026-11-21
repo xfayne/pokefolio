@@ -70,3 +70,19 @@ test('catalog filters animate, fill a two-column mobile grid and combine card ty
  await expect(panel).toHaveAttribute('inert','');
  await page.screenshot({path:test.info().outputPath('catalog-toolbar-badges.png'),animations:'disabled'});
 });
+
+test('First Edition checkbox selects exact printing prices without a fallback',async({page})=>{
+ await page.route('https://openapi.tcgtracking.com/**',async route=>{
+  const url=route.request().url();
+  const data=url.endsWith('/sets') ? {sets:[{id:630,name:'Fossil'}]} : url.endsWith('/cards') ? {products:[{id:1,name:'Gengar (5)',number:'05/62'}]} : {products:{1:{a:{lng:'EN',cnd:'LP',var:'Unlimited Holofoil',mkt:25.42},b:{lng:'EN',cnd:'LP',var:'1st Edition Holofoil',mkt:60}}}};
+  await route.fulfill({json:data});
+ });
+ await page.goto('./#/search');
+ await page.getByRole('searchbox',{name:'Search cards',exact:true}).fill('gengar #5/62');
+ await page.getByRole('button',{name:/Gengar/}).click();
+ await expect(page.getByText('$25.42',{exact:true})).toBeVisible();
+ await page.getByRole('checkbox',{name:'First Edition',exact:true}).check();
+ await expect(page.getByText('$60.00',{exact:true})).toBeVisible();
+ await page.getByLabel('Price condition').selectOption('NM');
+ await expect(page.getByText('Unpriced',{exact:true})).toBeVisible();
+});

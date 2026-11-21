@@ -126,3 +126,13 @@ Catalog filters animate with the shared disclosure, lay sets out in a mobile gri
 and combine Energy/Trainer exclusions with Holo-only and multi-set/text search.
 Owned/Wishlist row badges render only from caller-supplied data. Real account
 holdings/Wishlist remain disconnected; explicit sample contexts provide demo counts.
+
+## Purchase account integration — pending activation
+
+The current branch prepares owner-scoped Firestore purchase/history/copy storage,
+revision-checked audited editing, Google sign-in in Settings and exact-edition
+prices via First Edition checkboxes. Save remains a direct action. This supersedes
+the earlier implementation notes above **only after activation**. Live staging
+rules publication and acceptance are still pending; #8 remains open. See the
+[persistence and activation guide](docs/PURCHASE_PERSISTENCE.md) for paths, safeguards,
+limits and remaining verification. No legacy import or production cutover is included.

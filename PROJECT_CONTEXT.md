@@ -343,3 +343,18 @@ from the mock. Callers must supply evidence: explicit sample global contexts sho
 received held counts, ordinary account context stays empty until persistence is
 connected. Wishlist input is supported/tested, but no account wishlist adapter or
 fake wishlist holdings are introduced. Rows have extra room for genuine badges.
+
+## Issue #8 account integration — 2026-11-21, pending activation
+
+Owner approved completing account persistence/editing and clarified: no confirmation
+before Save; First Edition is a checkbox in purchase rows and Card Details, with
+Unlimited when unchecked and exact matching market quotes. Optional listing URL/order
+reference use the existing form. The branch adds the private Firestore adapter,
+immutable receipts/audits, owner-scoped query, sign-in controls and account navigation.
+See `docs/PURCHASE_PERSISTENCE.md` for exact constraints and activation checks.
+
+The Firebase plugin is enabled but exposes no tools in this session; CLI has no
+Firebase login and the browser redirects the staging console to Google sign-in.
+Live rules and live acceptance have NOT been completed. Keep this increment a draft
+until authenticated staging publication and live checks, and required CI, succeed.
+No real account records, legacy data or production settings were written.
