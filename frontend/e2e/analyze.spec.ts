@@ -10,6 +10,7 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABgAAAAgCAIAAACHPC9vAAAAJ0lEQVR4nGO8e2kxAzUAE1VMGTVo1KBRg0YNGjVo1KBRg0YNGnCDAFZAApJq8lFgAAAAAElFTkSuQmCC','base64')});
  await expect(page.getByRole('button',{name:'Inspect photo 1'})).toBeVisible();
  await expect(page.locator('.pokedex-bottom')).toHaveCSS('overflow','hidden');
+ expect(await page.locator('.pokedex-middle').evaluate(el=>Math.abs(el.getBoundingClientRect().bottom-document.querySelector('.pokedex-bottom')!.getBoundingClientRect().top))).toBeLessThan(1);
  await page.screenshot({path:'test-results/analyzer-en.png',fullPage:true});
  await page.getByRole('button',{name:'Inspect photo 1'}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
  expect((await new AxeBuilder({page}).include('.pokedex-frame').analyze()).violations).toEqual([]);
