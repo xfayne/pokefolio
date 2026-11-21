@@ -55,7 +55,7 @@ export function useMarketHistory(owner:string|undefined,products:readonly string
 }
 
 export function selectMarketVariant(result:MarketResult,catalog:CatalogRef,condition:z.infer<typeof conditionSchema>) {
- if(!result.data || catalog.kind!=='identified' || catalog.edition==='unknown' || catalog.language.status!=='known' || catalog.language.value!=='English' || catalog.finish.status!=='known')return null;
+ if(!result.data || catalog.kind!=='identified' || catalog.edition==='unknown' || catalog.language.status!=='known' || !['english','en'].includes(catalog.language.value.toLowerCase()) || catalog.finish.status!=='known')return null;
  const finish=catalog.finish.value;
  if(!['normal','holo','shining','reverse'].includes(finish))return null;
  const matches=result.data.variants.filter(v=>{
