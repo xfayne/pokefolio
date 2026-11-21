@@ -18,3 +18,11 @@ it('supports multi-set union combined with text search', () => {
  expect(new Set(results.map(c=>c.setName))).toEqual(new Set(['Fossil','Legendary Collection']));
  expect(searchCatalog('gengar',[])).toEqual(searchCatalog('gengar'));
 });
+
+it('combines energy/trainer exclusion and holo filters, including secret shinings and promos',()=>{
+ const results=searchCatalog('',[],{excludeEnergy:true,excludeTrainers:true,holoOnly:true});
+ const ids=new Set(results.map(c=>c.id));
+ expect(ids.has('neo3-65')).toBe(true);expect(ids.has('basep-9')).toBe(true);expect(ids.has('basep-34')).toBe(true);
+ expect(ids.has('base1-96')).toBe(false);expect(ids.has('base1-71')).toBe(false);expect(ids.has('base1-46')).toBe(false);
+ expect(searchCatalog('energy',[],{excludeEnergy:true}).some(c=>c.id==='base1-102')).toBe(false);
+});

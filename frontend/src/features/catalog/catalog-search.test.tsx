@@ -15,3 +15,11 @@ it('shares selection, set filtering and list/grid modes', async () => {
  await user.click(screen.getAllByRole('listitem')[0]!.querySelector('button')!);
  expect(select.mock.calls[0]?.[0].id).toBe('base3-5');
 });
+
+it('shows evidenced ownership and wishlist badges and animates filter disclosure',async()=>{
+ const user=userEvent.setup();render(<CatalogSearch query="gengar" onQuery={vi.fn()} onSelect={vi.fn()} owned={{'base3-5':2}} wishlist={['base3-20']} />);
+ expect(screen.getByText('Owned · 2 copies')).toBeInTheDocument();expect(screen.getByText('Wishlist')).toBeInTheDocument();
+ const button=screen.getByRole('button',{name:'Filters'});await user.click(button);expect(button).toHaveAttribute('aria-expanded','true');
+ const target=document.getElementById(button.getAttribute('aria-controls')!)!;expect(target).toHaveAttribute('data-open','true');
+ await user.click(button);expect(target).toHaveAttribute('data-open','false');expect(target).toHaveAttribute('inert');
+});

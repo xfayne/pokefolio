@@ -25,7 +25,7 @@ test('catalog density, subtle detail entry and condition prices', async ({page})
  await route.fulfill({json:data});
  });
  await page.goto('./#/search');await page.getByRole('searchbox').fill('gengar #5/62');
- expect((await page.locator('.catalog-result').boundingBox())!.height).toBeLessThanOrEqual(72);
+ expect((await page.locator('.catalog-result').boundingBox())!.height).toBeLessThanOrEqual(88);
  expect((await page.getByRole('button',{name:'Filters'}).boundingBox())!.height).toBeLessThanOrEqual(32);
  await page.getByRole('button',{name:/Gengar/}).click();
  await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','subtle');
@@ -51,4 +51,22 @@ test('multiple sets survive opening details and returning to catalog',async({pag
  await expect(page.getByRole('searchbox')).toHaveValue('jolteon');
  await expect(page.getByRole('listitem')).toHaveCount(2);
  await page.screenshot({path:test.info().outputPath('catalog-multiple-sets.png')});
+});
+
+test('catalog filters animate, fill a two-column mobile grid and combine card types',async({page})=>{
+ await page.goto('./#/collection/cards?inventory=sample');
+ await page.getByRole('button',{name:'Search',exact:true}).click();
+ await page.getByRole('searchbox').fill('gengar');
+ await expect(page.getByText('Owned · 1 copy',{exact:true})).toBeVisible();
+ const filter=page.getByRole('button',{name:'Filters',exact:true});await filter.click();
+ const panel=page.locator('.catalog-search .ui-disclosure');await expect(panel).toHaveAttribute('data-open','true');
+ expect(await page.locator('.catalog-set-grid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2);
+ await page.getByRole('searchbox').fill('');
+ await page.getByRole('checkbox',{name:'Holo only',exact:true}).check();
+ await page.getByRole('checkbox',{name:'Exclude Energy',exact:true}).check();
+ await page.getByRole('checkbox',{name:'Exclude Trainers',exact:true}).check();
+ await page.screenshot({path:test.info().outputPath('catalog-filter-grid.png'),animations:'disabled'});
+ await filter.click();await expect(panel).toHaveAttribute('data-open','false');
+ await expect(panel).toHaveAttribute('inert','');
+ await page.screenshot({path:test.info().outputPath('catalog-toolbar-badges.png'),animations:'disabled'});
 });

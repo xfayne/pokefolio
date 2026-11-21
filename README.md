@@ -121,3 +121,8 @@ Details entry points retain the original slide animation.
 Catalog filters accept multiple sets and retain selection when returning from
 Card Details. WoTC Promo price matching uses verified standard product IDs and
 actual SKU finishes, keeping alternate printings separate.
+
+Catalog filters animate with the shared disclosure, lay sets out in a mobile grid,
+and combine Energy/Trainer exclusions with Holo-only and multi-set/text search.
+Owned/Wishlist row badges render only from caller-supplied data. Real account
+holdings/Wishlist remain disconnected; explicit sample contexts provide demo counts.
