@@ -1,4 +1,5 @@
 import {analyzeCardCondition} from './card-condition.js';
+import {pricesApi} from './market-prices.js';
 import {analyzeUploadApi,resolveEbayLinkApi} from './standalone-condition.js';
 /**
  * Cloudflare Worker /api/search: trusted eBay API proxy.
@@ -445,6 +446,7 @@ export default {
   const origin=request.headers.get('origin')||'';const headers=cors(origin,env);const u=new URL(request.url);
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(!allowedOrigin(origin,env))return reply({error:'Origin not allowed'},403,headers);
+  if(u.pathname==='/api/market/prices')return pricesApi(request,env,headers,{reply,verifyFirebaseBearer});
   if(u.pathname.startsWith('/api/shipments/'))return shipmentsApi(request,env,headers,u);
   if(request.method==='POST'&&u.pathname==='/api/analyze-condition')return analyzeConditionApi(request,env,headers);
   if(request.method==='POST'&&u.pathname==='/api/analyze-upload')return analyzeUploadApi(request,env,headers,{reply,verifyFirebaseBearer});

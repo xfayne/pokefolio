@@ -1,4 +1,8 @@
 {
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "miniflare": "5.20261119.0-beta",
+    "wrangler": "4.166.0"
+  }
 }

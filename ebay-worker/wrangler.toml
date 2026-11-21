@@ -1,9 +1,27 @@
 # Pokefolio backend API: eBay, AI analysis and shipment registration and queries.
 name = "pokefolio-api-staging"
-main = "./index.js"
+main = "./worker-entry.js"
 compatibility_date = "2026-11-06"
 workers_dev = true
 preview_urls = false
+
+[[kv_namespaces]]
+binding = "MARKET_CACHE"
+id = "cdf43434b7684b4eb2dbc0060e5b3234"
+
+[[durable_objects.bindings]]
+name = "PRICE_COORDINATOR"
+class_name = "PriceCoordinator"
+
+[[migrations]]
+tag = "market-prices-v1"
+new_sqlite_classes = ["PriceCoordinator"]
+
+[observability]
+enabled = true
+
+[observability.traces]
+enabled = true
 
 [vars]
 ALLOWED_ORIGIN = "https://xfayne.github.io"
