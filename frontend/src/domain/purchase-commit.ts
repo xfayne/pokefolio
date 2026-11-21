@@ -99,6 +99,12 @@ export function purchaseCommit(
         notes: before.record.notes,
       };
     }
+    if (before.collection === 'shipments' && after.collection === 'shipments') {
+      const unchanged = before.record.trackingNumber === after.record.trackingNumber && before.record.carrier === after.record.carrier;
+      after.record = { ...after.record, deliveredOn: before.record.deliveredOn, notes: before.record.notes,
+        ...(unchanged && before.record.tracking ? { tracking: before.record.tracking } : {}) };
+      if (!unchanged) delete after.record.tracking;
+    }
     const audit = revisionSchema.parse({
       schemaVersion: 1,
       id: `audit-${crypto.randomUUID()}`,

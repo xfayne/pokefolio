@@ -1,3 +1,6 @@
+import { PurchaseReceiptAction } from '@/features/transactions/purchase-receipt-action';
+import { useTrackingSync } from '@/hooks/use-tracking-sync';
+import { unreadTracking } from '@/domain/shipment-tracking';
 import { TransactionHeaderContext } from '@/features/transactions/transaction-header-context';
 import { NewSalePage } from '@/features/transactions/new-sale-page';
 import { SalePage, SaleActions } from '@/features/transactions/sale-page';
@@ -90,6 +93,8 @@ function Shell() {
   const demoTransactions = useDemoTransactionData();
   const account = usePortfolio();
   const contextParams = new URLSearchParams(contentLocation.search);
+  const tracking = useTrackingSync(account.owner, account.records, contextParams.get('transactions') !== 'sample' && contextParams.get('inventory') !== 'sample');
+  const unread = account.records.reduce((sum,e) => sum + (e.collection === 'shipments' ? unreadTracking(e.record) : 0), 0);
   const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : account.history.copies;
   const catalogOwned: Record<string,number> = {};
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
@@ -120,7 +125,7 @@ function Shell() {
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
         <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
         {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
-        <div className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
+        <div className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : <><PurchaseReceiptAction key={contentLocation.pathname} id={purchaseMatch?.params.transactionId ?? ''} preview={contextParams.get('transactions') === 'sample'} /><PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /></> : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
         </>} </div>
@@ -129,6 +134,7 @@ function Shell() {
     </header>
     <main data-transaction-form={isTransactionForm || undefined} id="main-content" tabIndex={-1} className="app-content space-y-6 px-3 pt-3 sm:px-6">
       <TransactionHeaderContext value={{ actions: saveTarget, tabs: kindTarget }}>
+      {isPurchase && contextParams.get('transactions') !== 'sample' && tracking.error && <p role="alert" className="text-sm text-red-700">{t('purchaseDetails.trackingFailed')} <button type="button" className="underline" onClick={() => void tracking.refetch()}>{t('reload')}</button></p>}
       <Routes location={contentLocation}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         {destinations.map(({ name }) => <Route key={name} path={`/${name}`} element={name in sections ? <SavedSectionRedirect name={name as keyof typeof sections} search={contentLocation.search} /> : <SectionPage name={name} />} />)}
@@ -138,7 +144,7 @@ function Shell() {
         <Route path="/transactions/sales/:transactionId/edit" element={<NewSalePage editing />} />
         <Route path="/transactions/purchases/:transactionId/edit" element={<EditPurchasePage />} />
         <Route path="/transactions/new" element={<Suspense fallback={<LoadingState label={t('loading')} />}><NewPurchasePage key={new URLSearchParams(contentLocation.search).get('transactions') === 'sample' ? 'sample' : 'account'} /></Suspense>} />
-        <Route path="/transactions/purchases/:transactionId" element={<Suspense fallback={<LoadingState label={t('loading')} />}><PurchasePage /></Suspense>} />
+        <Route path="/transactions/purchases/:transactionId" element={<Suspense fallback={<LoadingState label={t('loading')} />}><PurchasePage onRefresh={() => { void tracking.refetch(); }} refreshing={tracking.isFetching} /></Suspense>} />
         <Route path="/transactions/shipments" element={<Navigate to={{ pathname: "/transactions/overview", search: contentLocation.search }} replace />} />
         <Route path="/deals" element={<Navigate to="/wishlist/deals" replace />} />
         <Route path="*" element={<EmptyState title={t('missing')} description={t('missingDescription')} />} />
@@ -147,7 +153,7 @@ function Shell() {
     </main>
     <nav aria-label={t('navigation')} hidden={!!utility} className="bottom-bar fixed inset-x-0 bottom-0 z-30 mx-auto max-w-3xl bg-slate-900 text-white">
       <div className="grid grid-cols-5 px-1">{destinations.map(({ name, icon: Icon }) => <NavLink key={name} to={`/${name}`} className={({ isActive }) => `flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1 pb-1 text-center text-xs leading-4 transition-colors duration-150 focus-visible:outline-white ${isActive ? 'font-semibold text-sky-400' : 'text-slate-100 hover:bg-slate-800'}`}>
-        {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-5 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-10" /></span>}<span className="break-words">{t(name)}</span>
+        {Icon ? <Icon aria-hidden className="size-6 shrink-0" /> : <span aria-hidden className="-mt-5 mb-1 rounded-full bg-slate-900 p-1"><span className="pokeball size-10" /></span>}<span className="break-words">{t(name)}{name === 'transactions' && unread > 0 && <span className="ms-1 rounded-full bg-blue-600 px-1.5 text-xs text-white" aria-label={t('purchaseDetails.unread', {count:unread})}>{unread > 99 ? '99+' : unread}</span>}</span>
       </NavLink>)}</div>
     </nav>
     {/* Keep Search mounted behind Card Details. Returning reveals the same

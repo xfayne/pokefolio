@@ -332,3 +332,29 @@ test('nine-copy sale edits fit the atomic audit policy and lifecycle writes rema
   await assertFails(deleteDoc(doc(db,`users/${alice}/copies/copy-0`)));
  }finally{await env.cleanup();}
 });
+
+test('twenty-copy receipt fits audited atomic writes and preserves copy identity',async()=>{
+ const env=await environment('firestore.private.rules');
+ try {
+  await env.clearFirestore();
+  const db=env.authenticatedContext(alice).firestore();
+  const stamp='2026-11-21T00:00:00Z';
+  const metadata={schemaVersion:1,ownerUid:alice,revision:1,createdAt:stamp,updatedAt:stamp};
+  const envelope=record=>({record,auditId:null,committedAt:serverTimestamp()});
+  const copies=Array.from({length:20},(_,i)=>({...metadata,id:`receipt-copy-${i}`,possession:'pending'}));
+  const create=writeBatch(db);
+  for(const copy of copies)create.set(doc(db,`users/${alice}/copies/${copy.id}`),envelope(copy));
+  await assertSucceeds(create.commit());
+  const receive=writeBatch(db);
+  for(const copy of copies){
+   const next={...copy,possession:'received',revision:2,updatedAt:'2026-11-22T00:00:00Z'};
+   const auditId=`receipt-${copy.id}`;
+   const audit={...metadata,id:auditId,actorUid:alice,recordId:copy.id,before:copy,after:next,operation:'delivery',reason:'Synthetic receipt'};
+   receive.set(doc(db,`users/${alice}/revisions/${auditId}`),envelope(audit));
+   receive.set(doc(db,`users/${alice}/copies/${copy.id}`),{...envelope(next),auditId});
+  }
+  receive.set(doc(db,`users/${alice}/receipts/receive-twenty`),{fingerprint:'synthetic',committedAt:serverTimestamp()});
+  await assertSucceeds(receive.commit());
+  await assertFails(getDoc(doc(env.authenticatedContext(bob).firestore(),`users/${alice}/copies/${copies[0].id}`)));
+ }finally{await env.cleanup();}
+});

@@ -1,3 +1,4 @@
+import { validateReceiptCommit } from '@/domain/receipt';
 import {
   collection,
   doc,
@@ -45,7 +46,8 @@ export async function commitPortfolio(
   const command = prepareCommit(owner, raw, 450);
   if (command.updates.length > 20)
     throw Error('This edit exceeds the atomic audit limit');
-  const saleCommand = validateSaleCommit(owner, command);
+  const receiptCommand = validateReceiptCommit(command);
+  const saleCommand = receiptCommand ? false : validateSaleCommit(owner, command);
   // New financial records must describe complete purchases, not orphan copies.
   const purchases = command.creates.filter(
     (e) => e.collection === 'transactions' && e.record.kind === 'purchase',

@@ -1,14 +1,14 @@
 import {useDisplayMoney} from '@/services/display-currency';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuChevronRight, LuCopy, LuShoppingCart } from 'react-icons/lu';
+import { LuChevronRight, LuCopy, LuShoppingCart, LuRefreshCw } from 'react-icons/lu';
 import { Card } from '@/components/ui/surfaces';
 import { PokemonArt } from '@/components/ui/pokemon-art';
 import type { CardCopy, Cost } from '@/domain/schema';
 import type { PurchaseDetailsView, PurchaseShipment } from '@/domain/purchase-details';
 import { TransactionStatus } from './transaction-status';
 
-export function PurchaseDetails({ view, onInspect }: { view: PurchaseDetailsView; onInspect: (copy: CardCopy) => void }) {
+export function PurchaseDetails({ view, onInspect, onRefresh, refreshing }: { view: PurchaseDetailsView; onInspect: (copy: CardCopy) => void; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
   const { t, i18n } = useTranslation();
   const id = useId();
   const { transaction, row, copies, shipments } = view;
@@ -51,12 +51,12 @@ export function PurchaseDetails({ view, onInspect }: { view: PurchaseDetailsView
       </dl>
       {view.cardCostMismatch && <p role="alert" className="text-sm text-amber-800">{t('purchaseDetails.costMismatch')}</p>}
     </Card>
-    {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}
+    {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} onRefresh={onRefresh} refreshing={refreshing} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}
     {transaction.notes && <Card><h2>{t('inventory.notes')}</h2><p className="whitespace-pre-wrap break-words text-sm text-slate-600">{transaction.notes}</p></Card>}
   </article>;
 }
 
-function ShipmentDetails({ shipment }: { shipment: PurchaseShipment }) {
+function ShipmentDetails({ shipment, onRefresh, refreshing }: { shipment: PurchaseShipment; onRefresh?: (() => void) | undefined; refreshing?: boolean | undefined }) {
   const { t, i18n } = useTranslation();
   const [copyResult, setCopyResult] = useState<'idle' | 'copied' | 'failed'>('idle');
   const id = useId();
@@ -66,7 +66,8 @@ function ShipmentDetails({ shipment }: { shipment: PurchaseShipment }) {
     try { await navigator.clipboard.writeText(shipment.trackingNumber); setCopyResult('copied'); } catch { setCopyResult('failed'); }
   }
   return <Card className="purchase-shipment" aria-labelledby={`${id}-shipment`}>
-    <h2 id={`${id}-shipment`}>{t('purchaseDetails.shipment')}</h2>
+    <div className="flex items-center justify-between gap-2"><h2 id={`${id}-shipment`}>{t('purchaseDetails.shipment')}</h2>{shipment.trackingNumber && onRefresh && <button type="button" onClick={onRefresh} disabled={refreshing} aria-label={t('purchaseDetails.refreshTracking')} className="purchase-copy-tracking disabled:opacity-40"><LuRefreshCw aria-hidden className={`size-4 ${refreshing ? 'animate-spin' : ''}`} /></button>}</div>
+    {shipment.providerStatus && <p className="text-sm text-slate-600">{t('purchaseDetails.carrierStatus')}: {t(`purchaseDetails.statuses.${shipment.providerStatus}`, {defaultValue:shipment.providerStatus})}</p>}
     <TransactionStatus status={shipment.status} className="purchase-status" />
     <div className="purchase-tracking"><span>{shipment.carrier}{shipment.trackingNumber && <> · <bdi title={shipment.trackingNumber}>{`…${shipment.trackingNumber.slice(-7)}`}</bdi></>}</span>
       {shipment.trackingNumber && <button type="button" onClick={() => void copyTracking()} aria-label={`${t('purchaseDetails.copyTracking')}: ${shipment.trackingNumber}`} className="purchase-copy-tracking"><LuCopy aria-hidden className="size-4" /></button>}

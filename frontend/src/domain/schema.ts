@@ -170,9 +170,20 @@ export const refundSchema = z.strictObject({
   effectiveOn: dateSchema, reason: reasonSchema,
 });
 export type Refund = z.infer<typeof refundSchema>;
+export const trackingEventSchema = z.strictObject({
+  id: idSchema, time: z.string().max(40), description: z.string().max(240),
+  location: z.string().max(90), stage: z.string().max(60),
+});
+export const trackingStateSchema = z.strictObject({
+  registered: z.boolean(), carrier: z.number().int().positive().nullable(),
+  status: z.string().max(40), events: z.array(trackingEventSchema).max(150),
+  seenEventIds: z.array(idSchema).max(1000), initialized: z.boolean(),
+});
+export type TrackingState = z.infer<typeof trackingStateSchema>;
 export const shipmentSchema = z.strictObject({
   ...metadata, carrier: z.string().max(200).nullable().optional(), trackingNumber: z.string().max(100).nullable(),
   deliveredOn: evidenceSchema(dateSchema), notes: z.string().max(2000),
+  tracking: trackingStateSchema.optional(),
 });
 export type Shipment = z.infer<typeof shipmentSchema>;
 export const shipmentMembershipSchema = z.strictObject({
