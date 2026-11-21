@@ -19,19 +19,24 @@ async function json(path: string, signal: AbortSignal) {
  signal.throwIfAborted(); return value;
 }
 
-export async function fetchMarketQuotes(card: InventoryCatalogCard, catalog: CatalogRef, signal: AbortSignal): Promise<CopyQuote[]> {
- if (catalog.kind !== 'identified' || catalog.edition === 'unknown' || catalog.finish.status !== 'known') return [];
+export async function resolveMarketProduct(card: InventoryCatalogCard, signal: AbortSignal): Promise<{productId:string;setId:number} | null> {
  const promo = card.id.startsWith('basep-') ? promoProducts[Number(card.id.slice(6))] : undefined;
  const special = promo ? {set:'WoTC Promo',product:promo.product} : overrides[card.id];
  const wanted = special?.set ?? (card.setName === 'Wizards Black Star Promos' ? 'WoTC Promo' : card.setName);
  const groups = setsSchema.parse(await json('/sets',signal));
  const group = groups.sets.find(g => key(g.name) === key(wanted));
- if (!group) return [];
- const [rawCards, rawSkus] = await Promise.all([json(`/sets/${group.id}/cards`,signal),json(`/sets/${group.id}/skus`,signal)]);
+ if (!group) return null;
+ const rawCards = await json(`/sets/${group.id}/cards`,signal);
  const products = cardsSchema.parse(rawCards).products;
  const matches = products.filter(p => special ? p.id === special.product : String(p.number).replace(/^0+/,'').split('/')[0] === card.number.split('/')[0] && key(p.name.replace(/\s*\(\d{1,3}\)\s*$/,'')) === key(card.name));
- if (matches.length !== 1) return [];
- const skus = skusSchema.parse(rawSkus); const rows = Object.values(skus.products[String(matches[0]!.id)] ?? {});
+ if (matches.length !== 1) return null;
+ return {productId:String(matches[0]!.id),setId:group.id};
+}
+export async function fetchMarketQuotes(card: InventoryCatalogCard, catalog: CatalogRef, signal: AbortSignal): Promise<CopyQuote[]> {
+ if (catalog.kind !== 'identified' || catalog.edition === 'unknown' || catalog.finish.status !== 'known') return [];
+ const product=await resolveMarketProduct(card,signal);
+ if(!product)return [];
+ const skus = skusSchema.parse(await json(`/sets/${product.setId}/skus`,signal)); const rows = Object.values(skus.products[product.productId] ?? {});
  const isFirst = catalog.edition === 'first-edition';
  const finish = catalog.finish.value;
  const accepted = rows.filter(row => { const variant = (row.var ?? row.var_a ?? '').toLowerCase(); return row.lng === 'EN' && /1st|first edition/.test(variant) === isFirst && (finish === 'holo' || finish === 'shining' ? /holo/.test(variant) && !/reverse/.test(variant) : finish === 'reverse' ? /reverse/.test(variant) : !/holo|foil/.test(variant)); });
