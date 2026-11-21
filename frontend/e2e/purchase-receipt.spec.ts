@@ -56,7 +56,11 @@ test('receipt controls never leak into other headers after repeated section navi
     await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Collection',exact:true}).click();
     await expect(header.getByRole('button')).toHaveCount(2);
     await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Transactions',exact:true}).click();
+    // The header is identical on Collection and Transactions. Wait for the
+    // section's redirect before changing the hash, or it can overwrite that change.
+    await expect(page).toHaveURL(/#\/transactions\/(overview|history)(?:\?|$)/);
     await expect(header.getByRole('button')).toHaveCount(2);
     await page.evaluate(()=>{ location.hash='/transactions/purchases/sample-nov-19?transactions=sample'; });
+    await expect(page.getByRole('heading',{name:'Purchase details',exact:true})).toBeVisible();
   }
 });
