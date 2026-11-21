@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { LuArrowLeft, LuX } from 'react-icons/lu';
 import { useTranslation } from 'react-i18next';
 
-export function UtilitySheet({ title, onClose, onBack, backLabel, children, transition = 'slide' }: { title: string; onClose: () => void; onBack?: () => void; backLabel?: string; children: ReactNode; transition?: 'slide' | 'subtle' | undefined }) {
+export function UtilitySheet({ title, onClose, onBack, backLabel, children, transition = 'slide', contentMode = 'scroll' }: { title: string; onClose: () => void; onBack?: () => void; backLabel?: string; children: ReactNode; transition?: 'slide' | 'subtle' | undefined; contentMode?: 'scroll' | 'contained' }) {
   const ref = useRef<HTMLDialogElement>(null);
   const { t } = useTranslation();
   useEffect(() => {
@@ -31,7 +31,7 @@ export function UtilitySheet({ title, onClose, onBack, backLabel, children, tran
         {onBack && <button type="button" onClick={onBack} aria-label={backLabel ?? t('back')} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button>}<h1 id="sheet-title" className={`flex-1 font-bold ${onBack ? 'py-3 text-xl' : 'py-5 text-2xl'}`}>{title}</h1>
         <button type="button" aria-label={t('close')} onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuX aria-hidden className="size-6" /></button>
       </div>
-      <div className="sheet-content min-h-0 overflow-y-auto overscroll-contain p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
+      <div className={`sheet-content min-h-0 overscroll-contain ${contentMode === 'contained' ? 'sheet-content-contained' : 'overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]'}`}>{children}</div>
     </div>
   </dialog>;
 }

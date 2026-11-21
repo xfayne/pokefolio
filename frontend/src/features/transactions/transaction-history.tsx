@@ -38,7 +38,7 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   return <section className="transaction-history" aria-label={t('transactionHistory.title')}>
     <div className="history-tools">
       <div className="history-search-row">
-        <SearchInput label={t('transactionHistory.search')} placeholder={t('transactionHistory.search')} value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} />
+        <SearchInput label={t('transactionHistory.search')} placeholder={t('transactionHistory.searchShort')} value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} />
         <Select className="history-kind-select" aria-label={t('transactionHistory.type')} value={filters.kind} onChange={e => setFilters(f => ({ ...f, kind: e.target.value as HistoryFilters['kind'] }))}>
           <option value="all">{t('transactionHistory.all')}</option>
           <option value="purchase">{t('transactionHistory.purchases')}</option>
