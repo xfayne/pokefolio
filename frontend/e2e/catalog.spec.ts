@@ -18,10 +18,15 @@ test('shared catalog picks duplicate copies and global search opens details', as
  await expect(page.getByRole('searchbox',{name:'Search cards',exact:true})).toHaveValue('ancient mew');
 });
 
-test('catalog search and view/filter controls remain pinned inside the scrolling sheet', async ({ page }) => {
+test('catalog search controls sit outside the scrollport so card results never bleed above them', async ({ page }) => {
   await page.goto('./#/search');
-  const scrollport = page.locator('.sheet-content');
+  const scrollport = page.locator('.catalog-scroll-region');
   const sticky = page.locator('.catalog-pinned-tools');
+  const outer = page.locator('.sheet-content-contained');
+  await expect(outer).toHaveCSS('overflow-y', 'hidden');
+  await expect(scrollport).toHaveCSS('overflow-y', 'auto');
+  expect(await sticky.evaluate(el => el.parentElement?.contains(document.querySelector('.catalog-scroll-region')))).toBe(true);
+  expect(await scrollport.evaluate(el => el.contains(document.querySelector('.catalog-pinned-tools')))).toBe(false);
   const input = page.getByRole('searchbox', { name: 'Search cards', exact: true });
   const filter = page.getByRole('button', { name: 'Filters', exact: true });
   await expect(input).toBeVisible();
@@ -33,18 +38,42 @@ test('catalog search and view/filter controls remain pinned inside the scrolling
       .filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity)
       .map(animation => animation.finished)));
   const before = await sticky.boundingBox();
+  const viewportBefore = await scrollport.boundingBox();
+  expect(viewportBefore!.y).toBeGreaterThanOrEqual(before!.y + before!.height - 2);
+  const controls = [
+    input,
+    filter,
+    page.getByRole('button', { name: 'List', exact: true }),
+    page.getByRole('button', { name: 'Grid', exact: true }),
+  ];
+  for (const control of controls) {
+    expect(Math.abs((await control.boundingBox())!.height - 36)).toBeLessThanOrEqual(1);
+  }
   const scrollHeight = await scrollport.evaluate(el => el.scrollHeight - el.clientHeight);
   expect(scrollHeight).toBeGreaterThan(100);
   await scrollport.evaluate(el => { el.scrollTop = 450; });
   await expect.poll(() => scrollport.evaluate(el => el.scrollTop)).toBeGreaterThan(100);
   const after = await sticky.boundingBox();
-  expect(Math.abs(after!.y - before!.y)).toBeLessThanOrEqual(3);
+  expect(Math.abs(after!.y - before!.y)).toBeLessThanOrEqual(2);
+  const viewportAfter = await scrollport.boundingBox();
+  expect(viewportAfter!.y).toBeGreaterThanOrEqual(after!.y + after!.height - 2);
+  const visible = await page.evaluate(() => {
+    const tools = document.querySelector('.catalog-pinned-tools')!.getBoundingClientRect();
+    const target = document.elementFromPoint(tools.left + 20, tools.top + 15);
+    return !!target?.closest('.catalog-pinned-tools');
+  });
+  expect(visible).toBe(true);
+  await test.info().attach('catalog-clipped-scroll', { body: await page.screenshot(), contentType: 'image/png' });
   await expect(input).toBeInViewport();
   await expect(filter).toBeInViewport();
   await expect(page.getByRole('button', { name: 'List', exact: true })).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Grid', exact: true })).toBeInViewport();
   await page.setViewportSize({ width: 320, height: 568 });
   await expect(input).toBeInViewport();
+  await expect(filter).toBeInViewport();
+  const narrowTools = await sticky.boundingBox();
+  const narrowScroll = await scrollport.boundingBox();
+  expect(narrowScroll!.y).toBeGreaterThanOrEqual(narrowTools!.y + narrowTools!.height - 2);
   await expect(filter).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

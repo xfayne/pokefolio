@@ -59,10 +59,17 @@ directly below it. The expanded advanced filter stays connected to this row;
 the results scroll underneath. Sticky retains document flow and keyboard
 navigation without overlaying the last transaction above bottom navigation.
 
-Catalog Search pins its input and results/filter/List/Grid controls at the top
-of the UtilitySheet scrollport. The expanded set filters and results scroll
-beneath the control block. Keep English and RTL labels, 44px touch targets,
-and avoid horizontal overflow at 320px.
+Catalog Search's global and purchase-picker sheets use UtilitySheet's
+`contentMode="contained"`. The search input and results/filter/List/Grid row
+live OUTSIDE the `.catalog-scroll-region`; only expanded set filters and
+results scroll. Do not use a sticky child in the same scrollport (it leaked
+cards above the toolbar on iPhone). The containing sheet clips overflow.
+Search and toolbar controls share the compact 36px visible height; fields
+stay at 16px text to prevent iPhone zoom. Transactions Search/type Select/
+filter icon share that same visible height and compact radii, and the + icon
+is a 36px sibling of the section tabs, not an oversized action block.
+Keep English/RTL labels, keyboard accessibility and no horizontal overflow
+at 320px.
 
 ## Collection card sort keys (2026-11-21)
 

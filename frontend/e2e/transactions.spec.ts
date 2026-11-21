@@ -20,6 +20,17 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await expect(add).not.toContainText('New transaction');
   const kindSelect = page.getByRole('combobox', { name: 'Transaction type' });
   await expect(kindSelect).toHaveValue('all');
+  const search = page.getByRole('searchbox', { name: 'Search transactions' });
+  const filterButton = page.getByRole('button', { name: 'Filter transactions' });
+  for (const control of [search, kindSelect, filterButton, add]) {
+    expect(Math.abs((await control.boundingBox())!.height - 36)).toBeLessThanOrEqual(1);
+  }
+  const row = page.locator('.history-search-row');
+  const rowBox = await row.boundingBox();
+  const controlBounds = await Promise.all([search, kindSelect, filterButton].map(el => el.boundingBox()));
+  for (const box of controlBounds) {
+    expect(Math.abs(box!.y - rowBox!.y)).toBeLessThanOrEqual(1);
+  }
   await expect(page.getByText('−$227.00', { exact: true })).toBeVisible();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
@@ -51,7 +62,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await page.getByRole('searchbox').fill('gengar');
   await expect(page.getByRole('listitem')).toHaveCount(1);
   await page.getByRole('searchbox').fill('');
-  const filter = page.getByRole('button', { name: 'Filter transactions' });
+  const filter = filterButton;
   await expect(filter).toHaveAttribute('aria-expanded', 'false');
   await filter.click();
   await page.getByLabel('Status', { exact: true }).selectOption('received');
