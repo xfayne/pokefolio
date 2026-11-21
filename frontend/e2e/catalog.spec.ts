@@ -26,6 +26,12 @@ test('catalog search and view/filter controls remain pinned inside the scrolling
   const filter = page.getByRole('button', { name: 'Filters', exact: true });
   await expect(input).toBeVisible();
   await expect(filter).toBeVisible();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-entered', 'true');
+  await dialog.locator('.sheet-frame').evaluate(el =>
+    Promise.all(el.getAnimations({ subtree: true })
+      .filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity)
+      .map(animation => animation.finished)));
   const before = await sticky.boundingBox();
   const scrollHeight = await scrollport.evaluate(el => el.scrollHeight - el.clientHeight);
   expect(scrollHeight).toBeGreaterThan(100);
