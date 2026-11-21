@@ -50,6 +50,9 @@ test('dashboard stays within narrow viewports and supports Hebrew and reduced mo
  for(const width of [320,390,768,1280]){
   await page.setViewportSize({width,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.evaluate(()=>window.scrollTo(200,window.scrollY));
+  expect(await page.evaluate(()=>window.scrollX)).toBe(0);
+  await expect(page.locator('html')).toHaveCSS('overscroll-behavior-x','none');
  }
  await page.setViewportSize({width:390,height:844});
  await page.getByRole('button',{name:'Settings',exact:true}).click();

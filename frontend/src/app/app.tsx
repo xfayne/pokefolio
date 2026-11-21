@@ -1,3 +1,4 @@
+import {StagingYearLoader} from '@/features/staging/year-loader';
 import { PurchaseReceiptAction } from '@/features/transactions/purchase-receipt-action';
 import { useTrackingSync } from '@/hooks/use-tracking-sync';
 import { unreadTracking } from '@/domain/shipment-tracking';
@@ -161,7 +162,7 @@ function Shell() {
     {/* Keep Search mounted behind Card Details. Returning reveals the same
         scrollport and decoded images, without replaying the catalog entrance. */}
     {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><StagingYearLoader /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
     {utility === 'search' && catalogCard && <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} />}
   </div>;
