@@ -462,3 +462,35 @@ equal shipping shares are recalculated, existing copy IDs retained, and new copi
 join the same optional shipment. Removal remains unchanged. The atomic adapter
 validates the combined created/updated purchase, lines and copy allocation before
 writing new copies, avoiding orphan records or unverified cost allocations.
+
+## Issue #18 — on-demand market data foundation, 2026-11-21
+
+Owner selected JustTCG after live Free-key checks returned one-year histories for
+Fossil Gengar #5, Neo Discovery Umbreon #13 and WoTC Promo Mew #9. The agreed scope
+is provider-supplied history with a shared, replaceable response cache: no daily
+price collector, permanent archive, per-user daily snapshots or tracked-card scan.
+Current use is personal. Preserve provider neutrality for future paid alternatives.
+
+`ebay-worker/market-prices.js` defines normalized exact-variant observations and the
+owner-authenticated `/api/market/prices` endpoint. Staging `worker-entry.js` exports
+the existing API and a SQLite PriceCoordinator. KV gives 24-hour freshness with
+seven-day bounded stale retention; only misses reach the quota coordinator. It
+reserves durable per-minute/day/rolling-31-day budgets, deduplicates overlapping
+misses and keeps a short-lived mirror to bridge KV propagation. A cleanup alarm
+expires that mirror and never collects prices. All keys/data are public market
+identities; no collection, transaction or user IDs enter shared cache records.
+
+`services/market-history.ts` supplies Worker calls, React Query reuse, explicit
+stale/unavailable states and strict condition/edition/finish/language selection.
+Catalog matching is reused through `resolveMarketProduct`. Existing screen quotes
+remain on their current adapter; finance selectors and Dashboard wiring follow in
+separate increments. No new UI, finance engine, historical FX service or Firestore
+writes are included. The shared cache does not itself grant multi-user access;
+the existing verified owner allowlist is intentionally retained. Any later Worker
+using the same JustTCG key must share the account coordinator instead of starting
+an independent quota counter.
+
+See `docs/MARKET_PRICE_CACHE.md` for contracts, bounded retention, provider terms,
+local/runtime tests and release configuration. Consult PR/CI/deployment receipts
+for activation status; this context entry is implementation scope, not a claim of
+completed rollout. No production/legacy data, rules or migration were changed.
