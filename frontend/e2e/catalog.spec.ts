@@ -88,7 +88,7 @@ test('catalog density, subtle detail entry and condition prices', async ({page})
  expect((await page.locator('.catalog-result').boundingBox())!.height).toBeLessThanOrEqual(88);
  expect((await page.getByRole('button',{name:'Filters'}).boundingBox())!.height).toBeCloseTo(36, 2);
  await page.getByRole('button',{name:/Gengar/}).click();
- await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','subtle');
+ await expect(page.getByRole('dialog').last()).toHaveAttribute('data-transition','subtle');
  await expect(page.getByText('$25.42',{exact:true})).toBeVisible();
  await page.getByLabel('Price condition').selectOption('NM');
  await expect(page.getByText('$40.00',{exact:true})).toBeVisible();
