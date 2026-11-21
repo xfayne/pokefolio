@@ -90,3 +90,27 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
 });
+
+
+test('Card Details loading shimmer has no yellow frame; the original frame appears after loading', async ({ page }) => {
+  let reveal: (() => Promise<void>) | undefined;
+  await page.route('https://images.pokemontcg.io/base1/4_hires.png', route => {
+    reveal = () => route.fulfill({
+      status: 200, contentType: 'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8//8/AwMDEwMDAwMDAwAkBgMB/DXemwAAAABJRU5ErkJggg==', 'base64'),
+    });
+  });
+  await page.goto('./#/collection/cards?inventory=sample');
+  await page.getByRole('button', { name: /^Card details: Charizard/ }).click();
+  const art = page.getByRole('dialog').locator('.pokemon-art-large');
+  await expect(art).toHaveAttribute('data-image-state', 'loading');
+  await expect(art).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+  await expect(art).toHaveCSS('box-shadow', 'none');
+  await expect.poll(() => Boolean(reveal)).toBe(true);
+  await reveal!();
+  await expect(art).toHaveAttribute('data-image-state', 'ready');
+  await expect(art).toHaveCSS('border-top-color', 'rgb(244, 202, 39)');
+  const bounds = await art.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(Math.abs(bounds!.width - bounds!.height)).toBeLessThanOrEqual(1);
+});
