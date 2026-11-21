@@ -50,6 +50,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 /* Adventure Blue surfaces follow the approved mobile mock proportions. */
 :root { --content-background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); --adventure-blue: #0064ff; --adventure-navy: #03233e; --surface-panel: #f2f7fd; --surface-border: #b3ccec; --surface-field: #f3f6fd; --compact-control-height: 2.25rem; background: #d9eafa; }
+:root { --dashboard-mint: #00cdb4; --dashboard-positive: #008532; --dashboard-negative: #bd3154; }
 @theme inline { --color-primary: var(--adventure-blue); }
 .app-shell { background: var(--adventure-navy); }
 .app-shell > header, .bottom-bar, .sheet-header {
@@ -411,3 +412,69 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .catalog-result .pokemon-art { width: 3.5rem; height: 3.75rem; }
 @media (min-width:640px) { .catalog-set-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media (max-width:359px) { .catalog-toolbar { gap: 0.375rem; } .catalog-filter-button { min-width: 4.5rem; } .catalog-toolbar > button, .catalog-view button { padding-inline: 0.375rem; font-size: 0.75rem; } .catalog-view button { min-width: 3.25rem; } }
+
+/* Dashboard follows the approved top/scrolled mock. Shared surfaces/weights remain authoritative. */
+.dashboard { display: flex; flex-direction: column; gap: 1.125rem; padding-bottom: 1rem; }
+.dashboard-banner { margin: -0.75rem -0.75rem 0; overflow: hidden; border-radius: 1.25rem 1.25rem 0 0; }
+.dashboard-banner svg { display: block; width: 100%; aspect-ratio: 486 / 92; }
+.dashboard .dashboard-value { margin-top: -1.625rem; position: relative; border-radius: 1.25rem; padding: 0.875rem; }
+.dashboard h2 { margin: 0; font-size: clamp(1rem, 4.6vw, 1.25rem); font-weight: var(--font-weight-bold); line-height: 1.2; letter-spacing: -0.035em; }
+.dashboard-value-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.dashboard-coverage { display: inline-block; background: #b0f5e4; color: #032b2d; font-size: 0.75rem; font-weight: var(--font-weight-bold); border-radius: 0.625rem; padding: 0.0625rem 0.625rem; margin-top: 0.1875rem; }
+.dashboard-icon-control { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.25rem; width: 3.625rem; height: 2rem; flex-shrink: 0; border: 1px solid var(--surface-border); border-radius: 0.625rem; color: #101074; background: var(--surface-field); box-shadow: 0 1px 2px #216dc21a; }
+.dashboard-icon-control > svg { width: 1.25rem; height: 1.25rem; }
+.dashboard-icon-control > .dashboard-chevron { width: 0.875rem; height: 0.875rem; }
+.dashboard-icon-control > select, .dashboard-icon-control > input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+.dashboard-icon-control:focus-within { outline: 2px solid var(--adventure-blue); outline-offset: 2px; }
+.dashboard-big { display: block; font-size: clamp(2rem, 10.5vw, 3rem); font-weight: var(--font-weight-bold); line-height: 1.15; letter-spacing: -0.045em; margin-top: 0.25rem; }
+.dashboard-chart, .dashboard-chart-empty { height: 5.25rem; position: relative; }
+.dashboard-chart { direction: ltr; }
+.dashboard-chart svg { width: 100%; height: 100%; display: block; }
+.dashboard-chart input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: pan-y; }
+.dashboard-chart:focus-within { outline: 2px solid var(--adventure-blue); outline-offset: 2px; border-radius: 0.375rem; }
+.dashboard-chart-tooltip { position: absolute; inset-inline-end: 0.25rem; top: 0; padding: 0.125rem 0.375rem; font-size: 0.6875rem; border-radius: 0.375rem; background: var(--surface-panel); box-shadow: 0 1px 4px #216dc233; pointer-events: none; }
+.dashboard-chart-empty { display: flex; align-items: center; justify-content: center; text-align: center; color: #566078; font-size: 0.75rem; padding-inline: 0.5rem; }
+.dashboard-kpis { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.75rem; margin-top: 0.875rem; padding-top: 0.75rem; border-top: 1px solid var(--surface-border); }
+.dashboard-kpis > div { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.dashboard-kpis > div + div { border-inline-start: 1px solid #7588a5; padding-inline-start: 0.75rem; }
+.dashboard-kpis > div > svg { width: 1.625rem; height: 1.625rem; flex-shrink: 0; }
+.dashboard-kpis > div > span { min-width: 0; display: flex; flex-direction: column; }
+.dashboard-stat-label { font-size: clamp(0.625rem, 2.9vw, 0.8125rem); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.dashboard-kpis bdi { font-size: clamp(1rem, 5vw, 1.5rem); font-weight: var(--font-weight-bold); line-height: 1.15; letter-spacing: -0.025em; }
+.dashboard-positive { color: var(--dashboard-positive); }
+.dashboard-negative { color: var(--dashboard-negative); }
+.dashboard-wallet { color: var(--dashboard-mint); }
+.dashboard-periods { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0.25rem; margin-top: 1rem; }
+.dashboard-periods button { min-height: 1.75rem; border: 0; border-radius: 2rem; background: linear-gradient(#e8eef6,#d9e2ef); font-size: 0.875rem; font-weight: var(--font-weight-bold); transition: background-color 180ms ease; cursor: pointer; }
+.dashboard-periods button[aria-pressed="true"] { background: var(--adventure-blue); color: white; }
+.dashboard-note { font-size: 0.625rem; line-height: 1.4; color: #526178; margin: 0.3125rem 0 0; }
+.dashboard-text-link { color: #0047d1; text-decoration: underline; font-weight: var(--font-weight-bold); cursor: pointer; }
+.dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+.dashboard-section-heading > button, .dashboard-month-link { color: #1010c5; font-weight: var(--font-weight-bold); font-size: 0.875rem; display: flex; align-items: center; gap: 0.125rem; white-space: nowrap; cursor: pointer; }
+.dashboard-section-heading button svg, .dashboard-month-link svg { width: 1.125rem; height: 1.125rem; }
+.dashboard-acquisitions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0.625rem; }
+.dashboard-acquisitions > button { min-width: 0; text-align: center; cursor: pointer; }
+.dashboard-acquisitions .dashboard-acquisition-art { width: 100%; max-width: 100%; aspect-ratio: 63 / 88; border-width: 0; border-radius: 0.625rem; background: transparent; box-shadow: 0 2px 5px #216dc226; }
+.dashboard-acquisition-art .pokemon-art-window { position: absolute; inset: 0; background: transparent; }
+.dashboard-acquisition-art img { padding: 0; object-fit: contain; }
+.dashboard-acquisitions > button > span { display: block; margin-top: 0.375rem; font-size: clamp(0.6875rem, 3vw, 0.875rem); font-weight: var(--font-weight-bold); line-height: 1.3; }
+.dashboard-month { border-radius: 1.25rem; padding: 0.875rem; }
+.dashboard-month-heading { display: flex; align-items: center; gap: 0.625rem; }
+.dashboard-month-heading > svg { width: 1.5rem; height: 1.5rem; color: #10104c; flex-shrink: 0; }
+.dashboard-month-heading h2 { flex: 1; }
+.dashboard-month .dashboard-kpis { border-top: 0; margin-top: 1.5rem; padding-top: 0; }
+.dashboard-month-link { border-top: 1px solid var(--surface-border); justify-content: flex-end; width: 100%; margin-top: 1.25rem; padding-top: 0.625rem; }
+.dashboard-holdings { padding: 0.25rem 0.625rem; border-radius: 1rem; }
+.dashboard-holdings ul { list-style: none; margin: 0; padding: 0; }
+.dashboard-holdings li + li { border-top: 1px solid var(--surface-border); }
+.dashboard-holdings li > button { display: flex; align-items: center; gap: 0.625rem; width: 100%; min-height: 3.5rem; padding-block: 0.375rem; text-align: start; cursor: pointer; }
+.dashboard-holdings .dashboard-holding-art { width: 3.25rem; height: 3.25rem; }
+.dashboard-holding-name { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.dashboard-holding-name strong { font-size: 0.9375rem; font-weight: var(--font-weight-bold); }
+.dashboard-holding-name span { font-size: 0.75rem; }
+.dashboard-holding-name strong, .dashboard-holding-name span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-holdings bdi { font-size: 1.125rem; font-weight: var(--font-weight-bold); white-space: nowrap; }
+.dashboard-holdings button > svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+.dashboard-empty { color: #526178; font-size: 0.8125rem; margin: 0; padding-block: 0.75rem; }
+[dir="rtl"] .dashboard-section-heading button > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
+@media (min-width: 640px) { .dashboard-banner { margin-inline: -1.5rem; } }

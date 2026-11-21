@@ -18,19 +18,20 @@ import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/d
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false }: { pricesLoading?: boolean; data: InventoryData; onSave: SaveCopy; onViewPurchase?: (id: string) => void }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId }: { inspectCopyId?: string | undefined; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [sort, setSort] = useState<CollectionSort>('value');
   const [filter, setFilter] = useState('all');
   const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
-  const [initialInspection, setInitialInspection] = useState<string | null>(null);
+  const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
+  const initialGroup = inventory.groups.find(g => g.copies.some(c => c.copy.id === inspectCopyId));
+  const [initialInspection, setInitialInspection] = useState<string | null>(initialGroup ? inspectCopyId! : null);
   const [initialCopy, setInitialCopy] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialGroup?.key ?? null);
   const [notice, setNotice] = useState('');
   const id = useId();
-  const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
   const money = useDisplayMoney();
   const cost = (v: CopyView['paid']) => v.status === 'exact' ? money(v.value) : v.status === 'estimated' ? `${money(v.value)} · ${t('inventory.estimated')}` : t(`inventory.${v.status === 'unallocated' ? 'unallocated' : 'unavailable'}`);
   const metric = (v: CopyView['market']) => v.status === 'unavailable' ? t(pricesLoading ? 'loading' : 'inventory.unpriced') : money(v);
@@ -77,15 +78,15 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
             <span className="border-s border-blue-200 ps-2 text-slate-600">{t('inventory.cost')}: {cost(v.paid)}</span>
           </button>
           <span className={`text-sm font-bold tabular-nums ${v.market.status === 'unavailable' ? 'text-amber-800' : ''}`}>{metric(v.market)}</span>
-          <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-8 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
+          <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} disabled={!onSave} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-8 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
         </div>)}
       </div></DisclosureContent>
     </ListCard>)}</ul>
-    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase} onViewPurchase={onViewPurchase} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); }} money={money} cost={cost} metric={metric} />}
+    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
   </section>;
 }
 
-export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, initialInspection = null, onClose, onSave, onViewPurchase, livePrices = false, transition, priceStatus, onRetryPrice, onEditionChange, money, cost, metric }: { livePrices?: boolean; onEditionChange?: ((first: boolean) => void) | undefined; transition?: 'slide' | 'subtle'; priceStatus?: string | undefined; onRetryPrice?: (() => void) | undefined; group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; initialInspection?: string | null; onClose: () => void; onSave?: SaveCopy; onViewPurchase?: ((transactionId: string) => void) | undefined; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
+export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, initialInspection = null, onClose, onSave, onViewPurchase, livePrices = false, transition, priceStatus, onRetryPrice, onEditionChange, money, cost, metric }: { livePrices?: boolean; onEditionChange?: ((first: boolean) => void) | undefined; transition?: 'slide' | 'subtle'; priceStatus?: string | undefined; onRetryPrice?: (() => void) | undefined; group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; initialInspection?: string | null; onClose: () => void; onSave?: SaveCopy | undefined; onViewPurchase?: ((transactionId: string) => void) | undefined; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<string | null>(initialCopy);
   const [inspecting, setInspecting] = useState<string | null>(initialInspection);

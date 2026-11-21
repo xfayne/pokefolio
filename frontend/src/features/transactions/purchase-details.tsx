@@ -34,7 +34,7 @@ export function PurchaseDetails({ view, onInspect, onRefresh, refreshing, tracki
       <div className="purchase-section-heading"><h2 id={`${id}-cards`}>{t('purchaseDetails.cards')}</h2><span>{t('purchaseDetails.cardCost')}</span></div>
       {!copies.length && <p className="text-sm text-slate-600">{t('transactionHistory.noCopies')}</p>}
       <ul>{copies.map(({ copy, card }) => <li key={copy.id}>
-        <button type="button" className="purchase-copy-row" onClick={() => onInspect(copy)}>
+        <button type="button" className="purchase-copy-row" data-copy-id={copy.id} onClick={() => onInspect(copy)}>
           <PokemonArt src={card?.imageUrl} alt={card?.name ?? t('inventory.unidentified')} className="purchase-art" />
           <span className="purchase-card-identity"><span className="purchase-card-name">{card?.name ?? (copy.catalog.kind === 'unidentified' ? copy.catalog.description : t('inventory.unidentified'))}</span>
             <span className="purchase-card-set">{card ? `${card.setName} · #${card.number}` : t('inventory.noCatalog')}</span>

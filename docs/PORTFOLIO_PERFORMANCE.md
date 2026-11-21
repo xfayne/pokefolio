@@ -83,3 +83,21 @@ the provider label `English`; neither permits another language.
 
 This increment supplies the engine and read-only history/FX adapters. Dashboard
 layout and live price/record hooks follow under #12 using the approved mock.
+
+## Dashboard integration
+
+Dashboard consumes `useDashboard` and the same pure selector for all metrics.
+Current holdings and recorded historical variants resolve distinct catalog products;
+the Worker receives public product IDs only, after sign-in. One-year market batches
+and dated reference FX reuse the public query cache across periods/navigation.
+Private audits remain in the owner-scoped portfolio cache. Unknown editions,
+languages, finishes and conditions never trigger speculative provider matching.
+
+The approved mobile layout supplies the banner, value panel, three recent physical
+copies, monthly summary and top received holdings. The metric picker switches value,
+estimated matched-holdings price change and realized sale P/L; missing observations
+break charts. Periods never extrapolate older history. Monthly selection changes
+recorded purchases, not confirmed cash settlements. Exact-copy links preserve the
+purchase's physical ID or open that copy in Collection. The opt-in
+`#/dashboard?dashboard=sample` uses synthetic, memory-only data and makes no
+portfolio or authenticated pricing requests. No user data is written by Dashboard.

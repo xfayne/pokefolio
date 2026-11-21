@@ -14,7 +14,7 @@ export async function fetchHistoricalFx(from:string,to:string,signal:AbortSignal
 export function useHistoricalFx(dates:readonly string[],today:string,enabled:boolean){
  const from=new Date(Date.parse(`${today}T00:00:00Z`)-372*86400_000).toISOString().slice(0,10);
  const older=[...new Set(dates.filter(d=>d<from))].sort();
- const windows=[{from,to:today},...older.map(d=>({from:d,to:d}))];
+ const windows=[{from,to:today},...older.map(d=>({from:new Date(Date.parse(`${d}T00:00:00Z`)-7*86400_000).toISOString().slice(0,10),to:d}))];
  const queries=useQueries({queries:windows.map(w=>({queryKey:['historical-reference-fx','v2',w.from,w.to],enabled,queryFn:({signal}:{signal:AbortSignal})=>fetchHistoricalFx(w.from,w.to,signal),staleTime:24*3600_000,retry:false}))},publicPriceClient);
  const rows=new Map<string,FxRow>();
  for(const result of queries)for(const row of result.data??[])rows.set(`${row.date}:${row.quote}`,row);

@@ -5,7 +5,7 @@ test('Pages subpath, reload, RTL and isolated new app', async ({ page }) => {
   page.on('pageerror', error => failures.push(error.message));
   page.on('request', request => requests.push(request.url()));
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pokefolio' })).toBeVisible();
   await page.getByRole('link', { name: 'Wishlist' }).click();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Wishlist' })).toBeVisible();
