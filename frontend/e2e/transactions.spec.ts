@@ -100,3 +100,16 @@ test('one saved display currency converts monthly totals while purchase entry ke
  await expect(page.getByRole('combobox',{name:'Currency',exact:true})).toHaveValue('USD');
  await expect(page.getByRole('textbox',{name:'Card cost 1',exact:true})).toHaveValue('52.00');
 });
+
+test('sticky transaction controls have a padded, rounded surface without enlarging inputs', async ({ page }) => {
+  await page.goto('./#/transactions/history?transactions=sample');
+  const tabs = page.locator('.transactions-nav-sticky');
+  const tools = page.locator('.history-tools');
+  for (const surface of [tabs, tools]) {
+    await expect(surface).toHaveCSS('border-radius', '14px');
+    expect(await surface.evaluate(el => parseFloat(getComputedStyle(el).paddingLeft))).toBeGreaterThan(0);
+    await expect(surface).toHaveCSS('background-color', 'rgb(233, 243, 255)');
+  }
+  await expect(page.getByRole('searchbox', { name: 'Search transactions' })).toHaveCSS('height', '36px');
+  await expect(page.getByRole('combobox', { name: 'Transaction type' })).toHaveCSS('height', '36px');
+});
