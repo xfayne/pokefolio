@@ -1,3 +1,4 @@
+import { publicPriceClient } from '@/services/public-price-client';
 import { promoProducts } from './promo-products';
 import { z } from 'zod';
 import type { InventoryCatalogCard, CopyQuote } from '@/domain/inventory';
@@ -8,7 +9,16 @@ const key = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u
 const setsSchema = z.object({sets:z.array(z.object({id:z.number().int().positive(),name:z.string()}))});
 const cardsSchema = z.object({products:z.array(z.object({id:z.number(),name:z.string(),number:z.union([z.string(),z.number()]).nullish()}))});
 const skusSchema = z.object({updated:z.string().optional(),products:z.record(z.string(),z.record(z.string(),z.object({lng:z.string(),cnd:z.string(),var:z.string().optional(),var_a:z.string().optional(),mkt:z.number().finite().nonnegative().nullable().optional()})))});
-async function json(path: string, signal: AbortSignal) { const response = await fetch(`${BASE}${path}`, {signal: AbortSignal.any([signal, AbortSignal.timeout(13000)]), credentials:'omit'}); if (!response.ok) throw Error('Price provider unavailable'); return response.json() as Promise<unknown>; }
+async function json(path: string, signal: AbortSignal) {
+ const value = await publicPriceClient.fetchQuery({queryKey:['tcg-source',path],queryFn:async({signal:sharedSignal})=>{
+  const response=await fetch(`${BASE}${path}`,{signal:AbortSignal.any([sharedSignal,AbortSignal.timeout(13000)]),credentials:'omit'});
+  if(!response.ok) throw Error('Price provider unavailable');
+  return response.json() as Promise<unknown>;
+ }});
+ // An individual printing must not cancel a shared set request used by other copies.
+ signal.throwIfAborted(); return value;
+}
+
 export async function fetchMarketQuotes(card: InventoryCatalogCard, catalog: CatalogRef, signal: AbortSignal): Promise<CopyQuote[]> {
  if (catalog.kind !== 'identified' || catalog.edition === 'unknown' || catalog.finish.status !== 'known') return [];
  const promo = card.id.startsWith('basep-') ? promoProducts[Number(card.id.slice(6))] : undefined;

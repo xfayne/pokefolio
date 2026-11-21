@@ -27,18 +27,8 @@ export function usePortfolio() {
       e.collection === 'copies' ? [e.record] : [],
     ),
     saleLines: [],
-    inTransit: records.flatMap((e) =>
-      e.collection === 'memberships'
-        ? e.record.transactionId
-          ? [
-              {
-                ownerUid: e.record.ownerUid,
-                transactionId: e.record.transactionId,
-              },
-            ]
-          : []
-        : [],
-    ),
+    // A private tracking number is not evidence that the carrier has the parcel.
+    inTransit: [],
   };
   const shipments: PurchaseShipment[] = records.flatMap((e) => {
     if (e.collection !== 'shipments') return [];

@@ -1,7 +1,7 @@
-import { useQuery, QueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { catalogCards } from '@/features/catalog/catalog';
 import { fetchMarketQuotes } from '@/features/catalog/market-prices';
-const priceClient = new QueryClient();
+import { publicPriceClient } from '@/services/public-price-client';
 import { useState } from 'react';
 import { LuChevronDown } from 'react-icons/lu';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,7 @@ export function CardMarketPrice({ catalog, quotes, currency, copies, money, stat
   const [first, setFirst] = useState(catalog.kind === 'identified' && catalog.edition === 'first-edition');
   const selectedCatalog = catalog.kind === 'identified' ? { ...catalog, edition: first ? 'first-edition' as const : 'unlimited' as const } : catalog;
   const card = catalog.kind === 'identified' ? catalogCards.find(c => c.id === catalog.cardId) : undefined;
-  const query = useQuery({queryKey:['market', selectedCatalog],enabled:live && !!card,queryFn:({signal})=>fetchMarketQuotes(card!,selectedCatalog,signal),staleTime:900_000,retry:1},priceClient);
+  const query = useQuery({queryKey:['market', catalogIdentity(selectedCatalog)],enabled:live && !!card,queryFn:({signal})=>fetchMarketQuotes(card!,selectedCatalog,signal),staleTime:900_000,retry:1},publicPriceClient);
   const displayedQuotes = live ? query.data ?? [] : quotes;
   const displayedStatus = live ? query.isPending ? t('loading') : query.isError ? t('inventory.unpriced') : undefined : status;
   const matches = displayedQuotes.filter(q => catalog.kind === 'identified' && q.catalog.kind === 'identified' &&

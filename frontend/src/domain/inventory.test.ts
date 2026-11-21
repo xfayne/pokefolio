@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { copy, catalog, known, gbp, metadata, unknown } from './fixtures.test-support';
-import { inspectBinder, planCopyMetadataEdit, selectInventory } from './inventory';
+import { inspectBinder, planCopyMetadataEdit, selectInventory, visibleCopyMarket } from './inventory';
 import { planSale, receiveCopy } from './lifecycle';
 import type { CardCopy } from './schema';
 
@@ -61,4 +61,10 @@ describe('physical-copy inventory', () => {
     expect(r.groups.every(g => g.card === null)).toBe(true);
     expect(r.market.missingCount).toBe(2);
   });
+});
+
+it('shows quote coverage for pending rows without counting them as received holdings',()=>{
+ const result=selectInventory('owner',[pending],cards,quotes,'GBP');
+ expect(result.market.pricedCount).toBe(0);
+ expect(visibleCopyMarket(result.groups[0]!.copies,'GBP')).toEqual({currency:'GBP',minor:4000,pricedCount:1,missingCount:0});
 });

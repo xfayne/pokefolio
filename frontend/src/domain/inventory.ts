@@ -89,6 +89,13 @@ export function selectInventory(ownerUid: string, rawCopies: readonly unknown[],
   }, market: { currency, minor: safeInteger(total), pricedCount, missingCount } };
 }
 
+/** Quote coverage of the visible copies, including pending acquisitions. Financial
+ * holdings totals above deliberately continue to count received copies only. */
+export function visibleCopyMarket(copies: readonly CopyView[], currency: Currency): InventoryGroup['market'] {
+  const priced=copies.filter(v=>v.market.status!=='unavailable' && v.market.currency===currency);
+  return {currency,minor:safeInteger(priced.reduce((sum,v)=>sum+(v.market.status==='unavailable'?0n:BigInt(v.market.minor)),0n)),pricedCount:priced.length,missingCount:copies.length-priced.length};
+}
+
 const editSchema = z.strictObject({
   condition: cardCopySchema.shape.condition.optional(),
   edition: z.enum(['unlimited', 'first-edition', 'unknown']).optional(),

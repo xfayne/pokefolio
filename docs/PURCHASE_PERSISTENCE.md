@@ -1,8 +1,8 @@
 # Purchase persistence (#8)
 
-This branch prepares the account workflow; live activation is pending authenticated
-staging rules publication and live acceptance. Do not close #8 or merge on unit
-results alone. No legacy or production data has been changed.
+The owner account flow is active on isolated staging following PR #85. The staging
+policy was published and checked on 2026-11-21. No legacy or production data was
+changed, and production frontend cutover remains #21.
 
 ## Storage
 
@@ -54,9 +54,45 @@ Run frontend unit/type/lint/build checks and mobile journeys. Run the demo-only
 Firestore emulator security suite; cloud fallback is forbidden. Local Chromium
 cannot start in this environment; required mobile journeys must pass in CI.
 
-Before merge/activation, publish only `firebase/firestore.private.rules` to
-`pokefolio-staging`, verify owner/foreign-user access and a synthetic complete
-create -> reload -> edit -> reload journey. Compare receipts, audits, original
-costs and shipping sums. Verify no sample/private-root mixing. Never run this
-against Vintage Binder or Production. Keep the prior rules for rollback; do not
-delete test or existing account records as part of activation.
+## Staging acceptance — 2026-11-21
+
+All five PR and main workflows passed for #85; staging Pages deployed source
+`5cd2e12d6ebc799387a1160b78a1ab1bfaacb283` in run `44875772495`.
+The active staging policy matches the repository (9360 trimmed characters,
+FNV32 `7b0e8f43`), published at 06:24 UTC. The previous revision remains available
+in the Firebase console for rollback. Rules Playground denied anonymous/foreign
+reads and allowed the simulated matching owner; emulator tests cover writes.
+
+Google sign-in succeeded in the actual staging app. One explicitly labelled
+`SYNTHETIC Issue 8 acceptance` purchase contains two independently selected Gengar
+copies, Unlimited LP at GBP 1 and First Edition NM at GBP 2. Shipping GBP 0.01
+reconciled to a GBP 3.01 purchase and survived page reload. Editing shipping to
+GBP 0.03 produced GBP 3.03, retained both copy prices/editions and survived another
+reload. The source order reference and synthetic tracking/carrier were preserved;
+no provider registration occurred. Payment remains unknown, with no invented cash.
+
+History displayed one purchase; both copies appeared in Cards. Copy and Dashboard
+links returned to that exact purchase. Eight immutable audit documents were observed
+in the console. The purchase audit records original revision 1 / GBP 3.01 and revision
+2 / GBP 3.03, matching owner/actor and a server committedAt timestamp. The parent
+user document remains nonexistent; no progress/Binder/Wishlist root was created or
+rewritten. Synthetic acceptance records are retained, never deleted automatically.
+
+A follow-up freezes edit baselines across query refreshes. Transaction and copy
+regressions assert that stale drafts still submit their opening revision, allowing
+the atomic adapter to reject concurrent changes. Tracking references alone do not
+claim in-transit status; live shipment evidence remains #11.
+
+## Owner UI refinements
+
+Purchase editing is opened from the header ellipsis menu; no standalone edit
+button consumes content space. The animated menu supports keyboard focus, Escape
+and outside dismissal. Signed-out screens direct users to Settings sign-in.
+
+Collection rows load the same exact-condition/edition public quotes as Card Details.
+Duplicate printings share one query, and provider set/cards/SKU responses are cached
+across printings. Rows show quotes for pending copies as well; financial received-
+holdings aggregates are unchanged. Partial row coverage is explicit. Failed/missing
+quotes remain unavailable, with retry. No FX conversion or account data is sent to
+the price provider. Account IDs use purchase/copy prefixes; demo IDs stay in sample
+contexts (the earlier explicitly synthetic live acceptance record remains readable).

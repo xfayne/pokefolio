@@ -35,8 +35,8 @@ separately paid/withheld fees, never both representations of the same cash flow.
 Commits require matching immutable audits for updates and reserve capacity for an
 idempotency receipt. Fake-store tests demonstrate replay/conflict expectations;
 they are not proof of live Firestore auth, reference integrity or atomicity.
-Production persistence is deliberately not
-implemented here: owner authorization, atomicity, reference checks, idempotency and
+The isolated staging adapter is implemented in `../services/portfolio.ts`; domain
+records remain independent of cloud IO. Adapter requirements include: owner authorization, atomicity, reference checks, idempotency and
 security rules must be enforced in the eventual adapter as well as domain commands.
 Record validation alone does not authorize a write or prove cross-record integrity.
 

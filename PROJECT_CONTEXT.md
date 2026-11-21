@@ -344,17 +344,31 @@ received held counts, ordinary account context stays empty until persistence is
 connected. Wishlist input is supported/tested, but no account wishlist adapter or
 fake wishlist holdings are introduced. Rows have extra room for genuine badges.
 
-## Issue #8 account integration — 2026-11-21, pending activation
+## Issue #8 account integration — 2026-11-21
 
-Owner approved completing account persistence/editing and clarified: no confirmation
-before Save; First Edition is a checkbox in purchase rows and Card Details, with
-Unlimited when unchecked and exact matching market quotes. Optional listing URL/order
-reference use the existing form. The branch adds the private Firestore adapter,
-immutable receipts/audits, owner-scoped query, sign-in controls and account navigation.
-See `docs/PURCHASE_PERSISTENCE.md` for exact constraints and activation checks.
+PR #85 connects owner-scoped purchase/copy/history persistence, immutable retry
+receipts, revision-checked edits/audits, Google sign-in and Dashboard/copy links.
+The owner clarified: Save is direct without confirmation; First Edition is a
+checkbox and unchecked means Unlimited. Details prices match edition/condition
+without fallback. Optional listing URL/order references use the existing form.
 
-The Firebase plugin is enabled but exposes no tools in this session; CLI has no
-Firebase login and the browser redirects the staging console to Google sign-in.
-Live rules and live acceptance have NOT been completed. Keep this increment a draft
-until authenticated staging publication and live checks, and required CI, succeed.
-No real account records, legacy data or production settings were written.
+After owner sign-in, the tested policy was published only to pokefolio-staging at
+06:24 UTC and verified byte-for-byte after trimming final whitespace. All five
+required workflows passed and Pages deployed main 5cd2e12. The live synthetic
+create -> reload -> edit -> reload journey passed: two copies, GBP 3.01 becoming
+GBP 3.03 after a shipping-only edit, retained editions/costs/reference/tracking,
+one history record, working Dashboard/copy links and eight immutable audits.
+The parent user document remains nonexistent; no progress map, Binder, Wishlist,
+legacy or production data was rewritten. Production frontend cutover is still #21.
+
+See docs/PURCHASE_PERSISTENCE.md for activation evidence, storage paths and limits.
+The follow-up freezes transaction/copy edit baselines against query refreshes,
+keeps pending tracking references distinct from proven transit, and updates the
+signed-out copy to point to Settings sign-in. Shipment provider integration is #11;
+Transactions Overview remains a separate approved screen.
+
+Owner refinements in the #8 follow-up: remove the standalone Purchase Details edit
+button and open Edit purchase from the header ellipsis. Connect account Collection
+rows to exact printing/condition quotes, including pending-copy row prices while
+retaining received-only financial totals. Public set/SKU responses and printing
+queries are shared/cached; no invented FX prices or provider account-data writes.
