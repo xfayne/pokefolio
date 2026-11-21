@@ -1,7 +1,7 @@
 import {useDisplayCurrency,useDisplayMoney} from '@/services/display-currency';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuChevronRight, LuFilter, LuPlus, LuShoppingCart, LuTag } from 'react-icons/lu';
+import { LuChevronRight, LuFilter, LuShoppingCart, LuTag } from 'react-icons/lu';
 import { TransactionStatus } from './transaction-status';
 import { Button } from '@/components/ui/button';
 import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure';
@@ -15,8 +15,8 @@ import { groupHistory, selectHistory, type HistoryData, type HistoryFilters, typ
 
 const initialFilters: HistoryFilters = { query: '', kind: 'all', currency: 'all', status: 'all' };
 const statuses = ['inTransit', 'received', 'pending', 'partial', 'unknown', 'completed'] as const;
-export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
-  data: HistoryData; empty?: ReactNode; onCreate?: () => void; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
+export function TransactionHistory({ data, empty, onOpen, canOpen }: {
+  data: HistoryData; empty?: ReactNode; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [filters, setFilters] = useState(initialFilters);
@@ -36,17 +36,14 @@ export function TransactionHistory({ data, empty, onCreate, onOpen, canOpen }: {
   }).format(new Date(`${value}${monthOnly ? '-01' : ''}T00:00:00Z`));
   const advancedCount = Number(filters.currency !== 'all') + Number(filters.status !== 'all');
   return <section className="transaction-history" aria-label={t('transactionHistory.title')}>
-    <Button className="history-new w-full text-base font-extrabold" aria-disabled={!onCreate} onClick={() => onCreate ? onCreate() : setNotice(t('transactionHistory.createSoon'))}>
-      <LuPlus aria-hidden className="size-5" />{t('transactionHistory.new')}
-    </Button>
     <div className="history-tools">
-      <SearchInput label={t('transactionHistory.search')} placeholder={t('transactionHistory.search')} value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} />
-      <div className="history-filter-row">
-        <div role="group" aria-label={t('transactionHistory.title')} className="history-kinds">
-          {(['all', 'purchase', 'sale'] as const).map(kind => <Button key={kind} variant={filters.kind === kind ? 'default' : 'outline'} aria-pressed={filters.kind === kind} onClick={() => setFilters(f => ({ ...f, kind }))}>
-            {t(`transactionHistory.${kind === 'purchase' ? 'purchases' : kind === 'sale' ? 'sales' : 'all'}`)}
-          </Button>)}
-        </div>
+      <div className="history-search-row">
+        <SearchInput label={t('transactionHistory.search')} placeholder={t('transactionHistory.search')} value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} />
+        <Select className="history-kind-select" aria-label={t('transactionHistory.type')} value={filters.kind} onChange={e => setFilters(f => ({ ...f, kind: e.target.value as HistoryFilters['kind'] }))}>
+          <option value="all">{t('transactionHistory.all')}</option>
+          <option value="purchase">{t('transactionHistory.purchases')}</option>
+          <option value="sale">{t('transactionHistory.sales')}</option>
+        </Select>
         <DisclosureButton open={filtersOpen} contentId={`${id}-filters`} onClick={() => setFiltersOpen(v => !v)} aria-label={`${t('transactionHistory.filters')}${advancedCount ? ` (${advancedCount})` : ''}`} className="history-filter-button surface-field">
           <LuFilter aria-hidden className="size-5" />{advancedCount > 0 && <span className="history-filter-count">{advancedCount}</span>}
         </DisclosureButton>

@@ -14,7 +14,7 @@ import { lazy, useState, Suspense } from 'react';
 import { HashRouter, matchPath, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { LuArrowLeft, LuArrowLeftRight, LuHeart, LuLayers, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowLeftRight, LuHeart, LuLayers, LuPlus, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { EmptyState, LoadingState } from '@/components/ui/surfaces';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
@@ -44,9 +44,22 @@ type Destination = (typeof destinations)[number]['name'];
 function SectionPage({ name }: { name: Destination }) {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const tabs = name in sections ? sections[name as keyof typeof sections] : null;
+  const isTransactions = name === 'transactions';
+  const tabNavigation = tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex min-w-0 flex-1 gap-1 rounded-full bg-blue-100/80 p-1">
+    {tabs.map(tab => <NavLink key={tab} to={{ pathname: `/${name}/${tab}`, search: isTransactions ? location.search : '' }} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}
+  </nav>;
+  const createTransaction = () => {
+    void navigate({ pathname: '/transactions/new', search: location.search }, { state: { purchaseFrom: 'history' } });
+  };
   return <div className={['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
-    {tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex gap-1 rounded-full bg-blue-100/80 p-1">{tabs.map(tab => <NavLink key={tab} to={{ pathname: `/${name}/${tab}`, search: name === 'transactions' ? location.search : '' }} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}</nav>}
+    {tabNavigation && (isTransactions ? <div className="transactions-nav-sticky">
+      {tabNavigation}
+      <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white focus-visible:outline-blue-800">
+        <LuPlus aria-hidden className="size-6" />
+      </button>
+    </div> : tabNavigation)}
     {name === 'dashboard' ? <><RecentPurchases /><EmptyState title={t('comingTitle')} description={t('description')} /></> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
