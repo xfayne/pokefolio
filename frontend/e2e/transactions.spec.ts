@@ -113,3 +113,27 @@ test('sticky transaction controls have a padded, rounded surface without enlargi
   await expect(page.getByRole('searchbox', { name: 'Search transactions' })).toHaveCSS('height', '36px');
   await expect(page.getByRole('combobox', { name: 'Transaction type' })).toHaveCSS('height', '36px');
 });
+
+test('sticky transaction backplates mask scrolling cards in the side gutters and between toolbars', async ({ page }) => {
+  await page.goto('./#/transactions/history?transactions=sample');
+  await page.getByRole('listitem').last().scrollIntoViewIfNeeded();
+  const tabs = page.locator('.transactions-nav-sticky');
+  const tools = page.locator('.history-tools');
+  for (const toolbar of [tabs, tools]) {
+    const shield = await toolbar.evaluate(el => {
+      const style = getComputedStyle(el, '::before');
+      return { background: style.backgroundColor, left: style.left, right: style.right, position: style.position };
+    });
+    expect(shield).toEqual({ background: 'rgb(233, 243, 255)', left: '-12px', right: '-12px', position: 'absolute' });
+  }
+  const toolBox = await tools.boundingBox();
+  const covered = await page.evaluate(({ x, y }) =>
+    !!document.elementFromPoint(x, y)?.closest('.history-tools'),
+    { x: toolBox!.x - 5, y: toolBox!.y + 10 });
+  expect(covered).toBe(true);
+  await page.getByRole('button', { name: 'Filter transactions' }).click();
+  await expect(page.locator('.history-tools')).toBeVisible();
+  await test.info().attach('transaction-sticky-gutter-mask', {
+    body: await page.screenshot(), contentType: 'image/png',
+  });
+});

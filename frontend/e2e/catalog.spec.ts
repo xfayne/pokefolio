@@ -88,7 +88,7 @@ test('catalog density, subtle detail entry and condition prices', async ({page})
  expect((await page.locator('.catalog-result').boundingBox())!.height).toBeLessThanOrEqual(88);
  expect((await page.getByRole('button',{name:'Filters'}).boundingBox())!.height).toBeCloseTo(36, 2);
  await page.getByRole('button',{name:/Gengar/}).click();
- await expect(page.getByRole('dialog')).toHaveAttribute('data-transition','subtle');
+ await expect(page.getByRole('dialog').last()).toHaveAttribute('data-transition','subtle');
  await expect(page.getByText('$25.42',{exact:true})).toBeVisible();
  await page.getByLabel('Price condition').selectOption('NM');
  await expect(page.getByText('$40.00',{exact:true})).toBeVisible();
@@ -164,4 +164,35 @@ test('returning from catalog card details restores the exact scroll offset', asy
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect.poll(() => page.locator('.catalog-scroll-region').evaluate(el => el.scrollTop)).toBeGreaterThanOrEqual(before - 2);
+});
+
+test('catalog return reveals the same mounted search and ready artwork without replaying entrance animation', async ({ page }) => {
+  // The real provider can be slow; this verifies the component lifecycle independently.
+  await page.route('https://images.pokemontcg.io/**', route => route.fulfill({
+    contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/omQAAAAASUVORK5CYII=', 'base64'),
+  }));
+  await page.goto('./#/search');
+  const searchDialog = page.locator('.utility-dialog').first();
+  await expect(searchDialog).toHaveAttribute('data-entered', 'true');
+  const list = page.locator('.catalog-scroll-region');
+  const art = page.locator('.catalog-result').nth(14).locator('.pokemon-art');
+  await art.locator('img').evaluate(img => img.dispatchEvent(new Event('load')));
+  await expect(art).toHaveAttribute('data-image-state', 'ready');
+  await searchDialog.evaluate(el => { el.dataset.searchIdentity = 'original-dialog'; });
+  await art.evaluate(el => { el.dataset.artIdentity = 'decoded-card'; });
+  await art.scrollIntoViewIfNeeded();
+  const before = await list.evaluate(el => el.scrollTop);
+  expect(before).toBeGreaterThan(0);
+  await art.locator('..').click();
+  await expect(page.locator('.utility-dialog')).toHaveCount(2);
+  await expect(searchDialog).toHaveAttribute('data-search-identity', 'original-dialog');
+  await expect(page.getByRole('dialog').last()).toHaveAttribute('data-transition', 'subtle');
+  await page.getByRole('button', { name: 'Back to card', exact: true }).click();
+  await expect(page.locator('.utility-dialog')).toHaveCount(1);
+  await expect(searchDialog).toHaveAttribute('data-search-identity', 'original-dialog');
+  await expect(searchDialog).toHaveAttribute('data-entered', 'true');
+  await expect(art).toHaveAttribute('data-art-identity', 'decoded-card');
+  await expect(art).toHaveAttribute('data-image-state', 'ready');
+  expect(Math.abs((await list.evaluate(el => el.scrollTop)) - before)).toBeLessThanOrEqual(2);
 });
