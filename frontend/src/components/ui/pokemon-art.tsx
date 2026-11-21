@@ -23,9 +23,9 @@ export function PokemonArt({ src, alt, size = 'thumbnail', className }: { src?: 
     if (!state.fallback && preferred !== src && src) setSaved({ source: preferred, phase: 'loading', fallback: true });
     else setSaved({ source: preferred, phase: 'error', fallback: state.fallback });
   };
-  return <div data-image-state={phase} className={cn('pokemon-art', size === 'detail' ? 'pokemon-art-large card-art-large mx-auto w-[min(58vw,15rem)] aspect-[63/88]' : size === 'zoom' ? 'pokemon-art-zoom mx-auto w-[min(90vw,30rem)] max-w-full aspect-[63/88]' : 'pokemon-art-thumbnail size-13 shrink-0', className)}>
+  return <div data-image-state={phase} className={cn('pokemon-art', size === 'detail' ? 'pokemon-art-large card-art-large mx-auto w-[min(58vw,15rem)] aspect-square' : size === 'zoom' ? 'pokemon-art-zoom mx-auto w-[min(90vw,30rem)] max-w-full aspect-[63/88]' : 'pokemon-art-thumbnail size-13 shrink-0', className)}>
     <span className="pokemon-art-window" data-loading={phase === 'loading'}>
-      {src && phase !== 'error' && <img key={active} src={active} alt={alt} loading={large ? 'eager' : 'lazy'} fetchPriority={large ? 'high' : undefined} decoding="async" width="245" height="342" className={cn('h-full w-full', large ? 'object-contain' : 'object-cover')} onLoad={markReady} onError={markError} />}
+      {src && phase !== 'error' && <img key={active} src={active} alt={alt} loading={large ? 'eager' : 'lazy'} fetchPriority={large ? 'high' : undefined} decoding="async" width="245" height="342" className={cn('h-full w-full', size === 'zoom' ? 'object-contain' : 'object-cover')} onLoad={markReady} onError={markError} />}
       {phase === 'error' && <span role="img" aria-label={alt} className="pokemon-art-fallback">✦</span>}
     </span>
   </div>;

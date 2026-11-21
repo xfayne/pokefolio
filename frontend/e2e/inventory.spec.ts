@@ -50,9 +50,13 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.getByRole('listitem', { name: 'Copy 2 · MP', exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveValue('NM');
   await expect(dialog.getByLabel('Price condition', { exact: true })).toHaveCSS('font-weight', '700');
-  await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '63 / 88');
-  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'contain');
-  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 50%');
+  await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '1 / 1');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
+  await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 0%');
+  await expect(dialog.locator('.pokemon-art-large .pokemon-art-window')).toHaveCSS('padding-top', '6px');
+  const detailBox = await dialog.locator('.pokemon-art-large').boundingBox();
+  expect(detailBox).not.toBeNull();
+  expect(Math.abs(detailBox!.width - detailBox!.height)).toBeLessThanOrEqual(1);
   await expect(dialog.getByText('$260.00', { exact: true }).first()).toBeVisible();
   await test.info().attach('card-details', { body: await dialog.screenshot({ path: test.info().outputPath('card-details.png') }), contentType: 'image/png' });
   await dialog.getByLabel('Price condition', { exact: true }).selectOption('LP');

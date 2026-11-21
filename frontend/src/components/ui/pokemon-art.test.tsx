@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { PokemonArt, highResolutionCardImage } from './pokemon-art';
 
-it('requests uncropped high-resolution artwork immediately for card details and zoom', () => {
+it('requests high-resolution artwork immediately while preserving the compact detail frame', () => {
   const src = 'https://images.pokemontcg.io/gym2/12.png';
   expect(highResolutionCardImage(src)).toBe('https://images.pokemontcg.io/gym2/12_hires.png');
   expect(highResolutionCardImage('https://images.pokemontcg.io/gym2/12_hires.png')).toBe('https://images.pokemontcg.io/gym2/12_hires.png');
@@ -13,11 +13,13 @@ it('requests uncropped high-resolution artwork immediately for card details and 
   expect(art.querySelector('.pokemon-art-window')).toHaveAttribute('data-loading', 'true');
   const image = screen.getByRole('img', { name: "Misty's Golduck" });
   expect(image).toHaveAttribute('src', 'https://images.pokemontcg.io/gym2/12_hires.png');
-  expect(image).toHaveClass('object-contain');
+  expect(image).toHaveClass('object-cover');
+  expect(art).toHaveClass('aspect-square');
   fireEvent.load(image);
   expect(art).toHaveAttribute('data-image-state', 'ready');
   view.rerender(<PokemonArt src={src} alt="Misty's Golduck" size="zoom" />);
   expect(view.container.querySelector('.pokemon-art-zoom')).toBeInTheDocument();
+  expect(screen.getByRole('img', { name: "Misty's Golduck" })).toHaveClass('object-contain');
 });
 
 it('reserves a shimmer while loading thumbnails, and resets when the image changes', () => {
