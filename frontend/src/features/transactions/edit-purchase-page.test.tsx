@@ -1,3 +1,4 @@
+import { TransactionFormTestFrame } from './transaction-header.test-support';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
@@ -33,7 +34,7 @@ it('keeps the opening revision after a query refresh rather than overwriting new
   ).creates;
   const opening = state.records;
   state.save.mockRejectedValue(Error('Stale revision'));
-  const view = render(<EditPurchasePage />);
+  const view = render(<EditPurchasePage />, {wrapper:TransactionFormTestFrame});
   await userEvent.clear(screen.getByRole('textbox', { name: 'Shipping cost' }));
   await userEvent.type(
     screen.getByRole('textbox', { name: 'Shipping cost' }),

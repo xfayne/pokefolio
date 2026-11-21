@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TransactionFormTestFrame } from './transaction-header.test-support';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { expect, it, vi } from 'vitest';
@@ -13,7 +14,7 @@ function Harness({save}: {save:()=>Promise<void>}) {
 it('validates before saving, blocks duplicate submits, and retains failed sale drafts',async()=>{
   let reject: (reason:Error)=>void=()=>{};
   const save=vi.fn(()=>new Promise<void>((_,no)=>{reject=no;}));
-  render(<Harness save={save} />);
+  render(<Harness save={save} />, {wrapper:TransactionFormTestFrame});
   expect(screen.getByText('£27.00',{exact:true})).toBeVisible();
   await userEvent.clear(screen.getByLabelText('Sale price 1'));
   await userEvent.click(screen.getByRole('button',{name:'Save sale'}));
@@ -27,7 +28,7 @@ it('validates before saving, blocks duplicate submits, and retains failed sale d
   expect(screen.getByLabelText('Sale price 1')).toHaveValue('30');
 });
 it('clears currency amounts with undo and leaves copy identity intact',async()=>{
-  render(<Harness save={vi.fn()} />);
+  render(<Harness save={vi.fn()} />, {wrapper:TransactionFormTestFrame});
   await userEvent.selectOptions(screen.getByLabelText('Currency'),'USD');
   expect(screen.getByLabelText('Sale price 1')).toHaveValue('');
   await userEvent.click(screen.getByRole('button',{name:'Undo'}));

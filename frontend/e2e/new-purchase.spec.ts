@@ -22,8 +22,8 @@ test('new purchase follows the mock and saves only pending demo copies with reco
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.getByLabel('Card cost 1', { exact: true }).evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
     await shipment.evaluate(el => el.scrollIntoView({ block: 'center' }));
-    const panel = await shipment.boundingBox(), save = await page.locator('.new-purchase-save').boundingBox();
-    expect(panel!.y + panel!.height).toBeLessThanOrEqual(save!.y);
+    await expect(page.locator('.new-purchase-save')).toHaveCount(0);
+    await expect(page.locator('.app-shell > header').getByRole('button', {name:'Save purchase',exact:true})).toBeVisible();
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Back to History' }).click();

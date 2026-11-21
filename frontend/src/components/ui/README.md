@@ -88,3 +88,13 @@ Collection → Cards. The semibold/extrabold/black Tailwind aliases resolve to t
 same token; component CSS also uses it. Do not introduce another bold weight.
 Regular/medium supporting text remains lighter. This supersedes older 800/900
 counts, headings and condition-selector notes.
+
+## Transaction form header (2026-11-21)
+
+Purchase/Sale form tabs live in the global sticky header's opaque canvas row.
+`TransactionFormHeader` portals the existing segments and an icon-only Save action
+into shell-owned targets; it does not duplicate draft state or submit handlers.
+Save uses the native `form` attribute, localized accessible name, disabled state
+and busy icon. Creation and editing share this behavior. No bottom save bar or
+reserved form padding remains. Preserve the existing control sizes and canvas
+colors; scrolling form content must never show through the pinned tabs.
