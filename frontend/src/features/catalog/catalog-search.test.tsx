@@ -6,7 +6,9 @@ import { CatalogSearch } from './catalog-search';
 afterEach(cleanup);
 it('shares selection, set filtering and list/grid modes', async () => {
  const select = vi.fn(); const user = userEvent.setup();
- render(<CatalogSearch query="gengar" onQuery={vi.fn()} onSelect={select} owned={{'base3-5':2}} />);
+ const { container } = render(<CatalogSearch query="gengar" onQuery={vi.fn()} onSelect={select} owned={{'base3-5':2}} />);
+ expect(container.querySelector('.catalog-pinned-tools')).toContainElement(screen.getByRole('searchbox', { name: 'Search cards' }));
+ expect(container.querySelector('.catalog-pinned-tools')).toContainElement(screen.getByRole('button', { name: 'Filters' }));
  await user.click(screen.getByRole('button', {name:'Grid'}));
  expect(screen.getByRole('button',{name:'Grid'})).toHaveAttribute('aria-pressed','true');
  await user.click(screen.getByRole('button',{name:'Filters'}));

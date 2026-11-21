@@ -18,6 +18,37 @@ test('shared catalog picks duplicate copies and global search opens details', as
  await expect(page.getByRole('searchbox',{name:'Search cards',exact:true})).toHaveValue('ancient mew');
 });
 
+test('catalog search and view/filter controls remain pinned inside the scrolling sheet', async ({ page }) => {
+  await page.goto('./#/search');
+  const scrollport = page.locator('.sheet-content');
+  const sticky = page.locator('.catalog-pinned-tools');
+  const input = page.getByRole('searchbox', { name: 'Search cards', exact: true });
+  const filter = page.getByRole('button', { name: 'Filters', exact: true });
+  await expect(input).toBeVisible();
+  await expect(filter).toBeVisible();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-entered', 'true');
+  await dialog.locator('.sheet-frame').evaluate(el =>
+    Promise.all(el.getAnimations({ subtree: true })
+      .filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity)
+      .map(animation => animation.finished)));
+  const before = await sticky.boundingBox();
+  const scrollHeight = await scrollport.evaluate(el => el.scrollHeight - el.clientHeight);
+  expect(scrollHeight).toBeGreaterThan(100);
+  await scrollport.evaluate(el => { el.scrollTop = 450; });
+  await expect.poll(() => scrollport.evaluate(el => el.scrollTop)).toBeGreaterThan(100);
+  const after = await sticky.boundingBox();
+  expect(Math.abs(after!.y - before!.y)).toBeLessThanOrEqual(3);
+  await expect(input).toBeInViewport();
+  await expect(filter).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'List', exact: true })).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Grid', exact: true })).toBeInViewport();
+  await page.setViewportSize({ width: 320, height: 568 });
+  await expect(input).toBeInViewport();
+  await expect(filter).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('catalog density, subtle detail entry and condition prices', async ({page}) => {
  await page.route('https://openapi.tcgtracking.com/**',async route => {
  const url=route.request().url();

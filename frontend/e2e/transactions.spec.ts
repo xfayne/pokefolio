@@ -14,7 +14,12 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await expect(page.getByText('Demo', { exact: true })).toBeVisible();
   await expect(page.getByRole('listitem')).toHaveCount(4);
   await expect(page.getByText('4 copies', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'New transaction', exact: true })).toBeEnabled();
+  const add = page.getByRole('button', { name: 'New transaction', exact: true });
+  await expect(add).toBeEnabled();
+  await expect(add.locator('svg')).toHaveCount(1);
+  await expect(add).not.toContainText('New transaction');
+  const kindSelect = page.getByRole('combobox', { name: 'Transaction type' });
+  await expect(kindSelect).toHaveValue('all');
   await expect(page.getByText('−$227.00', { exact: true })).toBeVisible();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
@@ -25,6 +30,12 @@ test('History follows the approved mock, keeps month and total inline, and isola
     const lastRow = page.getByRole('listitem').last();
     await lastRow.scrollIntoViewIfNeeded();
     const row = await lastRow.boundingBox();
+    const topHeader = await page.locator('.app-shell > header').boundingBox();
+    const pinnedTabs = await page.locator('.transactions-nav-sticky').boundingBox();
+    const pinnedTools = await page.locator('.history-tools').boundingBox();
+    expect(pinnedTabs!.y).toBeGreaterThanOrEqual(topHeader!.y + topHeader!.height - 2);
+    expect(pinnedTools!.y).toBeGreaterThanOrEqual(pinnedTabs!.y + pinnedTabs!.height - 2);
+    expect(pinnedTools!.y + pinnedTools!.height).toBeLessThanOrEqual((await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox())!.y);
     const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
     expect(row!.y + row!.height).toBeLessThanOrEqual(nav!.y);
   }
@@ -33,10 +44,10 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await page.locator('.pokemon-art img').evaluateAll(imgs => Promise.all(imgs.map(img => (img as HTMLImageElement).decode().catch(() => undefined))));
   await test.info().attach('transaction-history-en', { body: await page.screenshot({ path: test.info().outputPath('transaction-history-en.png') }), contentType: 'image/png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('button', { name: 'Sales', exact: true }).click();
+  await kindSelect.selectOption('sale');
   await expect(page.getByRole('listitem')).toHaveCount(1);
   await expect(page.getByText('+$85.00', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'All', exact: true }).click();
+  await kindSelect.selectOption('all');
   await page.getByRole('searchbox').fill('gengar');
   await expect(page.getByRole('listitem')).toHaveCount(1);
   await page.getByRole('searchbox').fill('');
@@ -48,6 +59,7 @@ test('History follows the approved mock, keeps month and total inline, and isola
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await filter.click();
   await page.getByRole('link', { name: 'Overview', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'New transaction', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'History', exact: true }).click();
   await expect(page.getByRole('listitem')).toHaveCount(4);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();

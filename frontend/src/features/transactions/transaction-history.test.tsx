@@ -28,17 +28,17 @@ it('searches and filters together, retains collapsed filters and resets empty re
   expect(screen.getByText('No matching transactions')).toBeInTheDocument();
   await userEvent.click(within(screen.getByText('No matching transactions').closest('section')!).getByRole('button', { name: 'Reset filters' }));
   expect(screen.getAllByRole('listitem')).toHaveLength(4);
-  await userEvent.click(screen.getByRole('button', { name: 'Sales' }));
+  const kind = screen.getByRole('combobox', { name: 'Transaction type' });
+  expect(kind).toHaveValue('all');
+  await userEvent.selectOptions(kind, 'sale');
   expect(screen.getByText('+$85.00')).toBeInTheDocument();
 });
-it('exposes only supplied creation/detail callbacks and supports Hebrew labels', async () => {
-  const create = vi.fn(), open = vi.fn();
-  render(<TransactionHistory data={sampleHistory} onCreate={create} onOpen={open} />);
-  await userEvent.click(screen.getByRole('button', { name: 'New transaction' }));
-  expect(create).toHaveBeenCalledOnce();
+it('exposes detail callbacks and keeps the compact type selector accessible in Hebrew', async () => {
+  const open = vi.fn();
+  render(<TransactionHistory data={sampleHistory} onOpen={open} />);
   await userEvent.click(screen.getByRole('button', { name: /View transaction: sample-nov-19/ }));
   expect(open).toHaveBeenCalledWith('sample-nov-19');
   await i18n.changeLanguage('he');
-  expect(await screen.findByRole('button', { name: 'עסקה חדשה' })).toBeInTheDocument();
+  expect(await screen.findByRole('combobox', { name: 'סוג עסקה' })).toHaveValue('all');
   expect(document.documentElement.dir).toBe('rtl');
 });
