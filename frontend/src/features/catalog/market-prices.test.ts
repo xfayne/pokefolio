@@ -1,6 +1,8 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { publicPriceClient } from '@/services/public-price-client';
+import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { fetchMarketQuotes } from './market-prices';
 import { catalogMarketReference, catalogCards, catalogReference } from './catalog';
+beforeEach(()=>publicPriceClient.clear());
 afterEach(()=>vi.unstubAllGlobals());
 it('matches exact card, English, edition, finish and condition without mixing printings',async()=>{
  const fetcher=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({sets:[{id:630,name:'Fossil'}]})}).mockResolvedValueOnce({ok:true,json:async()=>({products:[{id:1,name:'Gengar (5)',number:'05/62'},{id:2,name:'Gengar (20)',number:'20/62'}]})}).mockResolvedValueOnce({ok:true,json:async()=>({updated:'2026-11-20T12:00:00Z',products:{1:{a:{lng:'EN',cnd:'LP',var:'Unlimited Holofoil',mkt:25.42},b:{lng:'EN',cnd:'LP',var:'1st Edition Holofoil',mkt:99},c:{lng:'JP',cnd:'NM',var:'Unlimited Holofoil',mkt:5}}}})});
@@ -9,6 +11,8 @@ it('matches exact card, English, edition, finish and condition without mixing pr
  const quotes=await fetchMarketQuotes(card,catalogMarketReference(card.id),new AbortController().signal);
  expect(quotes).toHaveLength(1);expect(quotes[0]).toMatchObject({condition:'LP',money:{currency:'USD',minor:2542}});
  expect(await fetchMarketQuotes(card,catalogReference(card.id),new AbortController().signal)).toEqual([]);
+ const firstRef={...catalogMarketReference(card.id),kind:'identified' as const,cardId:card.id,edition:'first-edition' as const,language:{status:'known' as const,value:'en',source:'provider' as const},finish:{status:'known' as const,value:'holo',source:'provider' as const}};
+ expect(await fetchMarketQuotes(card,firstRef,new AbortController().signal)).toMatchObject([{money:{minor:9900}}]);
  expect(fetcher).toHaveBeenCalledTimes(3);
 });
 it('uses standard WoTC promo identity and its actual finish, excluding alternate editions',async()=>{

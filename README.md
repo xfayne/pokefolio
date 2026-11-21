@@ -31,7 +31,7 @@ Open http://localhost:5173/pokefolio/. The Adventure Blue shell defaults to Dash
 - React Hook Form + Zod for forms/boundary validation; i18next for localization.
 - Vitest, Testing Library, Playwright and ESLint for verification.
 
-Local development is disconnected unless supplied the exact validated staging configuration. The frontend rejects foreign/production Firebase projects and alternate API origins. It performs no collection migration or Firestore writes. The approved inventory/transaction domain is defined under `frontend/src/domain/`; live persistence adapters remain separate roadmap work.
+Local development is disconnected unless supplied the exact validated staging configuration. The frontend rejects foreign/production Firebase projects and alternate API origins. It performs no collection migration. Signed-in purchases and copy edits use isolated owner subcollections; the legacy progress root is untouched. The approved inventory/transaction domain is defined under `frontend/src/domain/`; live persistence adapters remain separate roadmap work.
 
 ## Environments and release
 
@@ -127,12 +127,13 @@ and combine Energy/Trainer exclusions with Holo-only and multi-set/text search.
 Owned/Wishlist row badges render only from caller-supplied data. Real account
 holdings/Wishlist remain disconnected; explicit sample contexts provide demo counts.
 
-## Purchase account integration — pending activation
+## Purchase account integration (#8)
 
-The current branch prepares owner-scoped Firestore purchase/history/copy storage,
-revision-checked audited editing, Google sign-in in Settings and exact-edition
-prices via First Edition checkboxes. Save remains a direct action. This supersedes
-the earlier implementation notes above **only after activation**. Live staging
-rules publication and acceptance are still pending; #8 remains open. See the
-[persistence and activation guide](docs/PURCHASE_PERSISTENCE.md) for paths, safeguards,
-limits and remaining verification. No legacy import or production cutover is included.
+The account integration supersedes the earlier disconnected-preview notes above.
+Sign in with Google through Settings to save purchases, read History/Cards/Details
+and open purchases from Dashboard or an exact copy. Saving is direct; editing uses
+the same form, immutable audit records and expected revisions. First Edition
+checkboxes select copy editions and exact printing prices. Listing URL/order
+references are optional. No legacy import, destructive migration or production
+cutover is included. See [persistence and staging acceptance](docs/PURCHASE_PERSISTENCE.md)
+for the verified live journey, paths, safeguards and atomic edit limits.

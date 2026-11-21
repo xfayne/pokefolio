@@ -1,3 +1,4 @@
+import { PurchaseActions } from '@/features/transactions/purchase-actions';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { RecentPurchases } from '@/features/transactions/recent-purchases';
 import { EditPurchasePage } from '@/features/transactions/edit-purchase-page';
@@ -12,7 +13,7 @@ import { lazy, useState, Suspense } from 'react';
 import { HashRouter, matchPath, NavLink, Navigate, Route, Routes, useLocation, useNavigate, type Location } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { LuArrowLeft, LuEllipsis, LuArrowLeftRight, LuHeart, LuLayers, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowLeftRight, LuHeart, LuLayers, LuScanLine, LuSearch, LuSettings } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { EmptyState, LoadingState } from '@/components/ui/surfaces';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
@@ -67,7 +68,10 @@ function Shell() {
   for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
   const isEditing = contentLocation.pathname.endsWith('/edit');
   const isNewPurchase = contentLocation.pathname === '/transactions/new';
-  const isPurchase = !!matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
+  const purchaseMatch = matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
+  const isPurchase = !!purchaseMatch;
+  const selectedPurchase = account.records.find(e => e.collection === 'transactions' && e.record.id === purchaseMatch?.params.transactionId);
+  const canEditPurchase = isPurchase && contextParams.get('transactions') !== 'sample' && selectedPurchase?.collection === 'transactions' && selectedPurchase.record.kind === 'purchase' && !('origin' in selectedPurchase.record) && selectedPurchase.record.settlement === 'unknown';
   const focusedTransaction = isPurchase || isNewPurchase || isEditing;
   const backToHistory = () => {
     if ((location.state as { purchaseFrom?: string } | null)?.purchaseFrom === 'history') void navigate(-1);
@@ -83,7 +87,7 @@ function Shell() {
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
         <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{t(isEditing ? 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
         {((contentLocation.pathname === '/collection/cards' && new URLSearchParams(contentLocation.search).get('inventory') === 'sample') || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className="rounded-full bg-white/15 px-2 py-1 text-xs font-medium">{t('inventory.demo')}</span>}
-        <div className="flex shrink-0 gap-1">{focusedTransaction ? <button type="button" disabled aria-label={t('purchaseDetails.more')} title={t('purchaseDetails.moreDetail')} className="flex size-11 items-center justify-center rounded-xl text-white"><LuEllipsis aria-hidden className="size-6" /></button> : <>
+        <div className="flex shrink-0 gap-1">{focusedTransaction ? <PurchaseActions key={contentLocation.pathname} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /> : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
         </>} </div>

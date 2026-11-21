@@ -20,7 +20,7 @@ export function EditPurchasePage() {
     /* Invalid or unavailable purchase. */
   }
   return draft ? (
-    <Editor key={transactionId} initial={draft} account={account} />
+    <Editor key={`${account.owner}-${transactionId}`} initial={draft} account={account} />
   ) : (
     <EmptyState
       title={t('purchaseDetails.notFound')}
@@ -36,6 +36,8 @@ function Editor({
   account: ReturnType<typeof usePortfolio>;
 }) {
   const [draft, setDraft] = useState(initial);
+  // Freeze the revision observed when editing began; query refreshes must not rebase a stale draft.
+  const [baseline] = useState(account.records);
   const navigate = useNavigate();
   const prepared = useRef<{ key: string; command: PortfolioCommit } | null>(
     null,
@@ -55,7 +57,7 @@ function Editor({
               account.owner!,
               draft,
               new Date().toISOString(),
-              account.records,
+              baseline,
             ),
           };
         await account.save(prepared.current.command);

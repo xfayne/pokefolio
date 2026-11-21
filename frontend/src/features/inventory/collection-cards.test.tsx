@@ -114,3 +114,16 @@ it('defaults Your copies open for one copy and closed for multiple copies in Car
   expect(within(dialog).getByRole('button', { name: /Your copies/ })).toHaveAttribute('aria-expanded', 'true');
   expect(within(dialog).getByRole('button', { name: 'Details 1' })).toBeInTheDocument();
 });
+
+it('keeps a copy editor based on its opening snapshot when query data refreshes',async()=>{
+ const original=data();const onSave=vi.fn().mockRejectedValue(Error('Stale revision'));
+ const view=render(<CollectionCards data={original} onSave={onSave} />);
+ await userEvent.click(screen.getByRole('button',{name:'2 copies: Charizard'}));
+ await userEvent.click(screen.getByRole('button',{name:'Edit copy charizard-b'}));
+ await userEvent.type(screen.getByLabelText('Notes'),'My draft');
+ const refreshed={...original,copies:original.copies.map(c=>c.id==='charizard-b'?{...c,revision:2,notes:'Changed elsewhere'}:c)};
+ view.rerender(<CollectionCards data={refreshed} onSave={onSave} />);
+ await userEvent.click(screen.getByRole('button',{name:'Save copy'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('Could not save');
+ expect(onSave).toHaveBeenCalledWith(original.copies[1],expect.objectContaining({notes:'My draft'}));
+});

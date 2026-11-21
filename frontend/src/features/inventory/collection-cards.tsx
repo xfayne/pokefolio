@@ -9,14 +9,14 @@ import { SearchInput } from '@/components/ui/search-input';
 import { ListCard } from '@/components/ui/list-card';
 import { Select } from '@/components/ui/select';
 import { Card, EmptyState } from '@/components/ui/surfaces';
-import { selectInventory, type CopyMetadataEdit, type CopyView, type InventoryCatalogCard, type CopyQuote, type InventoryGroup } from '@/domain/inventory';
+import { selectInventory, visibleCopyMarket, type CopyMetadataEdit, type CopyView, type InventoryCatalogCard, type CopyQuote, type InventoryGroup } from '@/domain/inventory';
 import { CardMarketPrice } from './card-market-price';
 import { bestCopy } from './copy-condition';
 import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/domain/schema';
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase }: { data: InventoryData; onSave: SaveCopy; onViewPurchase?: (id: string) => void }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false }: { pricesLoading?: boolean; data: InventoryData; onSave: SaveCopy; onViewPurchase?: (id: string) => void }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -31,11 +31,13 @@ export function CollectionCards({ data, onSave, onViewPurchase }: { data: Invent
   const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
   const money = (m: Money) => new Intl.NumberFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', { style: 'currency', currency: m.currency }).format(m.minor / 100);
   const cost = (v: CopyView['paid']) => v.status === 'exact' ? money(v.value) : v.status === 'estimated' ? `${money(v.value)} · ${t('inventory.estimated')}` : t(`inventory.${v.status === 'unallocated' ? 'unallocated' : 'unavailable'}`);
-  const metric = (v: CopyView['market']) => v.status === 'unavailable' ? t('inventory.unpriced') : money(v);
+  const metric = (v: CopyView['market']) => v.status === 'unavailable' ? t(pricesLoading ? 'loading' : 'inventory.unpriced') : money(v);
   const title = (g: InventoryGroup) => g.card?.name ?? (g.copies[0]?.copy.catalog.kind === 'unidentified' ? g.copies[0].copy.catalog.description : g.key);
   const needle = search.trim().toLocaleLowerCase(i18n.language);
   const groups = inventory.groups.filter(g => `${title(g)} ${g.card?.setName ?? ''} ${g.card?.number ?? ''}`.toLocaleLowerCase(i18n.language).includes(needle) && (filter === 'all' || g.copies.some(v => v.copy.possession === filter)));
-  groups.sort((a, b) => sort === 'value' ? Number(b.market.pricedCount > 0) - Number(a.market.pricedCount > 0) || b.market.minor - a.market.minor || title(a).localeCompare(title(b)) : sort === 'copies' ? b.copies.length - a.copies.length || title(a).localeCompare(title(b)) : title(a).localeCompare(title(b), i18n.language));
+  const quotedGroups = new Map(groups.map(g => [g.key,visibleCopyMarket(g.copies,data.currency)]));
+  const visibleMarket = (g: InventoryGroup) => quotedGroups.get(g.key)!;
+  groups.sort((a, b) => sort === 'value' ? Number(visibleMarket(b).pricedCount > 0) - Number(visibleMarket(a).pricedCount > 0) || visibleMarket(b).minor - visibleMarket(a).minor || title(a).localeCompare(title(b)) : sort === 'copies' ? b.copies.length - a.copies.length || title(a).localeCompare(title(b)) : title(a).localeCompare(title(b), i18n.language));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
   const isExpanded = (group: InventoryGroup) => expansionOverrides.get(group.key) ?? false;
   const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !(previous.get(group.key) ?? false)); return next; });
@@ -58,7 +60,7 @@ export function CollectionCards({ data, onSave, onViewPurchase }: { data: Invent
         <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 ps-2 text-start">
           <span className="sr-only">{t('inventory.details')}: </span><PokemonArt src={g.card?.imageUrl} alt={g.card?.name ?? title(g)} />
           <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span><span className="mt-0.5 inline-block rounded-full bg-blue-100 px-2 text-xs leading-[0.875rem] font-semibold text-slate-600">{t('inventory.copies', { count: g.copies.length })}</span></span>
-          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${g.market.pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{g.market.pricedCount ? money(g.market) : t('inventory.unpriced')}</span></span>
+          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{visibleMarket(g).pricedCount ? money(visibleMarket(g)) : t(pricesLoading ? 'loading' : 'inventory.unpriced')}</span>{visibleMarket(g).pricedCount > 0 && visibleMarket(g).missingCount > 0 && <span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}</span>
         </button>
         <DisclosureButton aria-label={`${t('inventory.copies', { count: g.copies.length })}: ${title(g)}`} open={isExpanded(g)} contentId={`${id}-${g.key}`} onClick={() => toggle(g)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950">
           <DisclosureChevron open={isExpanded(g)} />
@@ -110,23 +112,24 @@ export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy
 }
 function CopyEditor({ copy, onSave, onBack }: { copy: CardCopy; onSave: SaveCopy; onBack: () => void }) {
   const { t } = useTranslation();
-  const [condition, setCondition] = useState(copy.condition.status === 'known' ? copy.condition.value : 'unknown');
-  const [edition, setEdition] = useState(copy.catalog.kind === 'identified' ? copy.catalog.edition : 'unknown');
-  const [notes, setNotes] = useState(copy.notes);
+  const [baseline] = useState(copy);
+  const [condition, setCondition] = useState(baseline.condition.status === 'known' ? baseline.condition.value : 'unknown');
+  const [edition, setEdition] = useState(baseline.catalog.kind === 'identified' ? baseline.catalog.edition : 'unknown');
+  const [notes, setNotes] = useState(baseline.notes);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const id = useId();
   async function submit(e: FormEvent) {
     e.preventDefault(); if (saving) return; setSaving(true); setFailed(false);
     try {
-      const nextCondition = condition === (copy.condition.status === 'known' ? copy.condition.value : 'unknown') ? copy.condition : condition === 'unknown' ? copy.condition.status === 'unknown' ? copy.condition : { status: 'unknown' as const, reason: 'Condition not recorded' } : { status: 'known' as const, value: conditionSchema.parse(condition), source: 'user' as const };
-      const patch: CopyMetadataEdit = { condition: nextCondition, notes, ...(copy.catalog.kind === 'identified' ? { edition } : {}) };
-      await onSave(copy, patch); onBack();
+      const nextCondition = condition === (baseline.condition.status === 'known' ? baseline.condition.value : 'unknown') ? baseline.condition : condition === 'unknown' ? baseline.condition.status === 'unknown' ? baseline.condition : { status: 'unknown' as const, reason: 'Condition not recorded' } : { status: 'known' as const, value: conditionSchema.parse(condition), source: 'user' as const };
+      const patch: CopyMetadataEdit = { condition: nextCondition, notes, ...(baseline.catalog.kind === 'identified' ? { edition } : {}) };
+      await onSave(baseline, patch); onBack();
     } catch { setFailed(true); } finally { setSaving(false); }
   }
-  return <form onSubmit={e => void submit(e)} className="space-y-5"><p className="break-all text-sm font-medium" dir="ltr">{copy.id}</p><fieldset disabled={saving} className="space-y-5 disabled:opacity-60">
+  return <form onSubmit={e => void submit(e)} className="space-y-5"><p className="break-all text-sm font-medium" dir="ltr">{baseline.id}</p><fieldset disabled={saving} className="space-y-5 disabled:opacity-60">
     <label className="flex flex-col gap-2 text-sm font-medium">{t('inventory.condition')}<Select aria-label={t('inventory.condition')}  value={condition} onChange={e => setCondition(e.target.value)}>{['unknown', ...conditionSchema.options].map(c => <option key={c} value={c}>{c === 'unknown' ? t('inventory.unknown') : c}</option>)}</Select></label>
-    {copy.catalog.kind === 'identified' && <label className="flex min-h-9 items-center gap-2 text-sm font-medium"><input aria-label={t('inventory.edition')} type="checkbox" checked={edition === 'first-edition'} onChange={e => setEdition(e.target.checked ? 'first-edition' : 'unlimited')} />First Edition</label>}
+    {baseline.catalog.kind === 'identified' && <label className="flex min-h-9 items-center gap-2 text-sm font-medium"><input aria-label={t('inventory.edition')} type="checkbox" checked={edition === 'first-edition'} onChange={e => setEdition(e.target.checked ? 'first-edition' : 'unlimited')} />First Edition</label>}
     <div className="space-y-2"><label htmlFor={`${id}-notes`} className="block text-sm font-medium">{t('inventory.notes')}</label><textarea id={`${id}-notes`} maxLength={2000} rows={4} value={notes} onChange={e => setNotes(e.target.value)} className="w-full rounded-xl border border-slate-500 bg-white p-3 text-base" aria-describedby={`${id}-limit`} /><p id={`${id}-limit`} className="text-xs text-slate-600">{t('inventory.noteLimit')} · {notes.length}/2000</p></div>
     {failed && <p role="alert" className="text-sm text-rose-700">{t('inventory.saveFailed')}</p>}<div className="flex gap-2"><Button type="submit">{t(saving ? 'inventory.saving' : 'inventory.save')}</Button><Button type="button" variant="outline" onClick={onBack}>{t('inventory.cancel')}</Button></div>
   </fieldset></form>;
