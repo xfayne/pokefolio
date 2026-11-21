@@ -44,14 +44,17 @@ test('new purchase follows the mock and saves only pending demo copies with reco
   await page.getByLabel('Card cost 1', { exact: true }).fill('');
   await page.getByRole('button', { name: 'Save purchase', exact: true }).click();
   await expect(page.getByLabel('Card cost 1', { exact: true })).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByLabel('Card cost 1', { exact: true })).toBeFocused();
   await page.getByLabel('Card cost 1', { exact: true }).fill('52.00');
   await page.getByLabel('Shipping cost', { exact: true }).fill('10.00');
+  await expect(page.getByLabel('Shipping cost', { exact: true })).toHaveValue('10.00');
+  await expect(page.getByLabel('Card cost 1', { exact: true })).toHaveValue('52.00');
   await expect(page.getByText('Split equally: $3.33–$3.34 per copy (rounded)')).toBeVisible();
   await page.getByRole('button', { name: 'Save purchase', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Purchase details', exact: true })).toBeVisible();
   await expect(page.getByText('$140.00', { exact: true })).toBeVisible();
   await expect(page.getByText('Pending', { exact: true })).toBeVisible();
-  await expect(page.getByText('Payment status unknown', { exact: true })).toBeVisible();
+  await expect(page.getByText('Payment status unknown', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back to History' }).click();
   await expect(page.getByRole('listitem')).toHaveCount(5);
   await page.goto('./#/transactions/new');

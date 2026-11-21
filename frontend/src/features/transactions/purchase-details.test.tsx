@@ -16,7 +16,7 @@ it('renders the approved purchase breakdown and opens the exact physical copy', 
   expect(within(breakdown).getByText('$130.00')).toBeInTheDocument();
   expect(within(breakdown).getByText('$12.00')).toBeInTheDocument();
   expect(within(breakdown).getByText('$142.00')).toBeInTheDocument();
-  expect(screen.getByText('Shipping: $4.00 per copy')).toBeInTheDocument();
+  expect(screen.queryByText('Shipping: $4.00 per copy')).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: /^Gengar/ }));
   expect(inspect).toHaveBeenCalledWith(view.copies[1]?.copy);
 });

@@ -287,3 +287,16 @@ test('portfolio ownership, atomic audit revisions and immutable receipts', async
   });
  } finally {await env.cleanup();}
 });
+
+test('display currency preferences are private, bounded and use server time',async()=>{
+ const env=await environment('firestore.private.rules');
+ try{
+  const db=env.authenticatedContext(alice).firestore();const foreign=env.authenticatedContext(bob).firestore();
+  const path=`users/${alice}/preferences/display`;
+  await assertSucceeds(setDoc(doc(db,path),{currency:'ILS',updatedAt:serverTimestamp()}));
+  await assertSucceeds(getDoc(doc(db,path)));
+  await assertFails(getDoc(doc(foreign,path)));
+  await assertFails(setDoc(doc(foreign,path),{currency:'USD',updatedAt:serverTimestamp()}));
+  await assertFails(setDoc(doc(db,path),{currency:'FAKE',updatedAt:serverTimestamp()}));
+ }finally{await env.cleanup();}
+});

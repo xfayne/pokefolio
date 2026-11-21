@@ -75,3 +75,14 @@ it('rejects foreign owners and preserves per-copy possession during edits', () =
   ).toBe(true);
   expect(() => prepareCommit('foreign', initial, 450)).toThrow();
 });
+it('edits tracking atomically and supports adding and clearing tracking evidence',()=>{
+ const draft=createPurchaseDraft(true);const before=purchaseCommit('owner',draft,at).creates;
+ const withTracking={...draft,trackingNumber:'SYNTHETIC-NEW',carrier:'Test carrier'};
+ const added=purchaseCommit('owner',withTracking,'2026-11-21T09:00:00Z',before);
+ expect(added.creates.some(e=>e.collection==='shipments')).toBe(true);
+ const current=[...before.map(e=>added.updates.find(u=>u.before.record.id===e.record.id)?.after??e),...added.creates.filter(e=>e.collection!=='revisions')];
+ const changed=purchaseCommit('owner',{...withTracking,trackingNumber:'SYNTHETIC-CHANGED'},'2026-11-21T10:00:00Z',current);
+ expect(changed.updates.find(u=>u.after.collection==='shipments')?.after.record).toMatchObject({trackingNumber:'SYNTHETIC-CHANGED'});
+ const cleared=purchaseCommit('owner',draft,'2026-11-21T10:00:00Z',current);
+ expect(cleared.updates.find(u=>u.after.collection==='shipments')?.after.record).toMatchObject({trackingNumber:null});
+});

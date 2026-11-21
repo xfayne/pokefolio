@@ -67,6 +67,8 @@ export function purchaseCommit(
     throw Error('Cannot add/remove copies or edit disposed purchases');
   if (previous.record.pricingMode !== draft.pricingMode)
     throw Error('Cannot change pricing mode on an existing purchase');
+  const oldShipment = existing.find(e => e.collection === 'shipments' && e.record.id === `${draft.id}-shipment`);
+  if (oldShipment?.collection === 'shipments' && !records.some(e => e.collection === 'shipments')) records.push({collection:'shipments',record:{...oldShipment.record,trackingNumber:null,carrier:null,revision:1,updatedAt:at}});
   const command: PortfolioCommit = {
     ownerUid: owner,
     idempotencyKey: `edit-${crypto.randomUUID()}`,
@@ -78,7 +80,10 @@ export function purchaseCommit(
       (e) =>
         e.collection === entry.collection && e.record.id === entry.record.id,
     );
-    if (!before) throw Error('Purchase references changed');
+    if (!before) {
+      if (entry.collection === 'shipments' || entry.collection === 'memberships') { command.creates.push(entry); continue; }
+      throw Error('Purchase references changed');
+    }
     const after = {
       ...entry,
       record: {
