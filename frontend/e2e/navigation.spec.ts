@@ -38,13 +38,13 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   const content = page.locator('#main-content');
   await expect(header).toHaveCSS('border-top-left-radius', '0px');
   await expect(header).toHaveCSS('border-top-right-radius', '0px');
-  await expect(header).toHaveCSS('border-bottom-left-radius', '20px');
-  await expect(header).toHaveCSS('border-bottom-right-radius', '20px');
+  await expect(header).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(header).toHaveCSS('border-bottom-right-radius', '0px');
   await expect(content).toHaveCSS('border-top-left-radius', '0px');
   await expect(content).toHaveCSS('border-top-right-radius', '0px');
-  await expect(content).toHaveCSS('border-bottom-left-radius', '0px');
-  await expect(content).toHaveCSS('border-bottom-right-radius', '0px');
-  await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(229, 241, 255)');
+  await expect(content).toHaveCSS('border-bottom-left-radius', '20px');
+  await expect(content).toHaveCSS('border-bottom-right-radius', '20px');
+  await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   await expect(page.locator('header')).toHaveCSS('background-color', 'rgb(3, 35, 62)');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
@@ -59,11 +59,12 @@ test('mobile English / Hebrew visuals, contrast and narrow safe layout', async (
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => { document.querySelector('main')!.style.minHeight = '1500px'; window.scrollTo(0, 300); });
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-  await expect(header).toHaveCSS('border-bottom-left-radius', '20px');
-  await expect(header).toHaveCSS('border-bottom-right-radius', '20px');
+  await expect(header).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(header).toHaveCSS('border-bottom-right-radius', '0px');
   await expect(header).toHaveCSS('border-top-left-radius', '0px');
   await expect(content).toHaveCSS('border-top-left-radius', '0px');
-  await expect(content).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(content).toHaveCSS('border-bottom-left-radius', '20px');
+  await expect(content).toHaveCSS('border-bottom-right-radius', '20px');
   await test.info().attach('scrolled-header', { body: await page.screenshot(), contentType: 'image/png' });
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 844 });

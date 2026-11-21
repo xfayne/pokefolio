@@ -53,7 +53,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(dialog.locator('.pokemon-art-large')).toHaveCSS('aspect-ratio', '1 / 1');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-fit', 'cover');
   await expect(dialog.getByRole('img', { name: 'Charizard', exact: true })).toHaveCSS('object-position', '50% 0%');
-  await expect(dialog.locator('.pokemon-art-large .pokemon-art-window')).toHaveCSS('padding-top', '6px');
+  await expect(dialog.locator('.pokemon-art-large .pokemon-art-window')).toHaveCSS('padding-top', '0px');
   const detailBox = await dialog.locator('.pokemon-art-large').boundingBox();
   expect(detailBox).not.toBeNull();
   expect(Math.abs(detailBox!.width - detailBox!.height)).toBeLessThanOrEqual(1);
@@ -106,6 +106,8 @@ test('Card Details loading shimmer has no yellow frame; the original frame appea
   await expect(art).toHaveAttribute('data-image-state', 'loading');
   await expect(art).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
   await expect(art).toHaveCSS('box-shadow', 'none');
+  await expect(art.locator('img')).toHaveCSS('opacity', '0');
+  await expect(art.locator('.pokemon-art-window')).toHaveCSS('padding-top', '0px');
   await expect.poll(() => Boolean(reveal)).toBe(true);
   await reveal!();
   await expect(art).toHaveAttribute('data-image-state', 'ready');
