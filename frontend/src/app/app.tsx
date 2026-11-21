@@ -1,3 +1,5 @@
+import { createSampleCopies } from '@/features/inventory/sample';
+import { useDemoTransactionData } from '@/features/transactions/demo-data';
 import { initialCatalogSearch } from '@/features/catalog/search-state';
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { CatalogDetails } from '@/features/catalog/catalog-details';
@@ -53,6 +55,11 @@ function Shell() {
   const utility = location.pathname === '/search' ? 'search' : location.pathname === '/settings' ? 'settings' : null;
   const background = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
   const contentLocation = utility ? background ?? { ...location, pathname: '/dashboard' } : location;
+  const demoTransactions = useDemoTransactionData();
+  const contextParams = new URLSearchParams(contentLocation.search);
+  const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : [];
+  const catalogOwned: Record<string,number> = {};
+  for (const copy of previewCopies) if (copy.catalog.kind === 'identified' && copy.possession === 'received' && copy.disposition === 'held') catalogOwned[copy.catalog.cardId] = (catalogOwned[copy.catalog.cardId] ?? 0) + 1;
   const isNewPurchase = contentLocation.pathname === '/transactions/new';
   const isPurchase = !!matchPath('/transactions/purchases/:transactionId', contentLocation.pathname);
   const focusedTransaction = isPurchase || isNewPurchase;
@@ -94,7 +101,7 @@ function Shell() {
       </NavLink>)}</div>
     </nav>
     {utility === 'search' && catalogCard ? <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} /> : utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility}>
-      {utility === 'search' ? <CatalogSearch state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
   </div>;
 }

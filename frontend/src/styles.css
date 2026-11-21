@@ -294,3 +294,23 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .utility-dialog[open][data-transition="subtle"] > .sheet-frame { transform: none; }
 .utility-dialog[open][data-entered="true"][data-transition="subtle"] > .sheet-frame { animation: catalog-detail-enter 160ms ease-out both; }
 @keyframes catalog-detail-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Catalog mock alignment: one toolbar baseline, compact rectangular controls. */
+.catalog-toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 0.75rem; align-items: center; }
+.catalog-toolbar > p { white-space: nowrap; font-size: 0.8125rem; }
+.catalog-filter-button { display: flex; align-items: center; justify-content: center; gap: 0.375rem; min-width: 5.5rem; border: 1px solid #7da6e3; border-radius: 0.625rem; background: var(--surface-field); color: #445575; font-weight: var(--font-weight-bold); }
+.catalog-toolbar > button, .catalog-view button { min-height: 1.875rem; padding: 0.25rem 0.625rem; font-size: 0.8125rem; }
+.catalog-view { display: grid; grid-template-columns: repeat(2,1fr); border-radius: 0.625rem; overflow: hidden; }
+.catalog-view button { justify-content: center; gap: 0.375rem; min-width: 3.75rem; }
+.catalog-set-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0.25rem 0.625rem; }
+.catalog-set-grid label { overflow-wrap: anywhere; align-items: center; font-size: 0.75rem; line-height: 1.25; }
+.catalog-set-grid input { flex-shrink: 0; }
+.catalog-type-filters { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--surface-border); }
+.catalog-type-filters label { display: flex; align-items: center; gap: 0.375rem; min-height: 2rem; font-size: 0.8125rem; }
+.catalog-ownership, .catalog-wishlist { display: inline-flex; align-items: center; gap: 0.375rem; margin-top: 0.25rem; padding: 0.125rem 0.5rem; background: #d5e8ff; color: #103f88; border-radius: 1rem; font-size: 0.75rem; font-weight: var(--font-weight-bold); }
+.catalog-wishlist { border: 1px solid var(--surface-border); border-radius: 0.5rem; }
+.catalog-ownership svg, .catalog-wishlist svg { width: 1rem; height: 1rem; }
+.catalog-result { min-height: 4.5rem; padding: 0.375rem 0.5rem; gap: 0.625rem; }
+.catalog-result .pokemon-art { width: 3.5rem; height: 3.75rem; }
+@media (min-width:640px) { .catalog-set-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width:359px) { .catalog-toolbar { gap: 0.375rem; } .catalog-filter-button { min-width: 4.5rem; } .catalog-toolbar > button, .catalog-view button { padding-inline: 0.375rem; font-size: 0.75rem; } .catalog-view button { min-width: 3.25rem; } }

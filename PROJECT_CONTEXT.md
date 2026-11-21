@@ -326,3 +326,20 @@ Search supports union-of-selected-set checkboxes combined with the existing text
 query. Global Search and purchase picker each retain their own transient filter,
 List/Grid and pagination state in their parent while results unmount for details.
 No account state, Wishlist or Binder data is changed.
+
+## Catalog mock controls and animated filters — 2026-11-21
+
+Owner supplied the toolbar/badge crop again and permits slightly taller rows for
+clean spacing. Catalog toolbar now uses a stable three-column baseline, funnel
+icon, equal List/Grid segments and modest corner radii. Filter contents stay
+mounted in shared DisclosureContent (inert/aria-hidden closed) with the existing
+open/close animation. Set checkboxes fill two mobile columns, three on wider
+screens, without a one-column internal scroll box.
+Filters combine Energy/Trainer exclusion and Holo only (including Shining and
+Reverse Holo) with existing text/multi-set choices; special vintage numbering,
+trainer/energy exceptions and verified promo finishes retain their identities.
+Result badges support Owned with copy count and Wishlist, using icon/chip shapes
+from the mock. Callers must supply evidence: explicit sample global contexts show
+received held counts, ordinary account context stays empty until persistence is
+connected. Wishlist input is supported/tested, but no account wishlist adapter or
+fake wishlist holdings are introduced. Rows have extra room for genuine badges.
