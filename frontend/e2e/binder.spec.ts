@@ -134,7 +134,7 @@ test('Add empty page inserts nine blank pockets after the current page, keeps ad
 });
 test('dragging a card outside removes only its binder placement and makes its copy selectable again',async({page})=>{
   const privateWrites:string[]=[];
-  page.on('request',r=>{if(/firestore|workers\\.dev/.test(r.url()) && r.method()!=='GET')privateWrites.push(r.url());});
+  page.on('request',r=>{if(/firestore|workers\.dev/.test(r.url()) && r.method()!=='GET')privateWrites.push(r.url());});
   await page.goto('./#/collection/binder?inventory=sample');
   const slots=page.locator('.binder-slot');
   const source=(await slots.first().boundingBox())!;
