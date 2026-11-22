@@ -42,6 +42,15 @@ export function reservePocket(pockets: readonly BinderPocket[], index: number): 
   if (result.length > capacity) throw Error('Binder is full');
   return result;
 }
+/** Remove one binder placement, not the inventory copy or any sibling position.
+ * Keep a distinct reserved gap so the rest of the page never compacts.
+ */
+export function unplacePocket(pockets: readonly BinderPocket[], index: number): BinderPocket[] {
+  if (!Number.isInteger(index) || index < 0 || index >= pockets.length || pockets[index]?.kind === 'empty') throw Error('Invalid occupied pocket');
+  const result=[...pockets];
+  result[index]=gap();
+  return result;
+}
 export function removePocket(pockets: readonly BinderPocket[], index: number) {
   if (!Number.isInteger(index) || index < 0 || index >= pockets.length) throw Error('Invalid pocket');
   return pockets.filter((_,i) => i !== index);

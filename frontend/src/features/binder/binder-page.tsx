@@ -16,7 +16,7 @@ import { Select } from '@/components/ui/select';
 import type { BinderPocket } from '@/domain/inventory';
 import type { CardCopy } from '@/domain/schema';
 import { BinderBook, type VisualPocket } from './binder-book';
-import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, movePage, insertEmptyPage, capacity, type Binder } from './model';
+import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, unplacePocket, movePage, insertEmptyPage, capacity, type Binder } from './model';
 import { readBinder, saveBinder, readSharing, publishBinder, disableSharing } from './storage';
 import './binder.css';
 
@@ -75,22 +75,27 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   const [emptyTarget,setEmptyTarget]=useState<number|null>(null);
   const [wishDraft,setWishDraft]=useState<{revision:number;value:boolean}|null>(null);
   const [busy,setBusy]=useState(false),[failed,setFailed]=useState(false),[notice,setNotice]=useState('');
-  const current=Math.min(page,pageCount(binder.pockets)-1);
+  // Show the attempted arrangement immediately; keep it until the confirmed
+  // revision reaches this component. Failed writes roll back to saved pockets.
+  const [pendingLayout,setPendingLayout]=useState<{fromRevision:number;next:Binder}|null>(null);
+  const visibleBinder=pendingLayout && pendingLayout.fromRevision===binder.revision ? pendingLayout.next : binder;
+  const current=Math.min(page,pageCount(visibleBinder.pockets)-1);
   const changePage=(next:number)=>{setPage(next);try{sessionStorage.setItem(pageKey,String(next));}catch{/* navigation remains usable */}};
   const save=async(next:Binder)=>{
     if(busy) return false;
+    setPendingLayout({fromRevision:binder.revision,next});
     setBusy(true);setFailed(false);
     try {await onSave(next);setNotice(t('binderUi.saved'));return true;}
-    catch {setFailed(true);return false;}
+    catch {setPendingLayout(null);setFailed(true);return false;}
     finally {setBusy(false);}
   };
-  const visuals=visualPockets(binder,copies);
+  const visuals=visualPockets(visibleBinder,copies);
   if(loading || error) return <PortfolioStatus loading={loading} error={error} />;
   return <section className="binder-page" aria-label={t('binderUi.label')} aria-busy={busy}>
     {disconnected && <p className="binder-message">{t('binderUi.disconnected')} <button className="underline" onClick={onDemo}>{t('binderUi.demo')}</button></p>}
     {failed && <p className="binder-error" role="alert">{t('binderUi.failed')} <button onClick={reload} className="underline">{t('binderUi.reload')}</button></p>}
     <p className="sr-only" role="status">{busy?t('binderUi.saving'):notice}</p>
-    <BinderBook pockets={visuals} page={current} onPage={changePage} onOptions={!disconnected?()=>setPanel('options'):undefined} onEmpty={!disconnected?(index=>{setFailed(false);setEmptyTarget(index);}):undefined} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} />
+    <BinderBook pockets={visuals} page={current} onPage={changePage} onOptions={!disconnected?()=>setPanel('options'):undefined} onEmpty={!disconnected?(index=>{setFailed(false);setEmptyTarget(index);}):undefined} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} onRemove={!disconnected?((from)=>{try{void save({...binder,pockets:unplacePocket(binder.pockets,from)});}catch{setFailed(true);}}):undefined} />
     {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPick={async copy=>{
       if(!eligibleBinderCopies(binder,copies).some(c=>c.id===copy.id) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
       try {if(await save({...binder,pockets:placePocket(binder.pockets,{kind:'copy',copyId:copy.id},emptyTarget)}))setEmptyTarget(null);}catch{setFailed(true);}
