@@ -1,7 +1,7 @@
 import { describe,it,expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { binderSchema, emptyBinder, placePocket, reservePocket, removePocket, movePage, insertEmptyPage, capacity, pageCount, projectBinder, encodePublic, decodePublic, pocketKey } from './model';
+import { binderSchema, emptyBinder, placePocket, reservePocket, removePocket, movePage, insertEmptyPage, unplacePocket, capacity, pageCount, projectBinder, encodePublic, decodePublic, pocketKey } from './model';
 import type { BinderPocket } from '@/domain/inventory';
 import {createSampleCopies,sampleOwner} from '@/features/inventory/sample';
 import {decodeBinder} from './storage';
@@ -67,6 +67,22 @@ describe('legacy page and pocket invariants',()=>{
     const nearlyFull=Array.from({length:capacity-9},(_,i)=>hole(`h-${i}`));
     expect(()=>insertEmptyPage(nearlyFull,pageCount(nearlyFull)-1)).toThrow('Binder is full');
     expect(full).toHaveLength(capacity-10);
+  });
+  it('unplaces an exact physical copy while preserving every pocket, page and wishlist reservation',()=>{
+    const original=[c('first'),hole('reserved'),{kind:'wish' as const,cardId:'neo2-13'},c('second'),...Array.from({length:7},(_,i)=>hole(`gap-${i}`))];
+    const result=unplacePocket(original,0);
+    expect(result).toHaveLength(original.length);
+    expect(result[0]?.kind).toBe('empty');
+    expect(result.slice(1)).toEqual(original.slice(1));
+    expect(result.map(pocketKey)).not.toContain('copy:first');
+    expect(new Set(result.map(pocketKey)).size).toBe(result.length);
+    expect(pageCount(result)).toBe(pageCount(original));
+    expect(original[0]).toEqual(c('first'));
+    const wishRemoved=unplacePocket(result,2);
+    expect(wishRemoved[2]?.kind).toBe('empty');
+    expect(wishRemoved[3]).toEqual(c('second'));
+    expect(()=>unplacePocket(original,1)).toThrow('Invalid occupied pocket');
+    expect(()=>unplacePocket(original,99)).toThrow('Invalid occupied pocket');
   });
   it('reserves and explicitly clears holes, validates bounds and rejects duplicates',()=>{
     const original=[c('a'),c('b')],reserved=reservePocket(original,1);
