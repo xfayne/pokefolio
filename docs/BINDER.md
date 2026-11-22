@@ -59,3 +59,21 @@ unknown fields, oversize records, listing/deletion and unchanged legacy progress
 Mobile E2E covers hold-to-drag, no tap navigation, fixed viewport sizing, English/
 Hebrew, 320px, remembered page, explicit placement and landscape reader. These are
 Chromium checks; they do not claim physical iPhone verification.
+
+## Owner refinement — 2026-11-22
+
+The book now has no toolbar/pager/hint flow rows. Navigation arrows are translucent
+and positioned at the book's vertical midpoint; its fraction is printed in the
+lower frame and its overflow menu overlays the upper corner. Sharing lives in
+that menu. Tapping an empty pocket opens the existing CatalogSearch with a locked
+eligible-ID constraint. Pending copies are allowed; disposed, foreign and already
+placed copies are excluded. One eligible copy is selected automatically; duplicates
+require choosing condition/edition/receipt status using existing UI components.
+Placement into that empty pocket never shifts other cards. Explicit moving and
+Wishlist reservations also reuse CatalogSearch instead of a bespoke result list.
+
+Dragging starts directly after a small movement on an occupied pocket. Swipes on
+empty pockets/background turn pages; taps on cards do not navigate. A defect that
+clamped trailing implicit targets to the final occupied index was removed: moving
+the only card to pocket nine now materializes gaps and retains that exact target.
+Keyboard empty-pocket activation and explicit move tools remain available.

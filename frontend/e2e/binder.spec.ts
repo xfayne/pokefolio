@@ -19,7 +19,11 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   const slots=page.locator('.binder-slot');
   await expect(slots).toHaveCount(9);
   await expect(page.getByRole('heading',{name:'My Binder'})).toHaveCount(0);
-  await expect(page.getByText('Page 1 of 3',{exact:true})).toBeVisible();
+  await expect(page.locator('.binder-hint')).toHaveCount(0);
+  await expect(page.locator('.binder-toolbar')).toHaveCount(0);
+  const geometry=await page.locator('.binder-spread').evaluate(el=>{const book=el.getBoundingClientRect(),arrow=el.querySelector('.binder-pager button')!.getBoundingClientRect();return Math.abs(arrow.y+arrow.height/2-(book.y+book.height/2));});
+  expect(geometry).toBeLessThan(2);
+  await expect(page.locator('.binder-page-stamp').first()).toBeVisible();
   await fixedLayout(page);
   await test.info().attach('binder-initial',{body:await page.screenshot({path:test.info().outputPath('binder-initial.png')}),contentType:'image/png'});
   await slots.first().tap();
@@ -31,8 +35,8 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   const start={x:source.x+source.width/2,y:source.y+source.height/2};
   const end={x:target.x+target.width/2,y:target.y+target.height/2};
   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
-  await expect(page.locator('.binder-drag-ghost')).toBeVisible();
   await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[end]});
+  await expect(page.locator('.binder-drag-ghost')).toBeVisible();
   await expect(slots.nth(8)).toHaveAttribute('data-drop','true');
   await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
@@ -40,7 +44,7 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Previous page'})).toBeDisabled();
   await page.getByRole('button',{name:'Next page'}).click();
-  await expect(page.getByText('Page 2 of 3',{exact:true})).toBeVisible();
+  await expect(page.locator('[data-binder-page="1"] .binder-page-stamp')).toBeVisible();
   await page.getByRole('button',{name:'Binder options'}).click();
   await page.getByRole('button',{name:'Move page',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
@@ -52,7 +56,7 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page.getByLabel('To page',{exact:true})).toHaveValue('1');
   await page.getByRole('button',{name:'Apply',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByText('Page 1 of 3',{exact:true})).toBeVisible();
+  await expect(page.locator('.binder-page-stamp').first()).toBeVisible();
   await expect(slots.nth(1)).toHaveAttribute('data-kind','empty');
   await page.getByRole('button',{name:'Next page'}).click();
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
@@ -60,7 +64,7 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page).toHaveURL(/#\/dashboard$/);
   await page.getByRole('link',{name:'Collection',exact:true}).click();
   await page.getByRole('button',{name:'Explore sample binder',exact:true}).click();
-  await expect(page.getByText('Page 2 of 3',{exact:true})).toBeVisible();
+  await expect(page.locator('[data-binder-page="1"] .binder-page-stamp')).toBeVisible();
   expect(privateWrites).toEqual([]);
   await page.locator('.binder-art img').evaluateAll(imgs=>Promise.all(imgs.map(i=>(i as HTMLImageElement).decode().catch(()=>undefined))));
   await test.info().attach('binder-en',{body:await page.screenshot({path:test.info().outputPath('binder-en.png')}),contentType:'image/png'});
@@ -68,7 +72,7 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await page.getByRole('button',{name:'Settings',exact:true}).click();
   await page.getByRole('button',{name:'עברית',exact:true}).click();
   await page.getByRole('button',{name:'סגירה',exact:true}).click();
-  await expect(page.getByText('עמוד 2 מתוך 3',{exact:true})).toBeVisible();
+  await expect(page.locator('[data-binder-page="1"] .binder-page-stamp')).toBeVisible();
   for(const size of [{width:320,height:568},{width:390,height:664},{width:768,height:1024}]){
     await page.setViewportSize(size);await fixedLayout(page);
   }
@@ -104,4 +108,19 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   expect(header!.y+header!.height).toBeLessThanOrEqual(390);
   expect(await page.getByRole('dialog').evaluate(el=>el.scrollTop)).toBe(0);
   await test.info().attach('binder-landscape',{body:await page.screenshot({path:test.info().outputPath('binder-landscape.png')}),contentType:'image/png'});
+});
+
+test('empty pocket opens the shared eligible catalog and adds its sole copy in place',async({page})=>{
+ await page.goto('./#/collection/binder?inventory=sample');
+ const empty=page.locator('.binder-slot[data-kind="empty"]').first();
+ await empty.tap();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog).toHaveAttribute('data-entered','true');
+ await dialog.getByRole('searchbox').fill('Pikachu');
+ await expect(dialog.locator('.catalog-result')).toHaveCount(1);
+ await test.info().attach('binder-catalog',{body:await page.screenshot({path:test.info().outputPath('binder-catalog.png')}),contentType:'image/png'});
+ await dialog.getByRole('button',{name:/Pikachu/}).click();
+ await expect(dialog).toHaveCount(0);
+ await expect(page.locator('[data-pocket-index="8"]')).toHaveAttribute('aria-label',/Pikachu/);
+ await expect(page.locator('[data-pocket-index="0"]')).toHaveAttribute('aria-label',/Charizard/);
 });

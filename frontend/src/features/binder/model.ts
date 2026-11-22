@@ -22,7 +22,6 @@ export function placePocket(pockets: readonly BinderPocket[], pocket: BinderPock
   validateIndex(pockets,index);
   const result = [...pockets];
   const from = result.findIndex(p => pocketKey(p) === pocketKey(pocket));
-  if (from >= 0) index=Math.min(index,result.length-1);
   if (from === index) return result;
   // Materialize trailing holes before moving, preserving the requested index.
   while (result.length <= index) result.push(gap());

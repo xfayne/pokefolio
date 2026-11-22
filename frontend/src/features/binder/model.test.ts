@@ -27,6 +27,8 @@ describe('legacy page and pocket invariants',()=>{
     expect(placePocket(original,c('new'),1)).toEqual([c('a'),c('new'),c('b')]);
     expect(placePocket(original,c('new'),0)).toEqual([c('new'),...original]);
     expect(original).toEqual([c('a'),hole('gap'),c('b')]);
+    const trailing=placePocket([c('single')],c('single'),8);
+    expect(trailing).toHaveLength(9);expect(trailing[8]).toEqual(c('single'));expect(trailing[0]!.kind).toBe('empty');
   });
   it('preserves exact implicit gaps and partial pages moved into the middle',()=>{
     const inserted=placePocket([c('a')],c('b'),8);

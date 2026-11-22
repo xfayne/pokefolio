@@ -72,3 +72,19 @@
   .binder-wish span { font-size:clamp(.45rem,4.5cqw,.75rem); }
   .binder-wish svg { width:1rem; height:1rem; }
 }
+/* Owner-approved compact controls live on the book, never in flow rows. */
+.app-shell[data-binder] > .app-content { padding-bottom:1rem; }
+.binder-page { position:relative; gap:0; }
+.binder-book { gap:0; }
+.binder-spread { position:relative; }
+.binder-leaf { position:relative; padding-block:1.25rem; }
+.binder-page-stamp { position:absolute; inset-inline-end:.65rem; bottom:.125rem; font-size:.625rem; line-height:1rem; color:#526178; font-weight:700; direction:ltr; }
+.binder-pager { position:absolute; inset:0; width:100%; padding:0; max-width:none; pointer-events:none; }
+.binder-pager button { pointer-events:auto; position:absolute; top:50%; transform:translateY(-50%); width:2rem; height:2.5rem; background:#f2f7fd99; border:1px solid #b3ccec80; border-radius:.625rem; box-shadow:0 1px 4px #03233e22; backdrop-filter:blur(3px); }
+.binder-pager button:first-child { inset-inline-start:.125rem; }
+.binder-pager button:last-child { inset-inline-end:.125rem; }
+.binder-pager button:disabled { opacity:.25; }
+.binder-pager svg { width:1.125rem; height:1.125rem; }
+.binder-options-overlay { position:absolute; top:.125rem; inset-inline-end:.375rem; height:1.5rem; width:2.25rem; display:flex; justify-content:center; align-items:center; font-weight:700; letter-spacing:.1rem; font-size:.875rem; background:#f2f7fd99; border-radius:.375rem; color:#334572; backdrop-filter:blur(3px); }
+.binder-slot[data-kind="empty"][role="button"] { cursor:pointer; }
+.binder-slot { touch-action:none; }

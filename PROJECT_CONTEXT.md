@@ -571,3 +571,12 @@ the standalone public reader mounts no private portfolio hook. Read-only viewer
 supports two pages in landscape. Sample mode is session-only and never publishes.
 See docs/BINDER.md and PR/CI receipts for verified activation/deployment status.
 This increment does not complete Overview/export or real migration acceptance.
+
+### Binder compact refinement — 2026-11-22
+
+Owner approved middle-height translucent arrow overlays, fraction printed on the
+book frame, overflow menu on the book and sharing inside it. Remove all previous
+flow toolbar/pager/hint rows. Empty pockets open shared CatalogSearch constrained
+to eligible received/pending copies; auto-pick one, choose exact copy for duplicates.
+Fix direct touch dragging and implicit trailing-pocket placement without compaction.
+Rendered preview approval is required before merging/deploying this refinement.
