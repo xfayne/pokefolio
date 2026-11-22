@@ -178,3 +178,14 @@ are unified in one numbered photo gallery with linked defect markers,
 grade distribution and limitations. The existing Worker grader is reused;
 eBay evidence caches are owner-scoped, uploaded photos remain in memory, and
 save-only retry does not call AI again. See [analyzer contracts](docs/ANALYZER.md).
+
+## Collection Binder (#13)
+
+Collection → Binder implements the approved fixed 3×3 book with touch drag,
+page arrows/swipe, exact-copy placement, reserved gaps, page movement and a
+read-only landscape viewer. Card taps do not open details. The account layout
+has isolated owner-only, revision-checked persistence. Sharing explicitly
+publishes a catalog-only snapshot through the existing revocable link policy.
+See [Binder behavior and persistence](docs/BINDER.md). The
+[sample binder](https://xfayne.github.io/pokefolio/#/collection/binder?inventory=sample)
+is synthetic and session-only; no legacy data is imported.

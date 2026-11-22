@@ -32,6 +32,8 @@ import { createQueryClient } from './query-client';
 import { DemoPortfolioProvider } from '@/features/transactions/demo-provider';
 import { ErrorBoundary } from './error-boundary';
 import '@/lib/i18n';
+const BinderPage = lazy(async () => { const module = await import('@/features/binder/binder-page'); return { default: module.BinderPage }; });
+const SharedBinderPage = lazy(async () => { const module = await import('@/features/binder/shared-binder-page'); return { default: module.SharedBinderPage }; });
 const InventoryPage = lazy(async () => { const module = await import('@/features/inventory/inventory-page'); return { default: module.InventoryPage }; });
 
 const HistoryPage = lazy(async () => { const module = await import('@/features/transactions/history-page'); return { default: module.HistoryPage }; });
@@ -64,14 +66,14 @@ function SectionPage({ name }: { name: Destination }) {
   const createTransaction = () => {
     void navigate({ pathname: '/transactions/new', search: location.search }, { state: { purchaseFrom: 'history' } });
   };
-  return <div className={['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
+  return <div className={location.pathname === '/collection/binder' ? 'binder-section' : ['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
     {tabNavigation && (isTransactions ? <div className="transactions-nav-sticky">
       {tabNavigation}
       <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800">
         <LuPlus aria-hidden className="size-5" />
       </button>
     </div> : tabNavigation)}
-    {name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -123,13 +125,13 @@ function Shell() {
   const current = destinations.find(d => contentLocation.pathname.startsWith(`/${d.name}`))?.name ?? 'dashboard';
   const openUtility = (name: 'search' | 'settings') => navigate(`/${name}`, { state: { backgroundLocation: location } });
   const closeUtility = () => { if (background) void navigate(-1); else void navigate('/dashboard', { replace: true }); };
-  return <div data-analyzer={contentLocation.pathname === "/analyze" || undefined} className="app-shell mx-auto min-h-dvh max-w-3xl bg-blue-50">
+  return <div data-binder={contentLocation.pathname === "/collection/binder" || undefined} data-analyzer={contentLocation.pathname === "/analyze" || undefined} className="app-shell mx-auto min-h-dvh max-w-3xl bg-blue-50">
     <a href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }} className="skip-link rounded-xl bg-white p-3 text-blue-700">{t('skip')}</a>
     <header data-transaction-form={isTransactionForm || undefined} className="top-bar sticky top-0 z-20 bg-slate-900 text-white">
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
         <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{current==='dashboard'?'Pokefolio':t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
-        {((contentLocation.pathname === '/dashboard'&&new URLSearchParams(contentLocation.search).get('dashboard')==='sample') || (contentLocation.pathname === '/collection/cards' && (new URLSearchParams(contentLocation.search).get('inventory') === 'sample'||new URLSearchParams(contentLocation.search).get('transactions')==='sample')) || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className={`rounded-full px-2 py-1 text-xs font-medium ${current==='dashboard'?'bg-blue-600':'bg-white/15'}`}>{t('inventory.demo')}</span>}
+        {((contentLocation.pathname === '/dashboard'&&new URLSearchParams(contentLocation.search).get('dashboard')==='sample') || (contentLocation.pathname.startsWith('/collection/') && (new URLSearchParams(contentLocation.search).get('inventory') === 'sample'||new URLSearchParams(contentLocation.search).get('transactions')==='sample')) || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className={`rounded-full px-2 py-1 text-xs font-medium ${current==='dashboard'?'bg-blue-600':'bg-white/15'}`}>{t('inventory.demo')}</span>}
         <div key={`header-actions-${contentLocation.pathname}`} className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : isPurchase ? <><PurchaseReceiptAction onBusy={setReceiptBusy} key={`receipt-${contentLocation.pathname}`} id={purchaseMatch?.params.transactionId ?? ''} preview={contextParams.get('transactions') === 'sample'} /><PurchaseActions disabled={editDisabled} key={`edit-${contentLocation.pathname}`} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /></> : null : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
@@ -168,7 +170,8 @@ function Shell() {
     {utility === 'search' && catalogCard && <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} />}
   </div>;
 }
+function ApplicationRoutes() { return <Routes><Route path="/binder/share/:shareId" element={<Suspense fallback={<TranslatedLoading />}><SharedBinderPage /></Suspense>} /><Route path="*" element={<Shell />} /></Routes>; }
 function TranslatedLoading() { const { t } = useTranslation(); return <LoadingState label={t('loading')} />; }
 export function App() {
-  return <ErrorBoundary><QueryClientProvider client={queryClient}><Suspense fallback={<TranslatedLoading />}><HashRouter><DemoPortfolioProvider><DisplayCurrencyProvider><Shell /></DisplayCurrencyProvider></DemoPortfolioProvider></HashRouter></Suspense></QueryClientProvider></ErrorBoundary>;
+  return <ErrorBoundary><QueryClientProvider client={queryClient}><Suspense fallback={<TranslatedLoading />}><HashRouter><DemoPortfolioProvider><DisplayCurrencyProvider><ApplicationRoutes /></DisplayCurrencyProvider></DemoPortfolioProvider></HashRouter></Suspense></QueryClientProvider></ErrorBoundary>;
 }

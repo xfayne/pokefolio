@@ -141,6 +141,21 @@ service cloud.firestore {
           && request.resource.data.fingerprint is string && request.resource.data.fingerprint.size() <= 700000
           && request.resource.data.committedAt == request.time;
       }
+      // Layout only: no copy, transaction, legacy progress or Wishlist writes.
+      match /binders/{id} {
+        allow get: if isOwner(uid) && id == 'main';
+        allow create, update: if isOwner(uid) && id == 'main'
+          && request.resource.data.keys().hasOnly(['schemaVersion','ownerUid','revision','pockets','includeWish','updatedAt'])
+          && request.resource.data.keys().hasAll(['schemaVersion','ownerUid','revision','pockets','includeWish','updatedAt'])
+          && request.resource.data.schemaVersion == 1 && request.resource.data.ownerUid == uid
+          && request.resource.data.revision is int
+          && request.resource.data.revision >= 1 && request.resource.data.revision <= 9007199254740991
+          && ((!exists(/databases/$(database)/documents/users/$(uid)/binders/$(id)) && request.resource.data.revision == 1)
+            || (exists(/databases/$(database)/documents/users/$(uid)/binders/$(id)) && request.resource.data.revision == resource.data.revision + 1))
+          && request.resource.data.pockets is string && request.resource.data.pockets.size() <= 350000
+          && request.resource.data.includeWish is bool && request.resource.data.updatedAt == request.time;
+        allow list, delete: if false;
+      }
       match /preferences/{id} {
         allow read: if isOwner(uid) && id == 'display';
         allow create, update: if isOwner(uid) && id == 'display'
