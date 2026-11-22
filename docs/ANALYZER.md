@@ -89,3 +89,10 @@ as viewport bounds; a small thumbnail alone can hide a rail discontinuity.
 
 The owner approved the direct SVG render of this corrected contour on
 2026-11-22 before publication. Publish that exact artwork without further redesign.
+
+## Slice seam correction — 2026-11-22
+
+The stretchable middle SVG overlaps each fixed cap by one CSS pixel behind it.
+This prevents fractional clip edges on mobile from exposing a dark horizontal
+hairline above the heading or at the lower join. Artwork and layout are unchanged;
+Playwright checks both overlaps.
