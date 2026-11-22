@@ -87,7 +87,13 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
         if(next>=0 && next<total) onPage(next);
       }
     }
-    suppressClick.current=g.active || Math.hypot(event.clientX-g.x,event.clientY-g.y)>8;
+    const traveled=Math.hypot(event.clientX-g.x,event.clientY-g.y);
+    const tappedEmpty=!g.active && traveled<=8 && g.from!==null &&
+      (!pockets[g.from] || pockets[g.from]!.kind==='empty') && !busy && !!onEmpty;
+    // Some touch browsers suppress the synthetic click immediately after a
+    // captured drag. Handle the tap on pointer-up and suppress only its duplicate.
+    suppressClick.current=g.active || traveled>8 || tappedEmpty;
+    if(tappedEmpty) onEmpty?.(g.from!);
     cancel();
   };
   const dragPocket=drag ? pockets[drag.from] : null;
