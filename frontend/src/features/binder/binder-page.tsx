@@ -16,7 +16,7 @@ import { Select } from '@/components/ui/select';
 import type { BinderPocket } from '@/domain/inventory';
 import type { CardCopy } from '@/domain/schema';
 import { BinderBook, type VisualPocket } from './binder-book';
-import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, movePage, type Binder } from './model';
+import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, movePage, insertEmptyPage, capacity, type Binder } from './model';
 import { readBinder, saveBinder, readSharing, publishBinder, disableSharing } from './storage';
 import './binder.css';
 
@@ -99,6 +99,13 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
       <Button variant="outline" onClick={()=>setPanel('share')}><LuShare2 aria-hidden />{t('binderUi.share')}</Button>
       <Button variant="outline" onClick={()=>setPanel('arrange')}><LuPlus aria-hidden />{t('binderUi.add')}</Button>
       <Button variant="outline" disabled={pageCount(binder.pockets)<2} onClick={()=>setPanel('page')}><LuArrowUpDown aria-hidden />{t('binderUi.movePage')}</Button>
+      <Button variant="outline" disabled={busy || Math.max(binder.pockets.length,(current+1)*9)+9>capacity} onClick={()=>{
+        try {
+          const pockets=insertEmptyPage(binder.pockets,current);
+          void save({...binder,pockets}).then(ok=>{if(ok){changePage(current+1);setPanel(null);}});
+        } catch {setFailed(true);}
+      }}><LuPlus aria-hidden />{t('binderUi.addPage')}</Button>
+      {failed && <p role="alert" className="binder-error">{t('binderUi.failed')}</p>}
       <Button variant="outline" onClick={()=>setPanel('reader')}><LuBookOpen aria-hidden />{t('binderUi.reader')}</Button>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wishDraft?.revision===binder.revision ? wishDraft.value : binder.includeWish} disabled={busy} onChange={e=>{const value=e.target.checked;setWishDraft({revision:binder.revision,value});void save({...binder,includeWish:value}).then(ok=>{if(!ok)setWishDraft(null);});}} />{t('binderUi.includeWish')}</label>
     </div></UtilitySheet>}
