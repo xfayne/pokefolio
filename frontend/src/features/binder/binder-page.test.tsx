@@ -10,12 +10,12 @@ it('moves a selected partial page and keeps layout settings controlled through a
   const user=userEvent.setup();
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={['/collection/binder?inventory=sample']}><BinderPage /></MemoryRouter></QueryClientProvider>);
   await user.click(await screen.findByRole('button',{name:'Binder options'}));
-  await user.click(screen.getByRole('button',{name:'Move page',exact:true}));
+  await user.click(screen.getByRole('button',{name:'Move page'}));
   await user.selectOptions(screen.getByLabelText('From page',{exact:true}),'3');
   expect(screen.getByLabelText('From page',{exact:true})).toHaveValue('3');
   await user.selectOptions(screen.getByLabelText('To page',{exact:true}),'1');
-  await user.click(screen.getByRole('button',{name:'Apply',exact:true}));
-  const first=await screen.findByRole('group',{name:'Page 1 of 3',exact:true});
+  await user.click(screen.getByRole('button',{name:'Apply'}));
+  const first=await screen.findByRole('group',{name:'Page 1 of 3'});
   expect(first.querySelectorAll('[data-kind="empty"]')).toHaveLength(8);
   await user.click(screen.getByRole('button',{name:'Binder options'}));
   const dialog=screen.getByRole('dialog');
