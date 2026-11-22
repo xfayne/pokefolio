@@ -5,6 +5,24 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  const failures:string[]=[];page.on('pageerror',e=>failures.push(e.message));
  await page.goto('./#/analyze');await expect(page.getByRole('heading',{name:'Card Condition'})).toBeVisible();
  await expect(page.getByRole('button',{name:'Analyze card'})).toBeDisabled();
+ await expect(page.getByRole('button',{name:/Take photo|Add close-up/})).toHaveCount(0);
+ await expect(page.getByText('Use clear photos without glare.',{exact:false})).toHaveCount(0);
+ for(const size of [{width:390,height:844},{width:320,height:568},{width:768,height:600}]){
+   await page.setViewportSize(size);
+   const bounds=await page.locator('.pokedex-frame').evaluate(el=>{
+     const r=el.getBoundingClientRect(),header=document.querySelector('.app-shell>header')!.getBoundingClientRect(),nav=document.querySelector('.bottom-bar')!.getBoundingClientRect(),main=document.querySelector('#main-content')!.getBoundingClientRect();
+     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,headerBottom:header.bottom,navTop:nav.top,mainLeft:main.left,mainRight:main.right,scroll:document.documentElement.scrollHeight,viewport:innerHeight};
+   });
+   expect(Math.abs(bounds.top-bounds.headerBottom)).toBeLessThan(1);
+   expect(Math.abs(bounds.bottom-bounds.navTop)).toBeLessThan(1);
+   expect(bounds.left).toBe(bounds.mainLeft);expect(bounds.right).toBe(bounds.mainRight);
+   expect(bounds.scroll).toBeLessThanOrEqual(bounds.viewport);
+   await page.locator('.pokedex-display').evaluate(el=>{el.scrollTop=1000;});
+   expect(await page.locator('.pokedex-frame').evaluate(el=>el.getBoundingClientRect().top)).toBe(bounds.top);
+   expect(await page.evaluate(()=>window.scrollY)).toBe(0);
+ }
+ await page.setViewportSize({width:390,height:844});
+ await page.locator('.pokedex-display').evaluate(el=>{el.scrollTop=0;});
  await page.getByRole('button',{name:'eBay',exact:true}).click();await expect(page.getByRole('textbox',{name:'eBay listing URL'})).toBeVisible();
  await page.getByRole('button',{name:'Photos',exact:true}).click();
  await page.locator('input[type=file]').first().setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABgAAAAgCAIAAACHPC9vAAAAJ0lEQVR4nGO8e2kxAzUAE1VMGTVo1KBRg0YNGjVo1KBRg0YNGnCDAFZAApJq8lFgAAAAAElFTkSuQmCC','base64')});

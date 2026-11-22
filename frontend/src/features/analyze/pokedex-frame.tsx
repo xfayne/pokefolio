@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import frame from './pokedex-frame.svg?raw';
 // Three views of the approved vector artwork: end caps keep their proportions,
-// while only the straight side walls stretch to fit variable-length results.
+// while only the straight side walls stretch to the available viewport height.
 function slice(id:string,viewBox:string,stretch=false) {
   return frame.replace(/id="([^"]+)"/g,(_,key:string)=>`id="${id}-${key}"`)
     .replace(/url\(#([^)]+)\)/g,(_,key:string)=>`url(#${id}-${key})`)
