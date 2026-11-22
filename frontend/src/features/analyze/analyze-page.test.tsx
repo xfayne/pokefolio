@@ -20,6 +20,8 @@ it('loads listing photos without analyzing; renders one result and links numbere
  const wear=screen.getByRole('heading',{name:'Detected wear'});
  expect(wear.compareDocumentPosition(document.querySelector('.analyzer-gallery')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  expect(screen.queryByText('Photo-based estimate')).not.toBeInTheDocument();
+ expect(screen.queryByText(/Confidence:/)).not.toBeInTheDocument();
+ expect(screen.queryByText(/Analyzed .* of .* photos/)).not.toBeInTheDocument();
  expect(screen.queryByText(/An estimate from visible photo evidence/)).not.toBeInTheDocument();
  expect(screen.queryByText('Front')).not.toBeInTheDocument();expect(screen.queryByText('Back')).not.toBeInTheDocument();
  await user.click(screen.getByRole('button',{name:/1 Minor edge whitening/}));
@@ -53,13 +55,14 @@ it('uploads only on manual analysis, revokes object URLs and blocks signed-out r
 });
 
 it('keeps the breakdown open, sorts original probabilities and includes exactly 5 percent',async()=>{
- const result={...fixtureResult,analysis:{...fixtureResult.analysis,confidencePercent:60,gradePercentages:{NM:5,LP:60,MP:31,HP:4,DMG:0}}};
+ const result={...fixtureResult,analyzedPhotoIndices:[2],analysis:{...fixtureResult.analysis,confidencePercent:60,gradePercentages:{NM:5,LP:60,MP:31,HP:4,DMG:0}}};
  vi.mocked(readAnalysis).mockResolvedValue(result);render(<AnalyzePage/>);const user=await load();await user.click(screen.getByRole('button',{name:'Analyze card'}));
- const title=await screen.findByRole('heading',{name:'Grade breakdown & limitations'});
+ const title=await screen.findByRole('heading',{name:'Grade breakdown'});
  expect(title).toHaveClass('analyzer-pixel','analyzer-subtitle');
- expect(screen.queryByRole('button',{name:'Grade breakdown & limitations'})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Grade breakdown'})).not.toBeInTheDocument();
  expect(screen.getByText('Glare obscures some detail.')).toBeVisible();
  const meters=screen.getAllByRole('meter');expect(meters.map(m=>m.getAttribute('aria-label'))).toEqual(['Lightly Played','Moderately Played','Near Mint']);
- expect(meters.map(m=>m.getAttribute('value'))).toEqual(['60','31','5']);
+ expect(meters.map(m=>m.getAttribute('aria-valuenow'))).toEqual(['60','31','5']);
+ expect(screen.queryByText(/Analyzed .* of .* photos/)).not.toBeInTheDocument();
  expect(runAnalysis).not.toHaveBeenCalled();
 });

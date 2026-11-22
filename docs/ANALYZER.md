@@ -60,3 +60,18 @@ Bars show only original probabilities >=5%, sorted descending without
 renormalizing values; the selected grade/confidence and actual limitations remain
 unchanged. The owner removed the estimate chip and standalone disclaimer copy.
 The grading API, prompt, results and cache documents are unchanged.
+
+## Blue lens flash and instrument readout — 2026-11-22
+
+The owner clarified that busy keeps the blue glass, with a brief radial white
+light inside its bounds every 0.7 seconds. The metal rim stays steady. Small
+green/yellow lamps alternate opacity every 0.45 seconds over dark backings,
+avoiding animated SVG brightness filters on mobile WebKit. Reduced-motion
+preferences remain respected. Completed grade colors are unchanged.
+
+The outer enclosure is square and the SVG end caps trim their transparent
+vertical margins; the inner display retains its rounding. Hide confidence and
+photo-coverage copy without changing their stored values. Rename the heading
+to Grade breakdown (actual limitation findings remain visible). Replace native
+meters with accessible segmented LCD-style readouts, retaining original
+probabilities, the >=5% filter and descending order.

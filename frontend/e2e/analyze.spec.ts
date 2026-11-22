@@ -37,11 +37,21 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.setViewportSize({width:320,height:640});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  // Exercise the real vector colors/animations without a paid provider call.
  await page.locator('.pokedex-frame').evaluate(el=>el.setAttribute('data-status','busy'));
- expect(await page.locator('.pokedex-top .pokedex-lens-gradient stop').nth(2).evaluate(el=>getComputedStyle(el).stopColor)).toBe('rgb(237, 244, 252)');
- await expect(page.locator('.pokedex-top .pokedex-glass')).toHaveCSS('animation-name','pokedex-white-blink');
+ expect(await page.locator('.pokedex-top .pokedex-lens-gradient stop').nth(2).evaluate(el=>getComputedStyle(el).stopColor)).toBe('rgb(0, 182, 246)');
+ await expect(page.locator('.pokedex-top .pokedex-glass')).toHaveCSS('animation-name','none');
+ await expect(page.locator('.pokedex-top .pokedex-white-flash')).toHaveCSS('animation-name','pokedex-white-flash');
+ await expect(page.locator('.pokedex-top .pokedex-white-flash')).toHaveCSS('animation-duration','0.7s');
  await expect(page.locator('.pokedex-top .pokedex-green')).toHaveCSS('animation-delay','0s');
- await expect(page.locator('.pokedex-top .pokedex-yellow')).toHaveCSS('animation-delay','-0.8s');
- await page.screenshot({path:'test-results/analyzer-busy-white.png'});
+ await expect(page.locator('.pokedex-top .pokedex-yellow')).toHaveCSS('animation-delay','-0.45s');
+ const phase=async(selector:string,time:number)=>page.locator(selector).evaluate((el,t)=>{const animation=el.getAnimations()[0]!;animation.pause();animation.currentTime=t;return Number(getComputedStyle(el).opacity);},time);
+ expect(await phase('.pokedex-top .pokedex-white-flash',350)).toBe(0);
+ expect(await phase('.pokedex-top .pokedex-green',100)).toBe(1);
+ expect(await phase('.pokedex-top .pokedex-yellow',100)).toBeCloseTo(.12);
+ await page.screenshot({path:'test-results/analyzer-busy-blue.png'});
+ expect(await phase('.pokedex-top .pokedex-green',600)).toBeCloseTo(.12);
+ expect(await phase('.pokedex-top .pokedex-yellow',600)).toBe(1);
+ expect(await phase('.pokedex-top .pokedex-white-flash',133)).toBeCloseTo(.92);
+ await page.screenshot({path:'test-results/analyzer-busy-flash.png'});
  for(const [grade,color] of [['NM','rgb(19, 223, 128)'],['LP','rgb(162, 230, 53)'],['MP','rgb(250, 204, 21)'],['HP','rgb(251, 146, 60)'],['DMG','rgb(244, 63, 94)']]){
    await page.locator('.pokedex-frame').evaluate((el,g)=>{el.setAttribute('data-status','complete');el.setAttribute('data-grade',g!);},grade);
    expect(await page.locator('.pokedex-top .pokedex-lens-gradient stop').nth(2).evaluate(el=>getComputedStyle(el).stopColor)).toBe(color);
@@ -49,7 +59,7 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.emulateMedia({reducedMotion:'reduce'});
  // Simulate only the visual state to verify CSS; no request is triggered.
  await page.locator('.pokedex-frame').evaluate(el=>el.setAttribute('data-status','busy'));
- expect(await page.locator('.pokedex-top .pokedex-glass').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ expect(await page.locator('.pokedex-top .pokedex-white-flash').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
  await page.locator('#main-content').focus();await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:'test-results/analyzer-he-320.png',fullPage:true});expect(failures).toEqual([]);
 });
