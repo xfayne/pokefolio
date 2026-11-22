@@ -24,6 +24,7 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
   const spread=landscape ? 2 : 1;
   const current=Math.min(Math.max(0,page),total-1);
   const first=spread===2 ? Math.floor(current/2)*2 : current;
+  const suppressClick=useRef(false);
   const gesture=useRef<Gesture|null>(null);
   const [drag,setDrag]=useState<{from:number;over:number|null;x:number;y:number}|null>(null);
   const root=useRef<HTMLDivElement>(null);
@@ -39,12 +40,12 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
     const g=gesture.current; if(g?.timer) clearTimeout(g.timer); if(g?.turn) clearTimeout(g.turn);
   },[]);
   const start=(event:ReactPointerEvent<HTMLDivElement>)=>{
-    if((event.pointerType==='mouse' && event.button!==0) || !event.isPrimary || busy || (event.target as HTMLElement).closest('button')) return;
+    if((event.pointerType==='mouse' && event.button!==0) || busy || (event.target as HTMLElement).closest('button')) return;
     const slot=(event.target as HTMLElement).closest<HTMLElement>('[data-pocket-index]');
     const from=slot ? Number(slot.dataset.pocketIndex) : null;
     const g:Gesture={id:event.pointerId,x:event.clientX,y:event.clientY,from,active:false,timer:null,over:null,turn:null,turnPage:null};
-    gesture.current=g;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    gesture.current=g; suppressClick.current=false;
+    if(from!==null && pockets[from] && pockets[from]!.kind!=='empty')event.currentTarget.setPointerCapture(event.pointerId);
 
   };
   const move=(event:ReactPointerEvent<HTMLDivElement>)=>{
@@ -69,12 +70,12 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
     if(g.active && g.from!==null && g.over!==null && g.from!==g.over) onMove?.(g.from,g.over);
     else if(!g.active) {
       const dx=event.clientX-g.x,dy=event.clientY-g.y;
-      if(Math.hypot(dx,dy)<8 && g.from!==null && (!pockets[g.from] || pockets[g.from]!.kind==='empty')) onEmpty?.(g.from);
-      else if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4) {
+      if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4) {
         const next=first+((dx<0)!==(i18n.dir()==='rtl')?spread:-spread);
         if(next>=0 && next<total) onPage(next);
       }
     }
+    suppressClick.current=g.active || Math.hypot(event.clientX-g.x,event.clientY-g.y)>8;
     cancel();
   };
   const dragPocket=drag ? pockets[drag.from] : null;
@@ -88,7 +89,7 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
             {Array.from({length:9},(_,slot)=>{
               const index=number*9+slot,p=pockets[index];
               const kind=p?.kind ?? 'empty';
-              return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? t('binderUi.empty')}`}>
+              return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" onClick={()=>{if(kind==='empty'&&!busy&&!suppressClick.current)onEmpty?.(index);}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? t('binderUi.empty')}`}>
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{t(kind==='empty'?'binderUi.empty':'binderUi.unavailable')}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}

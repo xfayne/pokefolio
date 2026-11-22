@@ -82,10 +82,10 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await page.goto('./#/collection/binder?inventory=sample');
   await page.getByRole('button',{name:'Binder options'}).click();
   await page.getByRole('button',{name:'Add / move card'}).click();
-  await expect(page.getByRole('searchbox')).toHaveCSS('font-size','16px');
   await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
   await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   await page.getByRole('combobox',{name:'Arrange cards',exact:true}).selectOption('wish');
+  await expect(page.getByRole('searchbox')).toHaveCSS('font-size','16px');
   await page.getByRole('searchbox').fill('Umbreon');
   await page.getByRole('button',{name:/Umbreon.*13\/75/}).click();
   await page.getByLabel('Pocket',{exact:true}).selectOption('1');
