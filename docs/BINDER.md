@@ -89,3 +89,21 @@ All new gaps receive unique stable tokens; additions beyond the existing binder
 capacity are disabled and rejected. Account saves use the existing owner-only,
 revision-checked transaction; sample changes remain in memory. No inventory,
 Wishlist, transaction or legacy production data is modified.
+
+## Drag-to-remove and compact visual follow-up — 2026-11-22
+
+Dragging an occupied Binder pocket beyond the physical book and releasing there
+removes only its Binder placement. The original slot becomes a unique reserved
+empty pocket; all other page positions and copies remain unchanged. The exact
+physical copy becomes eligible in the Binder picker again, including when another
+copy of the same catalog card is still placed. A release over an arrow/control
+is not a removal, and cancelling a drag leaves the layout untouched.
+
+During save, the screen displays the proposed pocket layout immediately, retaining
+it until the owner-only, revision-checked write confirms the new revision. Failure
+restores the last confirmed layout and displays the existing error message. No
+optimistic Firestore write, inventory deletion, or Wishlist mutation is performed.
+
+The options trigger has no painted background, and book spacing is tightened so
+the raised navigation Poké Ball slightly overlaps the bottom Binder frame while
+the card grid remains usable. No document scroll or horizontal overflow is added.
