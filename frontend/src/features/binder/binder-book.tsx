@@ -93,7 +93,12 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
     // Some touch browsers suppress the synthetic click immediately after a
     // captured drag. Handle the tap on pointer-up and suppress only its duplicate.
     suppressClick.current=g.active || traveled>8 || tappedEmpty;
-    if(tappedEmpty) onEmpty?.(g.from!);
+    // Let the browser finish dispatching its synthetic click before mounting
+    // the sheet; otherwise that click can land on the new dialog backdrop.
+    if(tappedEmpty) {
+      const index=g.from!;
+      window.setTimeout(()=>onEmpty?.(index),0);
+    }
     cancel();
   };
   const dragPocket=drag ? pockets[drag.from] : null;
