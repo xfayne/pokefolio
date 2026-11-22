@@ -530,3 +530,15 @@ metal rim and honoring reduced motion. Detected wear precedes photos. Removed
 the estimate chip and standalone disclaimer; breakdown/limitations is always
 open with a pixel heading, descending probabilities and bars >=5% only, without
 renormalization. No model, API, cache, auth or portfolio behavior changes.
+
+## Analyzer optical/UI correction — 2026-11-22
+
+Owner clarified busy must keep blue glass with a fast white flash inside it,
+not recolor/dim the lens gray. A bounded radial white light uses opacity at
+0.7s; small fixed-color LEDs alternate opacity over dark backings at 0.9s with
+a half-cycle offset, replacing brightness-filter animation. Reduced motion
+remains supported. Square outer corners/trimmed end-cap margins fill all edges;
+the inner screen remains rounded. Removed confidence/photo-count copy, renamed
+Grade breakdown and styled its accessible meters as segmented LCD readouts.
+Original probabilities, >=5% filtering, descending order, limitations and the
+analysis engine/cache data are unchanged.

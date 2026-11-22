@@ -103,9 +103,7 @@ function Analyzer({owner}:{owner:string|null}) {
     </>:<>
       <h1 className="analyzer-pixel analyzer-title analyzer-complete"><LuCheck aria-hidden/>{a('complete')}</h1>
       <div className="analyzer-grade analyzer-pixel" dir="auto">{result.analysis.grade} — {a(result.analysis.grade)}</div>
-      <div className="analyzer-confidence"><span>{a('confidence',{value:result.analysis.confidencePercent})}</span></div>
       {cached&&<p className="analyzer-hint">{a('saved')}</p>}
-      {result.analyzedPhotoIndices.length<photos.length&&<p className="analyzer-hint">{a('coverage',{count:result.analyzedPhotoIndices.length,total:photos.length})}</p>}
       <h2 className="analyzer-pixel analyzer-subtitle">{a('wear')}</h2>
       <div className="analyzer-findings">{result.analysis.observations.length?result.analysis.observations.map((finding,i)=>{
         const loc=finding.locations.find(l=>l.photoIndex<=photos.length);
@@ -114,7 +112,7 @@ function Analyzer({owner}:{owner:string|null}) {
       <div className="analyzer-gallery">{photos.map((photo,i)=><button type="button" key={photo.url} onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}>{photoView(photo,i)}<span className="analyzer-photo-number">{i+1}</span><LuZoomIn aria-hidden className="analyzer-zoom"/></button>)}</div>
       <section aria-labelledby="analysis-details-title">
         <h2 id="analysis-details-title" className="analyzer-pixel analyzer-subtitle">{a('limits')}</h2>
-        <div className="analyzer-breakdown">{grades.filter(g=>result.analysis.gradePercentages[g]>=5).toSorted((left,right)=>result.analysis.gradePercentages[right]-result.analysis.gradePercentages[left]).map(g=><div key={g}><span>{g}</span><meter min="0" max="100" value={result.analysis.gradePercentages[g]} aria-label={a(g)}/><span>{result.analysis.gradePercentages[g]}%</span></div>)}{result.analysis.limitations.map((limit,i)=><p key={i}>{limit}</p>)}</div>
+        <div className="analyzer-breakdown">{grades.filter(g=>result.analysis.gradePercentages[g]>=5).toSorted((left,right)=>result.analysis.gradePercentages[right]-result.analysis.gradePercentages[left]).map(g=><div key={g} data-grade={g} className="analyzer-probability"><span className="analyzer-pixel">{g}</span><div className="analyzer-meter" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={result.analysis.gradePercentages[g]} aria-label={a(g)}><span style={{width:`${result.analysis.gradePercentages[g]}%`}} /></div><span className="analyzer-pixel">{result.analysis.gradePercentages[g]}%</span></div>)}{result.analysis.limitations.map((limit,i)=><p key={i}>{limit}</p>)}</div>
       </section>
       {saveFailed&&<div className="analyzer-error" role="status"><p>{a('saveFailed')}</p><Button variant="outline" disabled={busy} onClick={()=>void retrySave()}>{a('retrySave')}</Button></div>}
       <Button className="analyzer-run analyzer-pixel" disabled={busy} onClick={reset}>{a('new')}</Button>
