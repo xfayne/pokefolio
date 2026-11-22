@@ -149,6 +149,8 @@ test('First Edition checkbox selects exact printing prices without a fallback',a
 
 test('returning from catalog card details restores the exact scroll offset', async ({ page }) => {
   await page.goto('./#/search');
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
+  await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   const results = page.locator('.catalog-scroll-region');
   await expect(results.locator('.catalog-result')).toHaveCount(60);
   await results.evaluate(el => { el.scrollTop = 850; });

@@ -21,6 +21,7 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page.getByRole('heading',{name:'My Binder'})).toHaveCount(0);
   await expect(page.getByText('Page 1 of 3',{exact:true})).toBeVisible();
   await fixedLayout(page);
+  await test.info().attach('binder-initial',{body:await page.screenshot({path:test.info().outputPath('binder-initial.png')}),contentType:'image/png'});
   await slots.first().tap();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const first=await slots.first().getAttribute('aria-label');
@@ -42,6 +43,8 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page.getByText('Page 2 of 3',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Binder options'}).click();
   await page.getByRole('button',{name:'Move page',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
+  await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   await page.getByLabel('From page',{exact:true}).selectOption('2');
   await expect(page.getByLabel('From page',{exact:true})).toHaveValue('2');
   await page.getByLabel('To page',{exact:true}).selectOption('0');
@@ -50,7 +53,6 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await page.getByRole('button',{name:'Apply',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByText('Page 1 of 3',{exact:true})).toBeVisible();
-  console.log('after page move',await slots.evaluateAll(els=>els.map(el=>({kind:el.getAttribute('data-kind'),name:el.getAttribute('aria-label')}))));
   await expect(slots.nth(1)).toHaveAttribute('data-kind','empty');
   await page.getByRole('button',{name:'Next page'}).click();
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
@@ -75,6 +77,8 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await page.getByRole('button',{name:'Binder options'}).click();
   await page.getByRole('button',{name:'Add / move card'}).click();
   await expect(page.getByRole('searchbox')).toHaveCSS('font-size','16px');
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
+  await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   await page.getByRole('combobox',{name:'Arrange cards',exact:true}).selectOption('wish');
   await page.getByRole('searchbox').fill('Umbreon');
   await page.getByRole('button',{name:/Umbreon.*13\/75/}).click();
@@ -82,7 +86,9 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await page.getByRole('button',{name:'Apply',exact:true}).click();
   await expect(page.locator('.binder-slot').first()).toHaveAttribute('data-kind','wish');
   await page.getByRole('button',{name:'Binder options'}).click();
-  await page.getByLabel('Show Wishlist cards',{exact:true}).uncheck();
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
+  await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
+  await page.getByLabel('Show Wishlist cards',{exact:true}).click();
   await expect(page.locator('.binder-wish').first()).toHaveAttribute('data-hidden','true');
   await page.getByRole('button',{name:'View binder',exact:true}).click();
   await page.setViewportSize({width:844,height:390});

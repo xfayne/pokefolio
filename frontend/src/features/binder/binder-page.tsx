@@ -72,6 +72,7 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   const pageKey=`pokefolio:binder-page:${preview?'sample':binder.ownerUid}`;
   const [page,setPage]=useState(()=>savedPage(pageKey));
   const [panel,setPanel]=useState<'options'|'arrange'|'page'|'share'|'reader'|null>(null);
+  const [wishDraft,setWishDraft]=useState<{revision:number;value:boolean}|null>(null);
   const [busy,setBusy]=useState(false),[failed,setFailed]=useState(false),[notice,setNotice]=useState('');
   const current=Math.min(page,pageCount(binder.pockets)-1);
   const changePage=(next:number)=>{setPage(next);try{sessionStorage.setItem(pageKey,String(next));}catch{/* navigation remains usable */}};
@@ -97,7 +98,7 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
       <Button variant="outline" onClick={()=>setPanel('arrange')}><LuPlus aria-hidden />{t('binderUi.add')}</Button>
       <Button variant="outline" disabled={pageCount(binder.pockets)<2} onClick={()=>setPanel('page')}><LuArrowUpDown aria-hidden />{t('binderUi.movePage')}</Button>
       <Button variant="outline" onClick={()=>setPanel('reader')}><LuBookOpen aria-hidden />{t('binderUi.reader')}</Button>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={binder.includeWish} disabled={busy} onChange={e=>{void save({...binder,includeWish:e.target.checked});}} />{t('binderUi.includeWish')}</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wishDraft?.revision===binder.revision ? wishDraft.value : binder.includeWish} disabled={busy} onChange={e=>{const value=e.target.checked;setWishDraft({revision:binder.revision,value});void save({...binder,includeWish:value}).then(ok=>{if(!ok)setWishDraft(null);});}} />{t('binderUi.includeWish')}</label>
     </div></UtilitySheet>}
     {panel==='arrange' && <ArrangeSheet binder={binder} copies={copies} current={current} busy={busy} failed={failed} onClose={()=>setPanel(null)} onSave={async(pockets,index)=>{if(await save({...binder,pockets})){changePage(Math.floor(index/9));setPanel(null);}}} />}
     {panel==='page' && <MovePageSheet count={pageCount(binder.pockets)} current={current} busy={busy} failed={failed} onClose={()=>setPanel(null)} onApply={async(from,to)=>{try{if(await save({...binder,pockets:movePage(binder.pockets,from,to)})){changePage(to);setPanel(null);}}catch{setFailed(true);}}} />}
