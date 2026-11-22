@@ -35,10 +35,21 @@ test('Pokédex input modes, photo gallery, keyboard/RTL and reduced motion',asyn
  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'עברית'}).click();await page.getByRole('button',{name:'סגירה',exact:true}).click();
  await expect(page.locator('html')).toHaveAttribute('dir','rtl');await expect(page.getByRole('heading',{name:'מצב הקלף'})).toBeVisible();
  await page.setViewportSize({width:320,height:640});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ // Exercise the real vector colors/animations without a paid provider call.
+ await page.locator('.pokedex-frame').evaluate(el=>el.setAttribute('data-status','busy'));
+ expect(await page.locator('.pokedex-top .pokedex-lens-gradient stop').nth(2).evaluate(el=>getComputedStyle(el).stopColor)).toBe('rgb(237, 244, 252)');
+ await expect(page.locator('.pokedex-top .pokedex-glass')).toHaveCSS('animation-name','pokedex-white-blink');
+ await expect(page.locator('.pokedex-top .pokedex-green')).toHaveCSS('animation-delay','0s');
+ await expect(page.locator('.pokedex-top .pokedex-yellow')).toHaveCSS('animation-delay','-0.8s');
+ await page.screenshot({path:'test-results/analyzer-busy-white.png'});
+ for(const [grade,color] of [['NM','rgb(19, 223, 128)'],['LP','rgb(162, 230, 53)'],['MP','rgb(250, 204, 21)'],['HP','rgb(251, 146, 60)'],['DMG','rgb(244, 63, 94)']]){
+   await page.locator('.pokedex-frame').evaluate((el,g)=>{el.setAttribute('data-status','complete');el.setAttribute('data-grade',g!);},grade);
+   expect(await page.locator('.pokedex-top .pokedex-lens-gradient stop').nth(2).evaluate(el=>getComputedStyle(el).stopColor)).toBe(color);
+ }
  await page.emulateMedia({reducedMotion:'reduce'});
  // Simulate only the visual state to verify CSS; no request is triggered.
  await page.locator('.pokedex-frame').evaluate(el=>el.setAttribute('data-status','busy'));
- expect(await page.locator('.pokedex-top .pokedex-lens').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ expect(await page.locator('.pokedex-top .pokedex-glass').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
  await page.locator('#main-content').focus();await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:'test-results/analyzer-he-320.png',fullPage:true});expect(failures).toEqual([]);
 });

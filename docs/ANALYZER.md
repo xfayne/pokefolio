@@ -13,8 +13,9 @@ and frame stay in place. Header/navigation remain in flex flow, including safe
 areas and taller Hebrew labels. The native image picker supports camera/library
 selection; separate Take photo and Add close-up controls were removed at the
 owner's request. Multiple selections still support up to eight images.
-Its blue lens pulses and indicator lamps alternate only during an AI request;
-completion lights green. Reduced motion disables animation. Pixelify Sans is
+During an AI request the main glass blinks white while its metal ring stays
+steady; the small green/yellow lamps alternate in their existing colors. Completed
+results color the main lens NM green, LP lime, MP yellow, HP orange or DMG red. Reduced motion disables animation. Pixelify Sans is
 self-hosted and scoped to analyzer headings/actions; Hebrew uses the existing
 Noto Sans Hebrew fallback and findings keep the normal readable body font.
 
@@ -50,3 +51,12 @@ not establish a live authenticated provider call.
 
 Issue #16 includes catalog/Wishlist behaviors beyond this analyzer increment;
 this PR does not claim to close the entire issue.
+
+## Result refinements — 2026-11-22
+
+Detected wear precedes the unified photo gallery. Grade breakdown & limitations
+is an always-visible section with the same pixel heading as Detected wear.
+Bars show only original probabilities >=5%, sorted descending without
+renormalizing values; the selected grade/confidence and actual limitations remain
+unchanged. The owner removed the estimate chip and standalone disclaimer copy.
+The grading API, prompt, results and cache documents are unchanged.

@@ -16,6 +16,11 @@ it('loads listing photos without analyzing; renders one result and links numbere
  render(<AnalyzePage/>);const user=await load();expect(runAnalysis).not.toHaveBeenCalled();
  await user.click(screen.getByRole('button',{name:'Analyze card'}));await screen.findByRole('heading',{name:'Analysis complete'});
  expect(saveAnalysis).toHaveBeenCalledWith('owner',fixtureListing.source,fixtureResult);
+ expect(document.querySelector('.pokedex-frame')).toHaveAttribute('data-grade','LP');
+ const wear=screen.getByRole('heading',{name:'Detected wear'});
+ expect(wear.compareDocumentPosition(document.querySelector('.analyzer-gallery')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(screen.queryByText('Photo-based estimate')).not.toBeInTheDocument();
+ expect(screen.queryByText(/An estimate from visible photo evidence/)).not.toBeInTheDocument();
  expect(screen.queryByText('Front')).not.toBeInTheDocument();expect(screen.queryByText('Back')).not.toBeInTheDocument();
  await user.click(screen.getByRole('button',{name:/1 Minor edge whitening/}));
  expect(screen.getByRole('dialog')).toBeVisible();expect(screen.getByRole('heading',{name:'Photo 2'})).toBeVisible();
@@ -45,4 +50,16 @@ it('uploads only on manual analysis, revokes object URLs and blocks signed-out r
  await screen.findByRole('button',{name:'Inspect photo 1'});expect(runAnalysis).not.toHaveBeenCalled();
  await userEvent.click(screen.getByRole('button',{name:'Analyze card'}));await screen.findByRole('heading',{name:'Analysis complete'});expect(saveAnalysis).not.toHaveBeenCalled();
  view.unmount();expect(URL.revokeObjectURL).toHaveBeenCalled();auth.user=null;render(<AnalyzePage/>);expect(screen.getByRole('button',{name:'Analyze card'})).toBeDisabled();
+});
+
+it('keeps the breakdown open, sorts original probabilities and includes exactly 5 percent',async()=>{
+ const result={...fixtureResult,analysis:{...fixtureResult.analysis,confidencePercent:60,gradePercentages:{NM:5,LP:60,MP:31,HP:4,DMG:0}}};
+ vi.mocked(readAnalysis).mockResolvedValue(result);render(<AnalyzePage/>);const user=await load();await user.click(screen.getByRole('button',{name:'Analyze card'}));
+ const title=await screen.findByRole('heading',{name:'Grade breakdown & limitations'});
+ expect(title).toHaveClass('analyzer-pixel','analyzer-subtitle');
+ expect(screen.queryByRole('button',{name:'Grade breakdown & limitations'})).not.toBeInTheDocument();
+ expect(screen.getByText('Glare obscures some detail.')).toBeVisible();
+ const meters=screen.getAllByRole('meter');expect(meters.map(m=>m.getAttribute('aria-label'))).toEqual(['Lightly Played','Moderately Played','Near Mint']);
+ expect(meters.map(m=>m.getAttribute('value'))).toEqual(['60','31','5']);
+ expect(runAnalysis).not.toHaveBeenCalled();
 });

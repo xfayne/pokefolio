@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { LuCamera, LuCheck, LuImagePlus, LuLoaderCircle, LuScanLine, LuX, LuZoomIn } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
-import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure';
 import { useAuth } from '@/hooks/use-auth';
 import { PokedexFrame } from './pokedex-frame';
 import { grades, readAnalysis, resolveListing, runAnalysis, saveAnalysis, type AnalysisResult, type Listing } from './analysis-service';
@@ -25,7 +24,7 @@ function Analyzer({owner}:{owner:string|null}) {
   const [listing,setListing]=useState<Listing|null>(null);const [url,setUrl]=useState('');
   const [result,setResult]=useState<AnalysisResult|null>(null);const [cached,setCached]=useState(false);
   const [task,setTask]=useState<Task>('idle');const [error,setError]=useState('');const [saveFailed,setSaveFailed]=useState(false);
-  const [expanded,setExpanded]=useState(false);const [zoom,setZoom]=useState<number|null>(null);const [highlight,setHighlight]=useState<number|null>(null);
+  const [zoom,setZoom]=useState<number|null>(null);const [highlight,setHighlight]=useState<number|null>(null);
   const controller=useRef<AbortController|null>(null);const serial=useRef(0);
   const files=useRef<HTMLInputElement>(null);const slot=useRef<Photo['slot']>('closeup');
   const busy=task!=='idle';
@@ -33,7 +32,7 @@ function Analyzer({owner}:{owner:string|null}) {
   function replacePhotos(next:Photo[]) {
     photosRef.current.forEach(p=>{if(p.blob && !next.includes(p))URL.revokeObjectURL(p.url);});photosRef.current=next;setPhotos(next);
   }
-  function clearResult(){setResult(null);setCached(false);setSaveFailed(false);setError('');setExpanded(false);setZoom(null);setHighlight(null);}
+  function clearResult(){setResult(null);setCached(false);setSaveFailed(false);setError('');setZoom(null);setHighlight(null);}
   function reset(){serial.current++;controller.current?.abort();replacePhotos([]);setListing(null);clearResult();setTask('idle');}
   function start(next:Task){controller.current?.abort();const c=new AbortController();controller.current=c;const id=++serial.current;setTask(next);setError('');return {id,signal:c.signal};}
   function fail(e:unknown) {
@@ -54,7 +53,7 @@ function Analyzer({owner}:{owner:string|null}) {
     }catch(e){if(id===serial.current)fail(e);}finally{if(id===serial.current)setTask('idle');}
   }
   async function loadListing() {
-    if(!owner||busy)return; const {id,signal}=start('loading');replacePhotos([]);setListing(null);setResult(null);setSaveFailed(false);setCached(false);setExpanded(false);
+    if(!owner||busy)return; const {id,signal}=start('loading');replacePhotos([]);setListing(null);setResult(null);setSaveFailed(false);setCached(false);
     try {const data=await resolveListing(owner,url.trim(),signal);if(id!==serial.current)return;setListing(data);replacePhotos(data.images.map(url=>({url,slot:'listing'})));}
     catch(e){if(id===serial.current)fail(e);}finally{if(id===serial.current)setTask('idle');}
   }
@@ -87,7 +86,7 @@ function Analyzer({owner}:{owner:string|null}) {
       </svg>
     </div>;
   }
-  return <PokedexFrame status={task==='busy'?'busy':error?'error':result?'complete':'idle'}>
+  return <PokedexFrame grade={result?.analysis.grade} status={task==='busy'?'busy':error?'error':result?'complete':'idle'}>
     <input ref={files} type="file" accept="image/*" multiple hidden onChange={e=>void addPhotos(e)} />
     {!result?<>
       <h1 className="analyzer-pixel analyzer-title">{a('title')}</h1><p className="analyzer-intro">{a('intro')}</p>
@@ -104,18 +103,19 @@ function Analyzer({owner}:{owner:string|null}) {
     </>:<>
       <h1 className="analyzer-pixel analyzer-title analyzer-complete"><LuCheck aria-hidden/>{a('complete')}</h1>
       <div className="analyzer-grade analyzer-pixel" dir="auto">{result.analysis.grade} — {a(result.analysis.grade)}</div>
-      <div className="analyzer-confidence"><span>{a('confidence',{value:result.analysis.confidencePercent})}</span><span>{a('estimate')}</span></div>
+      <div className="analyzer-confidence"><span>{a('confidence',{value:result.analysis.confidencePercent})}</span></div>
       {cached&&<p className="analyzer-hint">{a('saved')}</p>}
       {result.analyzedPhotoIndices.length<photos.length&&<p className="analyzer-hint">{a('coverage',{count:result.analyzedPhotoIndices.length,total:photos.length})}</p>}
-      <div className="analyzer-gallery">{photos.map((photo,i)=><button type="button" key={photo.url} onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}>{photoView(photo,i)}<span className="analyzer-photo-number">{i+1}</span><LuZoomIn aria-hidden className="analyzer-zoom"/></button>)}</div>
       <h2 className="analyzer-pixel analyzer-subtitle">{a('wear')}</h2>
       <div className="analyzer-findings">{result.analysis.observations.length?result.analysis.observations.map((finding,i)=>{
         const loc=finding.locations.find(l=>l.photoIndex<=photos.length);
         return <button key={i} type="button" disabled={!loc} onClick={()=>{if(loc){setHighlight(i);setZoom(loc.photoIndex-1);}}}><span>{i+1}</span><div>{finding.finding}{!loc&&<small>{a('unlocated')}</small>}</div></button>;
       }):<p>{a('none')}</p>}</div>
-      <DisclosureButton open={expanded} contentId="analysis-details" onClick={()=>setExpanded(v=>!v)}>{a('limits')}</DisclosureButton>
-      <DisclosureContent id="analysis-details" open={expanded}><div className="analyzer-breakdown">{grades.map(g=><div key={g}><span>{g}</span><meter min="0" max="100" value={result.analysis.gradePercentages[g]} aria-label={a(g)}/><span>{result.analysis.gradePercentages[g]}%</span></div>)}{result.analysis.limitations.map((limit,i)=><p key={i}>{limit}</p>)}</div></DisclosureContent>
-      <p className="analyzer-hint">{a('disclaimer')}</p>
+      <div className="analyzer-gallery">{photos.map((photo,i)=><button type="button" key={photo.url} onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}>{photoView(photo,i)}<span className="analyzer-photo-number">{i+1}</span><LuZoomIn aria-hidden className="analyzer-zoom"/></button>)}</div>
+      <section aria-labelledby="analysis-details-title">
+        <h2 id="analysis-details-title" className="analyzer-pixel analyzer-subtitle">{a('limits')}</h2>
+        <div className="analyzer-breakdown">{grades.filter(g=>result.analysis.gradePercentages[g]>=5).toSorted((left,right)=>result.analysis.gradePercentages[right]-result.analysis.gradePercentages[left]).map(g=><div key={g}><span>{g}</span><meter min="0" max="100" value={result.analysis.gradePercentages[g]} aria-label={a(g)}/><span>{result.analysis.gradePercentages[g]}%</span></div>)}{result.analysis.limitations.map((limit,i)=><p key={i}>{limit}</p>)}</div>
+      </section>
       {saveFailed&&<div className="analyzer-error" role="status"><p>{a('saveFailed')}</p><Button variant="outline" disabled={busy} onClick={()=>void retrySave()}>{a('retrySave')}</Button></div>}
       <Button className="analyzer-run analyzer-pixel" disabled={busy} onClick={reset}>{a('new')}</Button>
       <button type="button" className="analyzer-again" disabled={busy} onClick={()=>void analyze(true)}>{a('again')}</button>
