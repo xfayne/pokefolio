@@ -7,9 +7,9 @@ import { pageCount } from './model';
 
 export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown'};
 type Gesture = {id:number;x:number;y:number;from:number|null;active:boolean;timer:ReturnType<typeof setTimeout>|null;over:number|null;turn:ReturnType<typeof setTimeout>|null;turnPage:number|null};
-export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=false,busy=false,onEmpty,onOptions}: {
+export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true,reader=false,busy=false,onEmpty,onOptions}: {
   pockets:readonly VisualPocket[];page:number;onPage:(page:number)=>void;onMove?:((from:number,to:number)=>void)|undefined;
-  onEmpty?: ((index:number)=>void)|undefined; onOptions?: (()=>void)|undefined;
+  onRemove?: ((from:number)=>void)|undefined; onEmpty?: ((index:number)=>void)|undefined; onOptions?: (()=>void)|undefined;
   includeWish?:boolean;reader?:boolean;busy?:boolean;
 }) {
   const {t,i18n}=useTranslation();
@@ -26,7 +26,7 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
   const first=spread===2 ? Math.floor(current/2)*2 : current;
   const suppressClick=useRef(false);
   const gesture=useRef<Gesture|null>(null);
-  const [drag,setDrag]=useState<{from:number;over:number|null;x:number;y:number}|null>(null);
+  const [drag,setDrag]=useState<{from:number;over:number|null;x:number;y:number;outside:boolean}|null>(null);
   const root=useRef<HTMLDivElement>(null);
   const pageCallback=useRef(onPage);
   useEffect(()=>{pageCallback.current=onPage;},[onPage]);
@@ -48,6 +48,12 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
     if(from!==null && pockets[from] && pockets[from]!.kind!=='empty')event.currentTarget.setPointerCapture(event.pointerId);
 
   };
+  // Pointer capture keeps drag events flowing even after the finger leaves the page.
+  // Only a deliberate release outside the physical book removes a placement.
+  const outsideBook=(x:number,y:number)=>!Array.from(root.current?.querySelectorAll<HTMLElement>('.binder-leaf') ?? []).some(leaf=>{
+    const rect=leaf.getBoundingClientRect();
+    return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom;
+  });
   const move=(event:ReactPointerEvent<HTMLDivElement>)=>{
     const g=gesture.current;if(!g || g.id!==event.pointerId) return;
     const distance=Math.hypot(event.clientX-g.x,event.clientY-g.y);
@@ -56,7 +62,7 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
     const hit=document.elementFromPoint(event.clientX,event.clientY);
     const target=hit?.closest<HTMLElement>('[data-pocket-index]');
     g.over=target && root.current?.contains(target) ? Number(target.dataset.pocketIndex) : null;
-    setDrag({from:g.from,over:g.over,x:event.clientX,y:event.clientY});
+    setDrag({from:g.from,over:g.over,x:event.clientX,y:event.clientY,outside:outsideBook(event.clientX,event.clientY) && !hit?.closest('button')});
     const turn=hit?.closest<HTMLElement>('[data-page-target]');
     const next=turn && !turn.hasAttribute('disabled') ? Number(turn.dataset.pageTarget) : null;
     if(next!==g.turnPage) {
@@ -67,8 +73,14 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
   };
   const finish=(event:ReactPointerEvent<HTMLDivElement>)=>{
     const g=gesture.current; if(!g || g.id!==event.pointerId) return;
-    if(g.active && g.from!==null && g.over!==null && g.from!==g.over) onMove?.(g.from,g.over);
-    else if(!g.active) {
+    if(g.active && g.from!==null) {
+      // Resolve the *release* coordinates rather than trusting a stale move target.
+      const hit=document.elementFromPoint(event.clientX,event.clientY);
+      const target=hit?.closest<HTMLElement>('[data-pocket-index]');
+      const over=target && root.current?.contains(target) ? Number(target.dataset.pocketIndex) : null;
+      if(over!==null && over!==g.from) onMove?.(g.from,over);
+      else if(over===null && outsideBook(event.clientX,event.clientY) && !hit?.closest('button')) onRemove?.(g.from);
+    } else if(!g.active) {
       const dx=event.clientX-g.x,dy=event.clientY-g.y;
       if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4) {
         const next=first+((dx<0)!==(i18n.dir()==='rtl')?spread:-spread);
@@ -106,6 +118,6 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
       {onOptions && <button type="button" className="binder-options-overlay" aria-label={t('binderUi.options')} disabled={busy} onClick={onOptions}>•••</button>}
       </div>
     </div>
-    {drag && dragPocket?.card && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}><img src={dragPocket.card.imageUrl} alt="" draggable={false} /></div>}
+    {drag && dragPocket?.card && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}><img src={dragPocket.card.imageUrl} alt="" draggable={false} />{drag.outside && onRemove && <span className="binder-drag-remove">{t('binderUi.releaseRemove')}</span>}</div>}
   </div>;
 }
