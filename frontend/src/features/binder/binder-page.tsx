@@ -107,7 +107,7 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   </section>;
 }
 function PageSelect({label,count,value,onChange}: {label:string;count:number;value:number;onChange:(n:number)=>void}) {
-  return <label className="flex flex-1 flex-col gap-1 text-sm font-bold">{label}<Select aria-label={label} value={value} onChange={e=>onChange(Number(e.target.value))}>{Array.from({length:count},(_,i)=><option key={i} value={i}>{i+1}</option>)}</Select></label>;
+  return <label className="flex flex-1 flex-col gap-1 text-sm font-bold">{label}<Select aria-label={label} value={value+1} onChange={e=>onChange(Number(e.target.value)-1)}>{Array.from({length:count},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</Select></label>;
 }
 function ArrangeSheet({binder,copies,current,busy,failed,onClose,onSave}: {binder:Binder;copies:readonly CardCopy[];current:number;busy:boolean;failed:boolean;onClose:()=>void;onSave:(p:BinderPocket[],index:number)=>Promise<void>}) {
   const {t}=useTranslation();
