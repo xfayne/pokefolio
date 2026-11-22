@@ -1,1 +1,0 @@
-(()=>{const page=document.getElementById("dealsPage");if(page)page.innerHTML="<div class=\"collection-panel\"><div class=\"collection-heading\"><div><h2>🔎 מציאות</h2><div class=\"subtle\">מכרזים אמיתיים על קלפים מרשימת הרצונות שלך</div></div></div></div>";})();

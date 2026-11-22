@@ -57,7 +57,9 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await page.getByRole('button',{name:'Next page'}).click();
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
   await page.getByRole('link',{name:'Dashboard',exact:true}).click();
+  await expect(page).toHaveURL(/#\/dashboard$/);
   await page.getByRole('link',{name:'Collection',exact:true}).click();
+  await page.getByRole('button',{name:'Explore sample binder',exact:true}).click();
   await expect(page.getByText('Page 2 of 3',{exact:true})).toBeVisible();
   expect(privateWrites).toEqual([]);
   await page.locator('.binder-art img').evaluateAll(imgs=>Promise.all(imgs.map(i=>(i as HTMLImageElement).decode().catch(()=>undefined))));
