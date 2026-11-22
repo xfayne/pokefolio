@@ -358,3 +358,29 @@ test('twenty-copy receipt fits audited atomic writes and preserves copy identity
   await assertFails(getDoc(doc(env.authenticatedContext(bob).firestore(),`users/${alice}/copies/${copies[0].id}`)));
  }finally{await env.cleanup();}
 });
+
+test('private React binder layout is owner-only, revision checked and isolated from financial/progress records',async()=>{
+ const env=await environment('firestore.private.rules');
+ try {
+  await seed(env);
+  const db=env.authenticatedContext(alice).firestore(), foreign=env.authenticatedContext(bob).firestore(), anon=env.unauthenticatedContext().firestore();
+  const path=`users/${alice}/binders/main`;
+  const payload={schemaVersion:1,ownerUid:alice,revision:1,pockets:JSON.stringify([{kind:'copy',copyId:'synthetic-copy'},{kind:'empty',token:'synthetic-gap'}]),includeWish:true,updatedAt:serverTimestamp()};
+  await assertSucceeds(getDoc(doc(db,path)));
+  await assertSucceeds(setDoc(doc(db,path),payload));
+  assert.equal((await getDoc(doc(db,path))).data().pockets,payload.pockets);
+  await assertFails(getDoc(doc(foreign,path))); await assertFails(getDoc(doc(anon,path)));
+  await assertFails(setDoc(doc(foreign,path),{...payload,revision:2}));
+  await assertFails(setDoc(doc(db,path),payload));
+  await assertFails(setDoc(doc(db,path),{...payload,revision:3}));
+  await assertFails(setDoc(doc(db,path),{...payload,revision:2,ownerUid:bob}));
+  await assertFails(setDoc(doc(db,path),{...payload,revision:2,privateExtra:'no'}));
+  await assertFails(setDoc(doc(db,path),{...payload,revision:2,pockets:[]}));
+  await assertFails(setDoc(doc(db,path),{...payload,revision:2,pockets:'x'.repeat(350001)}));
+  await assertSucceeds(setDoc(doc(db,path),{...payload,revision:2}));
+  await assertFails(getDocs(collection(db,`users/${alice}/binders`)));
+  await assertFails(deleteDoc(doc(db,path)));
+  await assertFails(setDoc(doc(db,`users/${alice}/binders/other`),payload));
+  assert.deepEqual((await getDoc(doc(db,`users/${alice}`))).data().progress,fixture.progress);
+ }finally{await env.cleanup();}
+});

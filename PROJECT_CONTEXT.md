@@ -552,3 +552,22 @@ now have square outer turns. A continuous right highlight replaces conflicting
 inset strokes. Original gradients, optics, inner screen and fixed viewport
 behavior remain unchanged. Validate full-resolution top/right/bottom captures;
 container bounds alone do not prove correct geometry.
+
+## Issue #13 — Collection Binder, 2026-11-22
+
+Owner approved the supplied Binder mock with no My Binder heading, no tap-to-card
+navigation, and no document/internal scrolling. The viewport-sized nine-pocket
+book uses shared Adventure Blue surfaces and full-card artwork. Hold-to-drag,
+swipe/arrows, explicit placement/removal and whole-page movement preserve legacy
+gap behavior; partial pages moved into the middle retain their trailing holes.
+Copies keep exact IDs through receipt, edits, missing records and sales.
+
+The new owner-only users/{uid}/binders/main document stores ordered typed pockets
+as JSON with expected-layout transactional concurrency. It never rewrites the
+retained progress root or financial records. Wishlist pockets are layout-only
+catalog reservations pending #14 integration, with no Wishlist order changes.
+Explicit snapshot sharing reuses the schema-v2 public payload/settings policy;
+the standalone public reader mounts no private portfolio hook. Read-only viewer
+supports two pages in landscape. Sample mode is session-only and never publishes.
+See docs/BINDER.md and PR/CI receipts for verified activation/deployment status.
+This increment does not complete Overview/export or real migration acceptance.
