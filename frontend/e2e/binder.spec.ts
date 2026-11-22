@@ -39,6 +39,13 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await expect(page.locator('.binder-drag-ghost')).toBeVisible();
   await expect(slots.nth(8)).toHaveAttribute('data-drop','true');
   await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  // A move must never paint its original pocket again while storage confirms it.
+  const firstFrames=await page.evaluate(async()=>{
+    const kinds:string[]=[];
+    for(let i=0;i<3;i++){await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));kinds.push(document.querySelector('[data-pocket-index="0"]')?.getAttribute('data-kind') ?? 'missing');}
+    return kinds;
+  });
+  expect(firstFrames).toEqual(['empty','empty','empty']);
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
   await expect(slots.nth(8)).toHaveAttribute('aria-label',first!.replace('pocket 1','pocket 9'));
   await expect(page.getByRole('dialog')).toHaveCount(0);
