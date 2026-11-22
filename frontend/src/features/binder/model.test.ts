@@ -1,7 +1,7 @@
 import { describe,it,expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { binderSchema, emptyBinder, placePocket, reservePocket, removePocket, movePage, projectBinder, encodePublic, decodePublic, pocketKey } from './model';
+import { binderSchema, emptyBinder, placePocket, reservePocket, removePocket, movePage, insertEmptyPage, capacity, pageCount, projectBinder, encodePublic, decodePublic, pocketKey } from './model';
 import type { BinderPocket } from '@/domain/inventory';
 import {createSampleCopies,sampleOwner} from '@/features/inventory/sample';
 import {decodeBinder} from './storage';
@@ -37,6 +37,35 @@ describe('legacy page and pocket invariants',()=>{
     expect(result).toHaveLength(18);expect(result[0]).toEqual(c('last'));expect(result[9]).toEqual(c('a'));expect(result[17]).toEqual(c('b'));
     expect(result.slice(1,9).every(p=>p.kind==='empty')).toBe(true);
     expect(new Set(result.map(pocketKey)).size).toBe(result.length);
+  });
+  it('inserts an entire blank page after the current page without shifting existing pocket identities within their pages',()=>{
+    const original=Array.from({length:20},(_,i)=>i===1?hole('reserved'):c(`copy-${i}`));
+    const added=insertEmptyPage(original,0);
+    expect(pageCount(added)).toBe(4);
+    expect(added.slice(0,9)).toEqual(original.slice(0,9));
+    expect(added.slice(9,18).every(p=>p.kind==='empty')).toBe(true);
+    expect(added.slice(18)).toEqual(original.slice(9));
+    expect(new Set(added.map(pocketKey)).size).toBe(added.length);
+    expect(original).toHaveLength(20);
+  });
+  it('pads a partial final page and appends nine explicit empty pockets, including when binder starts empty',()=>{
+    for(const original of [[],[c('a'),hole('reserved')]]) {
+      const added=insertEmptyPage(original,0);
+      expect(added).toHaveLength(18);
+      expect(pageCount(added)).toBe(2);
+      expect(added.slice(0,original.length)).toEqual(original);
+      expect(added.slice(original.length).every(p=>p.kind==='empty')).toBe(true);
+      expect(new Set(added.map(pocketKey)).size).toBe(18);
+    }
+  });
+  it('rejects invalid page targets and over-capacity additions without mutating the original',()=>{
+    expect(()=>insertEmptyPage([c('a')],-1)).toThrow('Invalid page');
+    expect(()=>insertEmptyPage([c('a')],1)).toThrow('Invalid page');
+    expect(()=>insertEmptyPage([c('a')],0.5)).toThrow('Invalid page');
+    const full=Array.from({length:capacity-10},(_,i)=>hole(`h-${i}`));
+    expect(insertEmptyPage(full,pageCount(full)-1)).toHaveLength(1251);
+    expect(()=>insertEmptyPage(Array.from({length:capacity-9},(_,i)=>hole(`h-${i}`)),pageCount(full)-1)).toThrow('Binder is full');
+    expect(full).toHaveLength(capacity-10);
   });
   it('reserves and explicitly clears holes, validates bounds and rejects duplicates',()=>{
     const original=[c('a'),c('b')],reserved=reservePocket(original,1);
