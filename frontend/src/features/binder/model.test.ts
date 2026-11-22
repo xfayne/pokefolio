@@ -54,6 +54,7 @@ describe('legacy page and pocket invariants',()=>{
     expect(decodePublic(encodePublic(projected))).toEqual(projected);
     expect(projectBinder({...binder,includeWish:false},copies)[5]).toBeNull();
     expect(binder.pockets[0]).toEqual(c('charizard-a'));
+    expect(projectBinder({...emptyBinder(sampleOwner),pockets:[c('charizard-b')]},copies.map(copy=>({...copy,possession:'unknown' as const})))).toEqual([null]);
     expect(()=>decodePublic('o:private-secret')).toThrow();
     expect(()=>decodePublic('o:base1-4;copy:secret')).toThrow();
   });

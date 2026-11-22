@@ -60,3 +60,15 @@
 .binder-slot .binder-art { pointer-events:none; }
 
 .binder-art img { padding:0; }
+/* Keep the pager hint above the central navigation ball. Size overlays to each
+   leaf, rather than the entire two-page spread. */
+.app-shell[data-binder] > .app-content { padding-bottom:1.25rem; }
+.binder-leaf { container-type:inline-size; }
+.utility-dialog:has(.binder-reader) { position:fixed; inset:0; overflow:clip; }
+.utility-dialog:has(.binder-reader) .sheet-content-contained { overflow:clip; }
+@container (max-width:230px) {
+  .binder-pending span { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .binder-pending svg { width:.75rem; height:.75rem; }
+  .binder-wish span { font-size:clamp(.45rem,4.5cqw,.75rem); }
+  .binder-wish svg { width:1rem; height:1rem; }
+}

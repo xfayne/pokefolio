@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuChevronLeft, LuChevronRight, LuHeart, LuPackage, LuGrip } from 'react-icons/lu';
+import { LuChevronLeft, LuChevronRight, LuHeart, LuPackage, LuGrip, LuCircleHelp } from 'react-icons/lu';
 import type { InventoryCatalogCard } from '@/domain/inventory';
 import { PokemonArt } from '@/components/ui/pokemon-art';
 import { pageCount } from './model';
 
-export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'};
+export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown'};
 type Gesture = {id:number;x:number;y:number;from:number|null;active:boolean;timer:ReturnType<typeof setTimeout>|null;over:number|null;turn:ReturnType<typeof setTimeout>|null;turnPage:number|null};
 export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=false,busy=false}: {
   pockets:readonly VisualPocket[];page:number;onPage:(page:number)=>void;onMove?:((from:number,to:number)=>void)|undefined;
@@ -97,7 +97,7 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{t(kind==='empty'?'binderUi.empty':'binderUi.unavailable')}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
-                {kind==='pending' && <span className="binder-pending"><LuPackage aria-hidden /><span>{t('binderUi.pending')}</span></span>}
+                {(kind==='pending'||kind==='unknown') && <span className="binder-pending">{kind==='pending'?<LuPackage aria-hidden />:<LuCircleHelp aria-hidden />}<span>{t(kind==='pending'?'binderUi.pending':'inventory.unknown')}</span></span>}
               </div>;
             })}
           </div>;
@@ -106,10 +106,10 @@ export function BinderBook({pockets,page,onPage,onMove,includeWish=true,reader=f
     </div>
     <div className="binder-pager">
       <button type="button" data-page-target={first-spread} disabled={first===0 || busy} aria-label={t('binderUi.previous')} onClick={()=>onPage(Math.max(0,first-spread))}><LuChevronLeft className="rtl:rotate-180" aria-hidden /></button>
-      <p aria-live="polite">{t('binderUi.page',{page:first+1,count:total})}{spread===2 && first+1<total && <span className="sr-only"> — {first+2}</span>}</p>
+      <p aria-live="polite">{spread===2 && first+1<total?t('binderUi.pages',{from:first+1,to:first+2,count:total}):t('binderUi.page',{page:first+1,count:total})}</p>
       <button type="button" data-page-target={first+spread} disabled={first+spread>=total || busy} aria-label={t('binderUi.next')} onClick={()=>onPage(first+spread)}><LuChevronRight className="rtl:rotate-180" aria-hidden /></button>
     </div>
-    <p className="binder-hint">{onMove && <LuGrip aria-hidden />}{onMove ? t('binderUi.hint') : t('binderUi.page',{page:first+1,count:total})}</p>
+    <p className="binder-hint">{onMove && <LuGrip aria-hidden />}{onMove ? t('binderUi.hint') : t('binderUi.swipe')}</p>
     {drag && dragPocket?.card && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}><img src={dragPocket.card.imageUrl} alt="" draggable={false} /></div>}
   </div>;
 }

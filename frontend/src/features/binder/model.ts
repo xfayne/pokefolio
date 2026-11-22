@@ -66,7 +66,7 @@ export function projectBinder(binder: Binder, copies: readonly CardCopy[]): Publ
     if (p.kind === 'empty') return null;
     if (p.kind === 'wish') return binder.includeWish ? {cardId:p.cardId,kind:'wish'} : null;
     const c = byId.get(p.copyId);
-    if (!c || c.disposition !== 'held' || c.catalog.kind !== 'identified') return null;
+    if (!c || c.disposition !== 'held' || c.catalog.kind !== 'identified' || c.possession === 'unknown') return null;
     return {cardId:c.catalog.cardId,kind:c.possession === 'received' ? 'owned' : 'pending'};
   });
 }

@@ -1,6 +1,6 @@
 export const binderTranslations = {
   en: {
-    label:'Binder', options:'Binder options', share:'Share binder', page:'Page {{page}} of {{count}}', previous:'Previous page', next:'Next page',
+    pages:'Pages {{from}}–{{to}} of {{count}}', swipe:'Swipe to change page', label:'Binder', options:'Binder options', share:'Share binder', page:'Page {{page}} of {{count}}', previous:'Previous page', next:'Next page',
     hint:'Hold to drag · Swipe to change page', empty:'Empty pocket', wish:'Wishlist', pending:'On the way', unavailable:'Copy unavailable',
     arrange:'Arrange cards', add:'Add / move card', reserve:'Reserve empty pocket', remove:'Remove from binder', clear:'Remove empty pocket',
     movePage:'Move page', sourcePage:'From page', targetPage:'To page', targetSlot:'Pocket', apply:'Apply',
@@ -14,7 +14,7 @@ export const binderTranslations = {
     emptyHint:'Use options to add cards or reserve pockets.', reload:'Reload binder',
   },
   he: {
-    label:'בינדר', options:'אפשרויות בינדר', share:'שיתוף בינדר', page:'עמוד {{page}} מתוך {{count}}', previous:'עמוד קודם', next:'עמוד הבא',
+    pages:'עמודים {{from}}–{{to}} מתוך {{count}}', swipe:'החלקה למעבר עמוד', label:'בינדר', options:'אפשרויות בינדר', share:'שיתוף בינדר', page:'עמוד {{page}} מתוך {{count}}', previous:'עמוד קודם', next:'עמוד הבא',
     hint:'לחיצה ארוכה לגרירה · החלקה למעבר עמוד', empty:'כיס ריק', wish:'רשימת משאלות', pending:'בדרך', unavailable:'העותק אינו זמין',
     arrange:'סידור קלפים', add:'הוספה / העברת קלף', reserve:'שמירת כיס ריק', remove:'הסרה מהבינדר', clear:'ביטול כיס ריק',
     movePage:'העברת עמוד', sourcePage:'מעמוד', targetPage:'לעמוד', targetSlot:'כיס', apply:'אישור',

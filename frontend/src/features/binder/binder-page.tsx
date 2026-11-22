@@ -28,7 +28,7 @@ function visualPockets(binder:Binder,copies:readonly CardCopy[]): VisualPocket[]
     if(p.kind==='wish') return {key:pocketKey(p),kind:'wish',card:cards.get(p.cardId) ?? null};
     const copy=byId.get(p.copyId);
     return {key:pocketKey(p),card:copy?.catalog.kind==='identified'?cards.get(copy.catalog.cardId) ?? null:null,
-      kind:!copy || copy.disposition!=='held'?'unavailable':copy.possession==='received'?'owned':'pending'};
+      kind:!copy || copy.disposition!=='held'?'unavailable':copy.possession==='received'?'owned':copy.possession==='pending'?'pending':'unknown'};
   });
 }
 const sampleCopies=(): CardCopy[]=>{

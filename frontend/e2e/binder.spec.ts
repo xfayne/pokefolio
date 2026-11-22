@@ -91,9 +91,15 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await page.getByLabel('Show Wishlist cards',{exact:true}).click();
   await expect(page.locator('.binder-wish').first()).toHaveAttribute('data-hidden','true');
   await page.getByRole('button',{name:'View binder',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
+  await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   await page.setViewportSize({width:844,height:390});
   await expect(page.getByRole('dialog').locator('.binder-leaf')).toHaveCount(2);
   await expect(page.getByRole('dialog').locator('.binder-leaf').first()).toBeVisible();
   await expect(page.getByRole('dialog').locator('.binder-leaf').last()).toBeVisible();
+  const header=await page.getByRole('dialog').locator('.sheet-header').boundingBox();
+  expect(header!.y).toBeGreaterThanOrEqual(0);
+  expect(header!.y+header!.height).toBeLessThanOrEqual(390);
+  expect(await page.getByRole('dialog').evaluate(el=>el.scrollTop)).toBe(0);
   await test.info().attach('binder-landscape',{body:await page.screenshot({path:test.info().outputPath('binder-landscape.png')}),contentType:'image/png'});
 });
