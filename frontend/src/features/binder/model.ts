@@ -22,7 +22,6 @@ export function placePocket(pockets: readonly BinderPocket[], pocket: BinderPock
   validateIndex(pockets,index);
   const result = [...pockets];
   const from = result.findIndex(p => pocketKey(p) === pocketKey(pocket));
-  if (from >= 0) index=Math.min(index,result.length-1);
   if (from === index) return result;
   // Materialize trailing holes before moving, preserving the requested index.
   while (result.length <= index) result.push(gap());
@@ -56,6 +55,20 @@ export function movePage(pockets: readonly BinderPocket[], from: number, to: num
   pages.slice(0,-1).forEach(page => { while (page.length < 9) page.push(gap()); });
   const result=pages.flat();
   if (result.length > capacity) throw Error('Binder is full');
+  return result;
+}
+/** Insert a complete blank 3×3 page directly after the selected page.
+ * Preserve every existing pocket in order, including trailing implicit gaps.
+ * The final existing page is padded only when appending after it.
+ */
+export function insertEmptyPage(pockets: readonly BinderPocket[], after: number): BinderPocket[] {
+  const count=pageCount(pockets);
+  if (!Number.isInteger(after) || after<0 || after>=count) throw Error('Invalid page');
+  const index=(after+1)*9;
+  const result=[...pockets];
+  if (Math.max(result.length,index)+9>capacity) throw Error('Binder is full');
+  while (result.length<index) result.push(gap());
+  result.splice(index,0,...Array.from({length:9},()=>gap()));
   return result;
 }
 export type PublicPocket = {cardId:string;kind:'owned'|'pending'|'wish'} | null;

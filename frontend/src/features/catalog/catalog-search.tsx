@@ -8,7 +8,7 @@ import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure'
 import { Button } from '@/components/ui/button';
 import { searchCatalog, catalogCards } from './catalog';
 import type { InventoryCatalogCard } from '@/domain/inventory';
-export function CatalogSearch({ query, onQuery, onSelect, owned = {}, state, onState, wishlist = [], scrollPositionRef }: { query: string; onQuery: (value: string) => void; onSelect: (card: InventoryCatalogCard) => void; owned?: Readonly<Record<string, number>>; wishlist?: readonly string[]; state?: CatalogSearchState; onState?: (state: CatalogSearchState) => void; scrollPositionRef?: RefObject<number> }) {
+export function CatalogSearch({ query, onQuery, onSelect, owned = {}, state, onState, wishlist = [], scrollPositionRef, allowedCardIds }: { query: string; onQuery: (value: string) => void; onSelect: (card: InventoryCatalogCard) => void; owned?: Readonly<Record<string, number>>; wishlist?: readonly string[]; state?: CatalogSearchState; onState?: (state: CatalogSearchState) => void; scrollPositionRef?: RefObject<number>; allowedCardIds?: ReadonlySet<string> }) {
   const { t, i18n } = useTranslation();
   const filtersId = useId();
   const scrollRegionRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,7 @@ export function CatalogSearch({ query, onQuery, onSelect, owned = {}, state, onS
   const current = state ?? local;
   const { grid, filters, sets, limit } = current;
   const update = (patch: Partial<CatalogSearchState>) => (onState ?? setLocal)({ ...current, ...patch });
-  const results = searchCatalog(query, sets, current);
+  const results = searchCatalog(query, sets, current).filter(card => !allowedCardIds || allowedCardIds.has(card.id));
   return <div className="catalog-search">
     <div className="catalog-pinned-tools space-y-2">
       <SearchInput label={t('searchCards')} placeholder={t('searchPlaceholder')} value={query} onChange={e => { onQuery(e.target.value); update({limit:60}); }} />

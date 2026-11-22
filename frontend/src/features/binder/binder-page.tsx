@@ -1,22 +1,22 @@
+import { CatalogSearch } from '@/features/catalog/catalog-search';
+import { BinderPicker, eligibleBinderCopies } from './binder-picker';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { LuEllipsis, LuShare2, LuArrowUpDown, LuBookOpen, LuPlus, LuCopy, LuLink2Off } from 'react-icons/lu';
+import { LuShare2, LuArrowUpDown, LuBookOpen, LuPlus, LuCopy, LuLink2Off } from 'react-icons/lu';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { getFirebaseServices } from '@/services/firebase';
-import { catalogCards, searchCatalog } from '@/features/catalog/catalog';
+import { catalogCards } from '@/features/catalog/catalog';
 import { createSampleCopies, sampleOwner } from '@/features/inventory/sample';
 import { PortfolioStatus } from '@/features/portfolio-status';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
-import { SearchInput } from '@/components/ui/search-input';
-import { PokemonArt } from '@/components/ui/pokemon-art';
 import type { BinderPocket } from '@/domain/inventory';
 import type { CardCopy } from '@/domain/schema';
 import { BinderBook, type VisualPocket } from './binder-book';
-import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, movePage, type Binder } from './model';
+import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, movePage, insertEmptyPage, capacity, type Binder } from './model';
 import { readBinder, saveBinder, readSharing, publishBinder, disableSharing } from './storage';
 import './binder.css';
 
@@ -35,10 +35,10 @@ const sampleCopies=(): CardCopy[]=>{
   const original=createSampleCopies();
   const reference=original[0]!.catalog; if(reference.kind!=='identified') throw Error('Invalid sample reference');
   const ids=['base5-4','base3-2','base3-4','base3-3','base2-1','base1-2','base1-15','neo1-9','neo1-18','gym2-12','basep-9'];
-  return [...original,...ids.map((cardId,i)=>({...original[0]!,id:`binder-sample-${i}`,catalog:{...reference,kind:'identified' as const,cardId,edition:'unlimited' as const}}))];
+  return [...original,{...original[0]!,id:'picker-sample',catalog:{...reference,cardId:'base1-58'}},...ids.map((cardId,i)=>({...original[0]!,id:`binder-sample-${i}`,catalog:{...reference,kind:'identified' as const,cardId,edition:'unlimited' as const}}))];
 };
 function sampleBinder(): Binder {
-  const pockets:BinderPocket[]=sampleCopies().map(c=>({kind:'copy',copyId:c.id}));
+  const pockets:BinderPocket[]=sampleCopies().filter(c=>c.id!=='picker-sample').map(c=>({kind:'copy',copyId:c.id}));
   pockets.splice(7,0,{kind:'wish',cardId:'neo2-13'},{kind:'empty',token:'sample-gap'});
   pockets.push({kind:'wish',cardId:'neo2-1'});
   return {...emptyBinder(sampleOwner),pockets};
@@ -72,6 +72,7 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   const pageKey=`pokefolio:binder-page:${preview?'sample':binder.ownerUid}`;
   const [page,setPage]=useState(()=>savedPage(pageKey));
   const [panel,setPanel]=useState<'options'|'arrange'|'page'|'share'|'reader'|null>(null);
+  const [emptyTarget,setEmptyTarget]=useState<number|null>(null);
   const [wishDraft,setWishDraft]=useState<{revision:number;value:boolean}|null>(null);
   const [busy,setBusy]=useState(false),[failed,setFailed]=useState(false),[notice,setNotice]=useState('');
   const current=Math.min(page,pageCount(binder.pockets)-1);
@@ -86,17 +87,25 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   const visuals=visualPockets(binder,copies);
   if(loading || error) return <PortfolioStatus loading={loading} error={error} />;
   return <section className="binder-page" aria-label={t('binderUi.label')} aria-busy={busy}>
-    <div className="binder-toolbar">
-      {disconnected && <p className="binder-message flex-1">{t('binderUi.disconnected')} <button className="underline" onClick={onDemo}>{t('binderUi.demo')}</button></p>}
-      <button className="binder-icon" disabled={disconnected || busy} aria-label={t('binderUi.share')} onClick={()=>setPanel('share')}><LuShare2 aria-hidden /></button>
-      <button className="binder-icon" disabled={disconnected || busy} aria-label={t('binderUi.options')} onClick={()=>setPanel('options')}><LuEllipsis aria-hidden /></button>
-    </div>
+    {disconnected && <p className="binder-message">{t('binderUi.disconnected')} <button className="underline" onClick={onDemo}>{t('binderUi.demo')}</button></p>}
     {failed && <p className="binder-error" role="alert">{t('binderUi.failed')} <button onClick={reload} className="underline">{t('binderUi.reload')}</button></p>}
     <p className="sr-only" role="status">{busy?t('binderUi.saving'):notice}</p>
-    <BinderBook pockets={visuals} page={current} onPage={changePage} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} />
+    <BinderBook pockets={visuals} page={current} onPage={changePage} onOptions={!disconnected?()=>setPanel('options'):undefined} onEmpty={!disconnected?(index=>{setFailed(false);setEmptyTarget(index);}):undefined} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} />
+    {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPick={async copy=>{
+      if(!eligibleBinderCopies(binder,copies).some(c=>c.id===copy.id) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
+      try {if(await save({...binder,pockets:placePocket(binder.pockets,{kind:'copy',copyId:copy.id},emptyTarget)}))setEmptyTarget(null);}catch{setFailed(true);}
+    }} />}
     {panel==='options' && <UtilitySheet title={t('binderUi.options')} onClose={()=>setPanel(null)}><div className="binder-arrange">
+      <Button variant="outline" onClick={()=>setPanel('share')}><LuShare2 aria-hidden />{t('binderUi.share')}</Button>
       <Button variant="outline" onClick={()=>setPanel('arrange')}><LuPlus aria-hidden />{t('binderUi.add')}</Button>
       <Button variant="outline" disabled={pageCount(binder.pockets)<2} onClick={()=>setPanel('page')}><LuArrowUpDown aria-hidden />{t('binderUi.movePage')}</Button>
+      <Button variant="outline" disabled={busy || Math.max(binder.pockets.length,(current+1)*9)+9>capacity} onClick={()=>{
+        try {
+          const pockets=insertEmptyPage(binder.pockets,current);
+          void save({...binder,pockets}).then(ok=>{if(ok){changePage(current+1);setPanel(null);}});
+        } catch {setFailed(true);}
+      }}><LuPlus aria-hidden />{t('binderUi.addPage')}</Button>
+      {failed && <p role="alert" className="binder-error">{t('binderUi.failed')}</p>}
       <Button variant="outline" onClick={()=>setPanel('reader')}><LuBookOpen aria-hidden />{t('binderUi.reader')}</Button>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wishDraft?.revision===binder.revision ? wishDraft.value : binder.includeWish} disabled={busy} onChange={e=>{const value=e.target.checked;setWishDraft({revision:binder.revision,value});void save({...binder,includeWish:value}).then(ok=>{if(!ok)setWishDraft(null);});}} />{t('binderUi.includeWish')}</label>
     </div></UtilitySheet>}
@@ -113,20 +122,17 @@ function ArrangeSheet({binder,copies,current,busy,failed,onClose,onSave}: {binde
   const {t}=useTranslation();
   const [mode,setMode]=useState('copy'),[query,setQuery]=useState(''),[selected,setSelected]=useState<BinderPocket|null>(null);
   const [page,setPage]=useState(current),[slot,setSlot]=useState(0),[localError,setLocalError]=useState(false);
-  const matches=copies.filter(c=>c.ownerUid===binder.ownerUid && c.disposition==='held' && c.catalog.kind==='identified').map(c=>({copy:c,card:c.catalog.kind==='identified'?cards.get(c.catalog.cardId):null})).filter(x=>x.card && `${x.card.name} ${x.card.setName} ${x.card.number} ${x.copy.id}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0,40);
-  const wishes=query.trim()?searchCatalog(query).slice(0,30):[];
   const source=selected?binder.pockets.findIndex(p=>pocketKey(p)===pocketKey(selected)):-1;
   const apply=()=>{try {setLocalError(false);const index=page*9+slot;void onSave(mode==='empty'?reservePocket(binder.pockets,index):placePocket(binder.pockets,selected!,index),index);}catch{setLocalError(true);}};
+  if(mode==='pick-copy') return <BinderPicker moving binder={binder} copies={copies} busy={busy} failed={failed} onClose={()=>setMode('copy')} onPick={async copy=>{setSelected({kind:'copy',copyId:copy.id});setMode('copy');}} />;
   return <UtilitySheet title={t('binderUi.arrange')} onClose={busy?()=>{}:onClose}><div className="binder-arrange">
     <Select aria-label={t('binderUi.arrange')} value={mode} disabled={busy} onChange={e=>{setMode(e.target.value);setSelected(null);setQuery('');}}>
       <option value="copy">{t('binderUi.copies')}</option><option value="wish">{t('binderUi.wishes')}</option><option value="empty">{t('binderUi.reserve')}</option>
     </Select>
-    {mode!=='empty' && <><SearchInput label={t('binderUi.search')} placeholder={t('binderUi.search')} value={query} onChange={e=>setQuery(e.target.value)} />
-      {mode==='wish' && <p className="binder-message">{t('binderUi.wishHint')}</p>}
-      <div className="binder-choices" aria-label={t('binderUi.copies')}>
-        {mode==='copy'?matches.map(({copy,card},i)=><button type="button" disabled={busy} key={copy.id} className="binder-choice" aria-pressed={selected?.kind==='copy'&&selected.copyId===copy.id} onClick={()=>setSelected({kind:'copy',copyId:copy.id})}><PokemonArt src={card!.imageUrl} alt="" /><span><strong>{card!.name}</strong><small>{card!.setName} · #{card!.number} · {t('binderUi.copy',{number:i+1})} · {copy.condition.status==='known'?copy.condition.value:'?'} · {t(copy.possession==='received'?'inventory.received':'binderUi.pending')}</small></span></button>):wishes.map(card=><button type="button" disabled={busy} key={card.id} className="binder-choice" aria-pressed={selected?.kind==='wish'&&selected.cardId===card.id} onClick={()=>setSelected({kind:'wish',cardId:card.id})}><PokemonArt src={card.imageUrl} alt="" /><span><strong>{card.name}</strong><small>{card.setName} · #{card.number}</small></span></button>)}
-        {mode==='copy'&&!matches.length&&<p className="binder-message">{t('binderUi.noCopies')}</p>}
-      </div></>}
+    {mode==='copy' && !selected && <Button variant="outline" onClick={()=>setMode('pick-copy')}>{t('binderUi.chooseCopy')}</Button>}
+    
+    {mode==='wish' && !selected && <div className="h-96 min-h-0"><CatalogSearch query={query} onQuery={setQuery} onSelect={card=>setSelected({kind:'wish',cardId:card.id})} /></div>}
+    {selected && <p className="text-sm font-bold">{selected.kind==='copy'?copies.find(c=>c.id===selected.copyId)?.catalog.kind==='identified' ? cards.get((copies.find(c=>c.id===selected.copyId)!.catalog as {cardId:string}).cardId)?.name : selected.copyId:selected.kind==='wish'?cards.get(selected.cardId)?.name:''}</p>}
     <div className="flex gap-3"><PageSelect label={t('binderUi.targetPage')} count={pageCount(binder.pockets)} value={page} onChange={setPage} /><PageSelect label={t('binderUi.targetSlot')} count={9} value={slot} onChange={setSlot} /></div>
     {(failed||localError) && <p role="alert" className="binder-error">{t('binderUi.failed')}</p>}
     <Button disabled={busy || mode!=='empty'&&!selected} onClick={apply}>{t(busy?'binderUi.saving':'binderUi.apply')}</Button>
