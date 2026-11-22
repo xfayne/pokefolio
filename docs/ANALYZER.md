@@ -75,3 +75,17 @@ photo-coverage copy without changing their stored values. Rename the heading
 to Grade breakdown (actual limitation findings remain visible). Replace native
 meters with accessible segmented LCD-style readouts, retaining original
 probabilities, the >=5% filter and descending order.
+
+## Molded perimeter correction — 2026-11-22
+
+Squaring only the base rectangles left the header plaque, perimeter highlight,
+right header seam and lower lip visibly rounded over a red backing. The owner
+rejected that result. The actual visible plaque/trim paths now turn at square
+outer corners. The right perimeter uses one continuous rail at the same source
+x-coordinate across all three slices; the redundant inset right stroke was
+removed. The existing palette/gradients, lens, lamps, central stepped seam and
+rounded inner display are preserved. Review full-resolution cap crops as well
+as viewport bounds; a small thumbnail alone can hide a rail discontinuity.
+
+The owner approved the direct SVG render of this corrected contour on
+2026-11-22 before publication. Publish that exact artwork without further redesign.
