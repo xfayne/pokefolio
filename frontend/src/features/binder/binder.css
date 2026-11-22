@@ -56,3 +56,5 @@
 .binder-error { font-size:.75rem; color:#962d30; }
 @keyframes binder-page-enter { from { opacity:.7; transform:translateX(4px); } to { opacity:1; transform:translateX(0); } }
 @media (max-height:550px) { .binder-toolbar .binder-icon { min-height:2.25rem; width:2.25rem; } .binder-hint { display:none; } .binder-pager button { height:2.25rem; } .binder-page { gap:.125rem; } }
+.binder-book, .binder-book img { -webkit-touch-callout:none; }
+.binder-slot .binder-art { pointer-events:none; }
