@@ -15,9 +15,9 @@ function slice(id:string,viewBox:string,stretch=false) {
 export function PokedexFrame({children,status}:{children:ReactNode;status:'idle'|'busy'|'complete'|'error'}) {
   const id=useId().replace(/:/g,'');
   return <section className="pokedex-frame" data-status={status} aria-label="Pokédex">
-    <div className="pokedex-top" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-top`,'0 0 432 140')}} />
-    <div className="pokedex-middle" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-middle`,'0 140 432 480',true)}} />
+    <div className="pokedex-top" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-top`,'2 0 428 140')}} />
+    <div className="pokedex-middle" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-middle`,'2 140 428 480',true)}} />
     <div className="pokedex-display">{children}</div>
-    <div className="pokedex-bottom" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-bottom`,'0 620 432 80')}} />
+    <div className="pokedex-bottom" aria-hidden dangerouslySetInnerHTML={{__html:slice(`${id}-bottom`,'2 620 428 80')}} />
   </section>;
 }
