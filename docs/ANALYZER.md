@@ -7,7 +7,12 @@ The main application shell remains Adventure Blue. Input slots may identify fron
 and back; result photos form one numbered gallery. Single-side inputs are valid.
 
 The frame has fixed-proportion SVG top/bottom caps and stretchable straight side
-walls. This preserves the lens and decoration while accommodating longer results.
+walls. It fills the app viewport between the header and bottom navigation, with
+no outer spacing or document scrolling. Only the light display scrolls; the lens
+and frame stay in place. Header/navigation remain in flex flow, including safe
+areas and taller Hebrew labels. The native image picker supports camera/library
+selection; separate Take photo and Add close-up controls were removed at the
+owner's request. Multiple selections still support up to eight images.
 Its blue lens pulses and indicator lamps alternate only during an AI request;
 completion lights green. Reduced motion disables animation. Pixelify Sans is
 self-hosted and scoped to analyzer headings/actions; Hebrew uses the existing

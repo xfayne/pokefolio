@@ -510,3 +510,13 @@ request lights respect reduced motion. Pixelify Sans is self-hosted/scoped, with
 existing Hebrew/body fonts for legibility. See docs/ANALYZER.md and PR/CI receipts
 for validation/deployment status. This does not complete other catalog/Wishlist
 acceptance items in #16 or change collection/transaction data.
+
+## Analyzer fixed frame refinement — 2026-11-22
+
+Owner requires the Pokédex frame flush to the app viewport between header and
+bottom navigation, stationary while only the light display scrolls. Analyze
+uses a viewport-height flex shell, real header/nav flow heights (including safe
+areas/RTL), zero outer padding and a bounded internal scroll region. Other
+routes retain document scrolling. Removed separate Take photo and Add close-up
+controls; Choose photos retains the native camera/library picker and multiple
+image selection. No grading, auth, cache or portfolio behavior changes.

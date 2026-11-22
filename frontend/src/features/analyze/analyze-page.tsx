@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
-import { LuCamera, LuCheck, LuImagePlus, LuLoaderCircle, LuPlus, LuScanLine, LuX, LuZoomIn } from 'react-icons/lu';
+import { LuCamera, LuCheck, LuImagePlus, LuLoaderCircle, LuScanLine, LuX, LuZoomIn } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure';
@@ -27,7 +27,7 @@ function Analyzer({owner}:{owner:string|null}) {
   const [task,setTask]=useState<Task>('idle');const [error,setError]=useState('');const [saveFailed,setSaveFailed]=useState(false);
   const [expanded,setExpanded]=useState(false);const [zoom,setZoom]=useState<number|null>(null);const [highlight,setHighlight]=useState<number|null>(null);
   const controller=useRef<AbortController|null>(null);const serial=useRef(0);
-  const files=useRef<HTMLInputElement>(null);const camera=useRef<HTMLInputElement>(null);const slot=useRef<Photo['slot']>('closeup');
+  const files=useRef<HTMLInputElement>(null);const slot=useRef<Photo['slot']>('closeup');
   const busy=task!=='idle';
   useEffect(()=>()=>{serial.current++;controller.current?.abort();photosRef.current.forEach(p=>{if(p.blob)URL.revokeObjectURL(p.url);});},[]);
   function replacePhotos(next:Photo[]) {
@@ -40,7 +40,7 @@ function Analyzer({owner}:{owner:string|null}) {
     const code=isAxiosError(e)?String(e.response?.data?.error ?? e.code):e instanceof Error?e.message:'';
     setError(code==='AI_AUTH_REQUIRED'?a('authError'):code==='CACHE_UNAVAILABLE'?a('cacheError'):code.startsWith('EBAY_')?a('linkError'):/IMAGE|PHOTO|UPLOAD/.test(code)?a('imageError'):/PROVIDER|RATE_LIMIT|WAIT_BEFORE|CONFIGURED/.test(code)?a('providerError'):a('error'));
   }
-  function pick(target:Photo['slot'],capture=false){slot.current=target;(capture?camera:files).current?.click();}
+  function pick(target:Photo['slot']){slot.current=target;files.current?.click();}
   async function addPhotos(event:ChangeEvent<HTMLInputElement>) {
     const incoming=Array.from(event.target.files??[]);event.target.value='';if(!incoming.length||busy)return;
     const target=slot.current;
@@ -89,17 +89,14 @@ function Analyzer({owner}:{owner:string|null}) {
   }
   return <PokedexFrame status={task==='busy'?'busy':error?'error':result?'complete':'idle'}>
     <input ref={files} type="file" accept="image/*" multiple hidden onChange={e=>void addPhotos(e)} />
-    <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={e=>void addPhotos(e)} />
     {!result?<>
       <h1 className="analyzer-pixel analyzer-title">{a('title')}</h1><p className="analyzer-intro">{a('intro')}</p>
       <div className="analyzer-modes" role="group" aria-label={a('title')}>{(['photos','ebay'] as const).map(m=><button key={m} type="button" aria-pressed={mode===m} disabled={busy} onClick={()=>{reset();setMode(m);}}>{a(m)}</button>)}</div>
       {mode==='photos'?<>
         <div className="analyzer-upload-grid">{(['front','back'] as const).map(side=>{
           const photo=photos.find(p=>p.slot===side);
-          return <div className="analyzer-upload" key={side}><strong>{a(side)}</strong>{photo?<button type="button" disabled={busy} className="analyzer-slot-preview" onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('add')}`}><img src={photo.url} alt={a(side)} /></button>:<LuCamera aria-hidden className="analyzer-camera" />}<div className="analyzer-pick"><button type="button" disabled={busy} onClick={()=>pick(side,true)} aria-label={`${a(side)} · ${a('camera')}`}><LuCamera aria-hidden />{a('camera')}</button><button type="button" disabled={busy} onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('files')}`}><LuImagePlus aria-hidden />{a('files')}</button></div></div>;
+          return <div className="analyzer-upload" key={side}><strong>{a(side)}</strong>{photo?<button type="button" disabled={busy} className="analyzer-slot-preview" onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('add')}`}><img src={photo.url} alt={a(side)} /></button>:<LuCamera aria-hidden className="analyzer-camera" />}<div className="analyzer-pick"><button type="button" disabled={busy} onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('files')}`}><LuImagePlus aria-hidden />{a('files')}</button></div></div>;
         })}</div>
-        <Button variant="outline" className="analyzer-closeup" disabled={busy||photos.length>=8} onClick={()=>pick('closeup')}><LuPlus aria-hidden />{a('closeup')}</Button>
-        <p className="analyzer-hint">{a('hint')}</p>
       </>:<form className="analyzer-ebay" onSubmit={e=>{e.preventDefault();void loadListing();}}><label htmlFor="analysis-ebay-url">{a('url')}</label><input id="analysis-ebay-url" type="url" dir="ltr" maxLength={750} required value={url} disabled={busy} onChange={e=>setUrl(e.target.value)} placeholder="https://www.ebay.com/itm/…"/><Button disabled={!owner||busy||!url.trim()}>{a('load')}</Button>{listing&&<a href={listing.url} target="_blank" rel="noopener noreferrer">{listing.title} ↗</a>}</form>}
       {!!photos.length&&<div className="analyzer-thumbs">{photos.map((photo,i)=><div key={photo.url}><button type="button" onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}><img src={photo.url} alt={a('photo',{number:i+1})}/></button>{mode==='photos'&&<button className="analyzer-remove" type="button" disabled={busy} onClick={()=>{replacePhotos(photos.filter((_,n)=>n!==i));clearResult();}} aria-label={a('remove',{number:i+1})}><LuX aria-hidden /></button>}</div>)}</div>}
       <Button className="analyzer-run analyzer-pixel" disabled={!owner||!photos.length||busy} onClick={()=>void analyze(error===a('cacheError'))}>{busy?<LuLoaderCircle className="analyzer-spin" aria-hidden/>:<LuScanLine aria-hidden/>}{a(task==='busy'?'busy':'run')}</Button>
