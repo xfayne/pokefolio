@@ -580,3 +580,13 @@ flow toolbar/pager/hint rows. Empty pockets open shared CatalogSearch constraine
 to eligible received/pending copies; auto-pick one, choose exact copy for duplicates.
 Fix direct touch dragging and implicit trailing-pocket placement without compaction.
 Rendered preview approval is required before merging/deploying this refinement.
+
+### Binder empty page action — 2026-11-22
+
+After owner approval of the compact Binder rendering, the Binder options menu gains
+Add empty page. It inserts exactly nine stable empty pockets immediately after the
+current page, materializing the old trailing implicit gaps if needed, and switches
+pages only on confirmed save. All original copy/wish pointers keep their order,
+with capacity and revision checks unchanged. Unit and mobile E2E coverage added.
+PR #117 remains the review/delivery unit; its new CI result and merge/deployment
+must be verified before claiming staging availability.
