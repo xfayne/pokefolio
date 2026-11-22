@@ -112,7 +112,7 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
 
 test('Add empty page inserts nine blank pockets after the current page, keeps adjacent pages and uses no account writes in sample mode',async({page})=>{
   const privateWrites:string[]=[];
-  page.on('request',r=>{if(/firestore|workers\\.dev/.test(r.url())&&r.method()!=='GET')privateWrites.push(r.url());});
+  page.on('request',r=>{if(/firestore|workers\.dev/.test(r.url())&&r.method()!=='GET')privateWrites.push(r.url());});
   await page.goto('./#/collection/binder?inventory=sample');
   const slots=page.locator('.binder-slot');
   const firstCard=await slots.first().getAttribute('aria-label');
