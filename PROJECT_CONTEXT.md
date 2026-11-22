@@ -542,3 +542,13 @@ the inner screen remains rounded. Removed confidence/photo-count copy, renamed
 Grade breakdown and styled its accessible meters as segmented LCD readouts.
 Original probabilities, >=5% filtering, descending order, limitations and the
 analysis engine/cache data are unchanged.
+
+## Correct square molded perimeter — 2026-11-22
+
+Owner rejected the prior base-only squaring because the visible plaque and
+highlights remained rounded and the right rail stepped out of alignment. The
+actual SVG header contour, right seam termination, outer highlight and lower lip
+now have square outer turns. A continuous right highlight replaces conflicting
+inset strokes. Original gradients, optics, inner screen and fixed viewport
+behavior remain unchanged. Validate full-resolution top/right/bottom captures;
+container bounds alone do not prove correct geometry.
