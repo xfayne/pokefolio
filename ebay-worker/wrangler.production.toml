@@ -1,0 +1,13 @@
+# Pokefolio backend API: eBay, AI analysis and shipment registration and queries.
+name = "pokefolio-api-production"
+main = "./index.js"
+compatibility_date = "2026-11-06"
+workers_dev = true
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGIN = "https://xfayne.github.io"
+POKEFOLIO_FIREBASE_PROJECT_ID = "pokefolio-production"
+
+# Owner explicitly approved shipment registration with the shared provider account.
+TRACK17_MUTATIONS_ENABLED = "true"

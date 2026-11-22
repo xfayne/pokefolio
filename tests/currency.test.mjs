@@ -1,0 +1,139 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import test from 'node:test';
+const source=readFileSync(new URL('../js/currency.js',import.meta.url),'utf8');
+const rates=[
+ {base:'USD',quote:'EUR',rate:0.9,date:'2026-11-12'},
+ {base:'USD',quote:'ILS',rate:3.5,date:'2026-11-12'},
+ {base:'USD',quote:'GBP',rate:0.8,date:'2026-11-12'}
+];
+function app(saved,reply=rates){
+ const storage=new Map(saved?[['pokefolio-display-currency',saved]]:[]);
+ const events=[];
+ const window={addEventListener(){},dispatchEvent(event){events.push(event.type);}};
+ const document={querySelectorAll:()=>[],getElementById:()=>null,addEventListener(){}};
+ const fetch=async()=>reply===null?{ok:false,status:503}:{ok:true,json:async()=>reply};
+ runInNewContext(source,{window,document,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch,Event:class{constructor(type){this.type=type;}},console:{warn(){}}});
+ return {fx:window.VintageCurrency,storage,events};
+}
+test('default ILS and consistent conversion of a EUR bid, GBP shipping and USD market price',async()=>{
+ const {fx}=app();
+ await fx.ready;
+ assert.equal(fx.getCurrency(),'ILS');
+ assert.ok(Math.abs(fx.convert(42.51,'EUR')-(42.51/0.9*3.5))<1e-9);
+ assert.ok(Math.abs(fx.convert(7.49,'GBP')-(7.49/0.8*3.5))<1e-9);
+ assert.ok(Math.abs(fx.convert(69.12,'USD')-69.12*3.5)<1e-9);
+ assert.ok(fx.format(42.51,'EUR').includes('165'));
+ assert.equal(fx.getFxDate(),'2026-11-12');
+ assert.match(fx.getRateStatus(),/Frankfurter/);
+});
+test('currency changes preserve USD scoring, notify UI and persist device setting',async()=>{
+ const {fx,storage,events}=app('USD');
+ await fx.ready;
+ assert.equal(fx.getCurrency(),'USD');
+ assert.ok(Math.abs(fx.toUSD(42.51,'EUR')-42.51/0.9)<1e-9);
+ assert.equal(fx.convert(42.51,'EUR'),fx.toUSD(42.51,'EUR'));
+ assert.equal(fx.setCurrency('EUR'),true);
+ assert.equal(fx.getCurrency(),'EUR');
+ assert.equal(storage.get('pokefolio-display-currency'),'EUR');
+ assert.ok(fx.format(10,'USD').includes('€'));
+ assert.equal(fx.setCurrency('GBP'),false);
+ assert.equal(fx.getCurrency(),'EUR');
+ assert.ok(events.length>=2);
+});
+test('unavailable or unrecognized FX never displays mixed or invented currencies',async()=>{
+ const {fx}=app('ILS',null);
+ await fx.ready;
+ assert.equal(fx.getFxDate(),null);
+ assert.equal(fx.format(100,'USD'),'—');
+ assert.equal(fx.format(100,'CAD'),'—');
+ assert.match(fx.getRateStatus(),/לא זמינים/);
+ fx.setCurrency('USD');
+ assert.ok(fx.format(100,'USD').includes('$'));
+ assert.equal(fx.format(100,'EUR'),'—');
+});
+test('invalid source and bad rate payload cannot produce fabricated amounts',async()=>{
+ const {fx}=app('EUR',[{base:'USD',quote:'EUR',rate:0,date:'2026-11-12'}]);
+ await fx.ready;
+ assert.equal(fx.format(10,'USD'),'—');
+ assert.equal(fx.toUSD(-5,'USD'),null);
+ assert.equal(fx.toUSD(null,'USD'),null);
+});
+
+
+test('GBP purchase amount persists with its original currency and is selected on reopening card details',()=>{
+ const actionsSource=readFileSync(new URL('../js/card-actions.js',import.meta.url),'utf8');
+ const detailsSource=readFileSync(new URL('../js/card-details.js',import.meta.url),'utf8');
+ const elements={
+  modalPurchaseAmount:{value:'19.95'},
+  modalPurchaseCurrency:{value:'GBP'},
+  modalPendingBadge:{hidden:true},
+  modalOwned:{classList:{toggle(){}},setAttribute(){},textContent:''},
+  modalPurchaseBox:{hidden:true},
+  modalMove:{textContent:'',onclick:null},
+  modalDeals:{onclick:null},
+  modalCondition:{onchange:null},
+  modalFirstEdition:{onchange:null},
+  modal:{open:false,showModal(){this.open=true;}}
+ };
+ let modalHTML='';
+ elements.modalContent={
+  set innerHTML(value){modalHTML=value;},
+  querySelector(){
+   return {parentElement:{classList:{add(){}}},addEventListener(){},complete:false};
+  }
+ };
+ const $=id=>elements[id]||null;
+ const state={
+  cards:[{id:'base1-1',set:'base1',name:'Alakazam',number:'1',large:'https://example.test/card.png'}],
+  owned:{'base1-1':true},wish:{},pendingPurchase:{},binderOrder:[],
+  conditions:{},firstEdition:{},purchasePrices:{}
+ };
+ let saves=0;
+ const actionWindow={};
+ runInNewContext(actionsSource,{window:actionWindow});
+ const actions=actionWindow.VintageCardActions.create({
+  state,$,ensureCloudEdit:()=>true,normalizeOrders(){},save(){saves++;},
+  refreshCard(){},toast(){},showModal(){}
+ });
+ actions.updatePurchasePrice('base1-1');
+ assert.deepEqual(JSON.parse(JSON.stringify(state.purchasePrices['base1-1'])),{amount:19.95,currency:'GBP'});
+ assert.equal(saves,1);
+ // Existing cloud/backup serializers preserve the purchase currency as provided.
+ state.purchasePrices=JSON.parse(JSON.stringify(state.purchasePrices));
+ const detailsWindow={VintageMarketPrices:{show(){}},VintageCloud:{canEdit:()=>true}};
+ runInNewContext(detailsSource,{window:detailsWindow});
+ const details=detailsWindow.VintageCardDetails.create({
+  state,MAP:new Map([['base1',{name:'Base Set',year:1999}]]),$,
+  esc:String,cardNumber:c=>c.number,rarityHtml:()=>'',dealAuctionUrl:()=>'',openDealsForCard(){},
+  toggleOwned(){},toggleWish(){},ensureCloudEdit:()=>true,openMovePicker(){},
+  save(){},renderCards(){},updatePurchasePrice:actions.updatePurchasePrice
+ });
+ details.showModal('base1-1');
+ assert.match(modalHTML,/<option value="GBP" selected>£<\/option>/);
+ assert.equal(elements.modalPurchaseBox.hidden,false);
+ assert.equal(typeof elements.modalPurchaseCurrency.onchange,'function');
+ elements.modalPurchaseCurrency.value='EUR';
+ elements.modalPurchaseCurrency.onchange();
+ assert.deepEqual(JSON.parse(JSON.stringify(state.purchasePrices['base1-1'])),{amount:19.95,currency:'EUR'});
+ assert.equal(saves,2);
+});
+
+test('display currency changes never read or mutate the legacy browser preference',async()=>{
+ const storage=new Map([['pokemon-vintage-display-currency','EUR']]);
+ const reads=[],writes=[];
+ const window={addEventListener(){},dispatchEvent(){}};
+ const document={querySelectorAll:()=>[],getElementById:()=>null,addEventListener(){}};
+ runInNewContext(source,{window,document,localStorage:{
+  getItem:key=>{reads.push(key);return storage.get(key)||null;},
+  setItem:(key,value)=>{writes.push(key);storage.set(key,value);}
+ },fetch:async()=>({ok:true,json:async()=>rates}),Event:class{},console:{warn(){}}});
+ await window.VintageCurrency.ready;
+ assert.equal(window.VintageCurrency.getCurrency(),'ILS');
+ window.VintageCurrency.setCurrency('USD');
+ assert.deepEqual(reads,['pokefolio-display-currency']);
+ assert.deepEqual(writes,['pokefolio-display-currency']);
+ assert.equal(storage.get('pokemon-vintage-display-currency'),'EUR');
+ assert.equal(storage.get('pokefolio-display-currency'),'USD');
+});

@@ -1,0 +1,96 @@
+{
+  "created": "2026-11-20",
+  "note": "Git blob SHAs verified against original downloaded bytes; images are unchanged.",
+  "assets": [
+    {
+      "path": "docs/design/approved/design-system.png",
+      "sha": "7847b3584b7436f1de12a1eeaf0edd878783b765",
+      "size": 1697911,
+      "library_file_id": "libfile_62653ee36ac48191bc466c43ba96548a"
+    },
+    {
+      "path": "docs/design/approved/dashboard.png",
+      "sha": "c1e2f9b3befbddf7da1d4585adc8d02f9a1fb53a",
+      "size": 1750987,
+      "library_file_id": "libfile_9fe3a8e466c0819197889ae0128f0513"
+    },
+    {
+      "path": "docs/design/approved/collection-overview.png",
+      "sha": "13f8c04f5ff8f779fb0701eedeee5910846b509f",
+      "size": 1459122,
+      "library_file_id": "libfile_9c48b77bf3ac8191896c087eb76586b4"
+    },
+    {
+      "path": "docs/design/approved/collection-cards.png",
+      "sha": "caafc8d3f17d7b4c53934b56fe72b3f66686ffee",
+      "size": 1587162,
+      "library_file_id": "libfile_228f0b386b1c819192dc35a4bd42a1b7"
+    },
+    {
+      "path": "docs/design/approved/collection-binder.png",
+      "sha": "7f9ba31206e64ef766ef8fa796ba825a70a69789",
+      "size": 1668292,
+      "library_file_id": "libfile_f5d27f91a6ec8191a3546c7278c90c57"
+    },
+    {
+      "path": "docs/design/approved/wishlist-cards.png",
+      "sha": "7af82c4586d97753e3c0cdaa3579b5f6199db666",
+      "size": 1588163,
+      "library_file_id": "libfile_4cadc2c5253081919b4c0ec38f83a913"
+    },
+    {
+      "path": "docs/design/approved/analyze-classic-red.png",
+      "sha": "9c03c6e9cb989927d8931cc8ce4d5055e64b10c0",
+      "size": 1681978,
+      "library_file_id": "libfile_bc184897d22481919ea0061ce2abfe17"
+    },
+    {
+      "path": "docs/design/approved/transactions-history.png",
+      "sha": "7c00796f982fa6c7b1db86e4b43573f6a1e9b9a5",
+      "size": 1575279,
+      "library_file_id": "libfile_59a0a93807688191940a3f39f0aa3b44"
+    },
+    {
+      "path": "docs/design/approved/purchase-details.png",
+      "sha": "712d33d98f413bff76d924b30ce8e613f2a276a9",
+      "size": 1622737,
+      "library_file_id": "libfile_ad5dbd51968081919c25e2cf6fdcad9e"
+    },
+    {
+      "path": "docs/design/approved/new-purchase-per-card.png",
+      "sha": "5d844bf36c95f9d75945556aa276c9476c9f51ea",
+      "size": 1597288,
+      "library_file_id": "libfile_3aa110887e648191bc057e2b0da85878"
+    },
+    {
+      "path": "docs/design/approved/new-purchase-lot.png",
+      "sha": "4078e11e2e7fc3fd46ba5a47bfec5773c7b49db2",
+      "size": 1585033,
+      "library_file_id": "libfile_3156f087c904819192e460b11fe4cebf"
+    },
+    {
+      "path": "docs/design/approved/new-sale.png",
+      "sha": "c21da86063a1626a13f64c7139a67c387b0640a8",
+      "size": 1577603,
+      "library_file_id": "libfile_9949c73fedac8191a954200db040b1ff"
+    },
+    {
+      "path": "docs/design/approved/catalog-search.png",
+      "sha": "5e53dca255ce7e4c08398fcbca2c01dc354680c6",
+      "size": 1574299,
+      "library_file_id": "libfile_5fd1336318e881919457a0fa32a80a69"
+    },
+    {
+      "path": "docs/design/approved/card-details.png",
+      "sha": "6d34748a64f21ad2139057c9bef9354991188bb6",
+      "size": 1603490,
+      "library_file_id": "libfile_ef9a49e0a2808191b773557a146758ce"
+    },
+    {
+      "path": "docs/design/proposals/wishlist-deals-proposal.png",
+      "sha": "f41b0e1deb26090833964104fb77ad7ef9216593",
+      "size": 1680682,
+      "library_file_id": "libfile_60cdd89192f88191ab61dd3da82ef7db"
+    }
+  ]
+}

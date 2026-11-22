@@ -1,0 +1,28 @@
+export const purchaseTranslations = {
+  en: {
+    trackingError: 'Tracking error', receive: 'Mark received', received: 'Received', receiveFailed: 'Could not mark received. Reload and try again.',
+    refreshTracking: 'Refresh tracking', trackingFailed: 'Tracking is unavailable. Your purchase is saved.', carrierStatus: 'Carrier status', unread: '{{count}} unread tracking updates',
+    statuses: { InfoReceived:'Information received', InTransit:'In transit', AvailableForPickup:'Available for pickup', OutForDelivery:'Out for delivery', Delivered:'Delivered', DeliveryFailure:'Delivery failed', Exception:'Exception', Expired:'Tracking expired', NotFound:'Awaiting tracking information', Unknown:'Awaiting update' },
+    title: 'Purchase details', cards: 'Cards', cardCost: 'Card cost', breakdown: 'Cost breakdown', shipping: 'Shipping', taxes: 'Taxes', fees: 'Fees', totalPaid: 'Total paid',
+    perCopy: 'Shipping: {{amount}} per copy', roundedShipping: 'Shipping: {{min}}–{{max}} per copy (rounded)', allocationUnknown: 'Per-copy shipping allocation is unavailable.',
+    shipment: 'Shipment', noShipment: 'No shipment linked', noEvents: 'No tracking updates yet', tracking: 'Tracking number', copyTracking: 'Copy tracking number', copied: 'Tracking number copied', copyFailed: 'Could not copy. Select the full tracking number to copy it.',
+    departed: 'Departed origin country', accepted: 'Accepted by carrier', registered: 'Tracking number received', unknownTime: 'Time unknown',
+    unknownCost: 'Unknown', estimated: 'Estimated', unallocated: 'Unallocated', costMismatch: 'Recorded copy prices do not reconcile with the card subtotal.',
+    notFound: 'Purchase unavailable', notFoundDetail: 'This purchase is not available in the current collection.', back: 'Back to History',
+    more: 'Transaction actions', moreDetail: 'Additional transaction actions', settlementUnknown: 'Payment status unknown', unpaid: 'Unpaid', partialPayment: 'Partially paid',
+    recordedTotal: 'Recorded total', legacyImport: 'Imported purchase',
+  },
+  he: {
+    trackingError: 'שגיאה במעקב', receive: 'התקבל', received: 'התקבל', receiveFailed: 'לא ניתן לסמן כהתקבל. טען מחדש ונסה שוב.',
+    refreshTracking: 'רענון מעקב', trackingFailed: 'המעקב אינו זמין כרגע. הרכישה שמורה.', carrierStatus: 'סטטוס חברת השילוח', unread: '{{count}} עדכוני מעקב שלא נקראו',
+    statuses: { InfoReceived:'פרטי משלוח התקבלו', InTransit:'בדרך', AvailableForPickup:'ממתין לאיסוף', OutForDelivery:'יוצא למסירה', Delivered:'נמסר', DeliveryFailure:'בעיה במסירה', Exception:'חריגה במשלוח', Expired:'המעקב הסתיים', NotFound:'ממתין למידע', Unknown:'ממתין לעדכון' },
+    title: 'פרטי רכישה', cards: 'קלפים', cardCost: 'מחיר הקלף', breakdown: 'פירוט עלויות', shipping: 'משלוח', taxes: 'מיסים', fees: 'עמלות', totalPaid: 'סך הכול שולם',
+    perCopy: 'משלוח: {{amount}} לעותק', roundedShipping: 'משלוח: {{min}}–{{max}} לעותק (לאחר עיגול)', allocationUnknown: 'חלוקת עלות המשלוח לעותקים אינה זמינה.',
+    shipment: 'משלוח', noShipment: 'לא קושר משלוח', noEvents: 'אין עדיין עדכוני מעקב', tracking: 'מספר מעקב', copyTracking: 'העתקת מספר מעקב', copied: 'מספר המעקב הועתק', copyFailed: 'ההעתקה נכשלה. אפשר לסמן ולהעתיק את מספר המעקב המלא.',
+    departed: 'יצא ממדינת המקור', accepted: 'התקבל בחברת השילוח', registered: 'התקבל מספר מעקב', unknownTime: 'השעה אינה ידועה',
+    unknownCost: 'לא ידוע', estimated: 'משוער', unallocated: 'טרם חולק', costMismatch: 'מחירי העותקים המתועדים אינם תואמים לסכום הקלפים בעסקה.',
+    notFound: 'הרכישה אינה זמינה', notFoundDetail: 'הרכישה אינה זמינה באוסף הנוכחי.', back: 'חזרה להיסטוריה',
+    more: 'פעולות עסקה', moreDetail: 'פעולות נוספות בעסקה', settlementUnknown: 'סטטוס התשלום אינו ידוע', unpaid: 'טרם שולם', partialPayment: 'שולם חלקית',
+    recordedTotal: 'סכום מתועד', legacyImport: 'רכישה שיובאה',
+  },
+};

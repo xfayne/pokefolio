@@ -1,0 +1,146 @@
+(()=>{'use strict';
+window.VintageCollectionViews={create({state,MAP,$,esc,cardNumber,normalizeOrders,renderShipments,binderPageCount,refreshPlacementTargets,binderVisible,renderOwnedList,renderDeals}){
+const isEmptyPocket=window.VintageCollectionOrdering.isEmptyPocket;
+function renderCollections({skipHidden=false}={}){if(!state.ready)return;normalizeOrders();if(!skipHidden||state.view==='shipments')renderShipments();
+ $('binderCountTab').textContent=state.binderOrder.filter(id=>!isEmptyPocket(id)).length+' קלפים';$('wishCountTab').textContent=state.wishOrder.length;
+ $('binderCount').textContent=state.binderOrder.filter(id=>state.owned[id]).length+' באוסף · '+state.binderOrder.filter(id=>!state.owned[id]&&state.pendingPurchase[id]).length+' בדרך · '+state.binderOrder.filter(id=>!state.owned[id]&&!state.pendingPurchase[id]&&state.wish[id]).length+' משאלות';
+ $('wishCount').textContent=state.wishOrder.length+' משאלות';
+ $('binderIncludeWish').checked=state.binderIncludeWish;
+ // Catalog actions need updated nav badges, not several off-screen image grids.
+ // Every destination is rendered normally on showView before it becomes visible.
+ if(skipHidden&&state.view==='catalog')return;
+ if($('binderTargetPage').options.length!==binderPageCount()||!$('binderTargetSlot').options.length)refreshPlacementTargets();
+ const list=binderVisible();const pageCount=Math.max(1,Math.ceil(list.length/9));state.binderPage=Math.min(Math.max(0,state.binderPage),pageCount-1);
+ const cardLookup=new Map(state.cards.map(c=>[c.id,c]));
+ const binderMarkup=Array.from({length:9},(_,slot)=>{const idx=state.binderPage*9+slot,id=list[idx];if(!id)return `<div class="binder-pocket empty" aria-label="כיס ריק"></div>`;
+ if(isEmptyPocket(id))return `<div class="binder-pocket empty binder-pocket-reserved" aria-label="כיס ${slot+1} שמור כריק"><span>כיס ריק</span><button type="button" data-binder-clear-empty="${idx}" aria-label="בטל רווח בכיס ${slot+1}">✕ בטל רווח</button></div>`;
+ const c=cardLookup.get(id);if(!c)return '<div class="binder-pocket empty"></div>';
+ const owned=!!state.owned[id],pending=!owned&&!!state.pendingPurchase[id],muted=!owned&&!pending&&!state.binderIncludeWish;
+ return `<article class="binder-pocket ${pending?'pending':owned?'':'wish'} ${muted?'wish-muted':''}" role="listitem" data-order-kind="binder" data-order-index="${idx}" data-card-id="${esc(id)}">
+ <span class="pocket-badge ${owned?'owned':pending?'pending':''}">${owned?'✓ שלי':pending?'📦 בדרך':muted?'☆ משאלה מוסתרת':'☆ משאלה'}</span>
+ <img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.name)}" data-preview="${esc(id)}" onerror="this.style.opacity='.3'">
+ <div class="pocket-title">${esc(c.name)}</div><div class="pocket-sub">${esc(MAP.get(c.set)?.name||'')} #${esc(cardNumber(c))}</div>
+ <div class="pocket-actions"><button type="button" data-binder-move="${esc(id)}" aria-label="בחר מיקום חדש עבור ${esc(c.name)}">↗ העבר</button><button type="button" class="binder-remove" data-binder-remove="${esc(id)}" aria-label="הסר את ${esc(c.name)} מהבינדר בלבד">✕ הסר</button></div>
+ <div class="reorder-row"><button type="button" aria-label="מקום קודם" data-move-kind="binder" data-move-index="${idx}" data-move-delta="-1" ${idx===0?'disabled':''}>↑</button><button type="button" class="drag-handle" data-drag-kind="binder" data-drag-index="${idx}" aria-label="גרור לשינוי הסדר">⋮⋮</button><button type="button" aria-label="מקום הבא" data-move-kind="binder" data-move-index="${idx}" data-move-delta="1" ${idx===list.length-1?'disabled':''}>↓</button></div></article>`}).join('');
+ reconcileKeyedChildren($('binderGrid'),binderMarkup,'binder');
+ $('binderBook').hidden=list.length===0;$('binderPager').hidden=list.length===0;$('binderEmpty').hidden=list.length!==0;
+ $('binderPageLabel').textContent='עמוד '+(state.binderPage+1)+' מתוך '+pageCount;
+ $('binderPageTools').hidden=list.length===0;
+ $('binderMovePage').disabled=pageCount<2;
+ $('binderPrev').disabled=state.binderPage===0;$('binderNext').disabled=state.binderPage>=pageCount-1;
+ const wishQuery=$('wishFind').value.trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+ const wishSort=$('wishSort').value;
+ const priorityOrder=wishSort==='priority';
+ $('wishSortNote').hidden=priorityOrder;
+ $('wishlistItems').dataset.sortMode=wishSort;
+ const wishMatches=state.wishOrder.map((id,i)=>({id,i})).filter(({id})=>{
+  if(!wishQuery)return true;
+  const card=cardLookup.get(id);
+  const searchable=card && [card.name,MAP.get(card.set)?.name||'',cardNumber(card),id].join(' ');
+  return searchable && searchable.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').includes(wishQuery);
+ });
+ if(!priorityOrder){
+  const prices=new Map(wishMatches.map(({id})=>{
+   const c=cardLookup.get(id),condition=state.conditions[id];
+   const value=c&&condition?window.VintageMarketPrices?.getOwnedPrice?.(c,MAP.get(c.set)?.name||'',condition,!!state.firstEdition[id]):null;
+   return [id,typeof value==='number'&&Number.isFinite(value)?value:null];
+  }));
+  wishMatches.sort((a,b)=>{
+   const av=prices.get(a.id),bv=prices.get(b.id);
+   if(av===null)return bv===null?a.i-b.i:1;
+   if(bv===null)return -1;
+   return (wishSort==='price-desc'?bv-av:av-bv)||a.i-b.i;
+  });
+ }
+ const wishlistMarkup=state.wishOrder.length ? wishMatches.length ? wishMatches.map(({id,i})=>{
+  const c=cardLookup.get(id);if(!c)return '';
+  const condition=state.conditions[id]||'';
+  const market=condition?window.VintageMarketPrices?.getOwnedPrice?.(c,MAP.get(c.set)?.name||'',condition,!!state.firstEdition[id]):null;
+  const amount=typeof market==='number'?window.VintageCurrency.format(market,'USD'):'';
+  return `<article class="wish-item" role="listitem" ${priorityOrder?'data-order-kind="wishlist" data-drag-kind="wishlist" data-drag-index="'+i+'"':''} data-order-index="${i}" data-open-wish="${esc(id)}" tabindex="0" aria-label="פרטים על ${esc(c.name)}">
+   <span class="wish-rank" ${priorityOrder?'data-drag-kind="wishlist" data-drag-index="'+i+'" title="גרור כדי לשנות את הסדר"':''} aria-label="עדיפות ${i+1}">${i+1}</span>
+   <img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.name)}" ${priorityOrder?'data-drag-kind="wishlist" data-drag-index="'+i+'"':''} title="${priorityOrder?'גרור לשינוי הסדר · הקש לפתיחת פרטים':'הקש לפתיחת פרטים'}" draggable="false">
+   <div class="wish-copy"><strong>${esc(c.name)}</strong><small>${esc(MAP.get(c.set)?.name||'')} · #${esc(cardNumber(c))}</small></div>
+   <div class="wish-side">
+    ${condition?`<div class="wish-market">
+     ${amount?`<span class="owned-price">${esc(amount)}</span>`:market===undefined?'<span class="owned-price pending">טוען…</span>':''}
+     <span class="owned-condition">${esc(condition)}${state.firstEdition[id]?' · 1st':''}</span>
+    </div>`:''}
+    <button type="button" class="btn sm wish-move-action" data-wish-move="${esc(id)}" aria-label="שנה מיקום של ${esc(c.name)} ב־Wishlist" ${priorityOrder?'':'disabled title="ניתן לשנות מיקום רק במיון לפי סדר הרצונות"'}>↗ העבר</button>
+   </div>
+  </article>`;
+ }).join('') : `<div class="no-cards">לא נמצאו קלפים שמתאימים לחיפוש.</div>` :
+ `<div class="no-cards">Wishlist עדיין ריקה. סמן ☆ ליד קלף בקטלוג כדי להוסיף אותו. <button type="button" class="btn sm primary" data-view-btn="catalog">לקטלוג</button></div>`;
+ reconcileKeyedChildren($('wishlistItems'),wishlistMarkup,'wishlist');
+ renderOwnedList();
+ if(state.view==='deals')renderDeals();
+}
+
+
+// A reorder moves existing DOM articles instead of recreating their card art.
+// An inert template provides updated prices, ranks and drag targets without
+// connecting any throwaway <img> elements to the document.
+function syncAttributes(current,next){
+ for(const attr of Array.from(current.attributes)){
+  // Preserve an onerror fallback style on an existing failed image.
+  if(!next.hasAttribute(attr.name)&&!(current.tagName==='IMG'&&attr.name==='style'))
+   current.removeAttribute(attr.name);
+ }
+ for(const attr of Array.from(next.attributes)){
+  if(current.getAttribute(attr.name)!==attr.value)current.setAttribute(attr.name,attr.value);
+ }
+}
+function patchElement(current,next){
+ if(current.nodeType!==next.nodeType||
+    (current.nodeType===1&&current.tagName!==next.tagName)){
+  current.replaceWith(next);return;
+ }
+ if(current.nodeType===3){
+  if(current.nodeValue!==next.nodeValue)current.nodeValue=next.nodeValue;
+  return;
+ }
+ if(current.nodeType!==1)return;
+ syncAttributes(current,next);
+ // Keep an already mounted and decoded image, while refreshing its attributes.
+ if(current.tagName==='IMG')return;
+ const desired=Array.from(next.childNodes);
+ for(let i=0;i<desired.length;i++){
+  const child=current.childNodes[i];
+  if(child)patchElement(child,desired[i]);
+  else current.appendChild(desired[i]);
+ }
+ while(current.childNodes.length>desired.length)current.lastChild.remove();
+}
+function reconcileKeyedChildren(container,markup,kind){
+ const template=document.createElement('template');
+ template.innerHTML=markup;
+ const incoming=Array.from(template.content.children);
+ const keyOf=(node,index)=>{
+  if(kind==='wishlist')return node.dataset.openWish||null;
+  return node.dataset.cardId||(
+   node.matches('.binder-pocket.empty')?'empty:'+index:null
+  );
+ };
+ const existing=new Map(Array.from(container.children).map((node,i)=>[keyOf(node,i),node])
+  .filter(([key])=>key!==null));
+ const wanted=incoming.map((node,i)=>{
+  const key=keyOf(node,i),mounted=key===null?null:existing.get(key);
+  if(mounted&&mounted.tagName===node.tagName){
+   patchElement(mounted,node);return mounted;
+  }
+  return node;
+ });
+ const keep=new Set(wanted);
+ for(const node of Array.from(container.children))if(!keep.has(node))node.remove();
+ // An anchor pass moves whole existing articles and their mounted images.
+ let anchor=null;
+ for(let i=wanted.length-1;i>=0;i--){
+  const node=wanted[i];
+  if(node.parentNode!==container||node.nextElementSibling!==anchor)
+   container.insertBefore(node,anchor);
+  anchor=node;
+ }
+}
+return {renderCollections};
+}};
+})();

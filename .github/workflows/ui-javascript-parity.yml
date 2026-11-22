@@ -1,0 +1,51 @@
+name: Main UI JavaScript Parity
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  javascript-parity:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.57.0-noble
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: npm install --no-save --no-package-lock playwright@1.57.0
+      - run: |
+          node --check js/shipments.js
+          node --check js/collection-views.js
+          node --check js/collection-analytics.js
+          node --check js/owned-cards.js
+          node --check js/collection-drag.js
+          node --check js/collection-ordering.js
+          node --check js/collection-state.js
+          node --check js/collection-backup.js
+          node --check js/card-actions.js
+          node --check js/card-details.js
+          node --check js/catalog-ui.js
+          node --check js/catalog-loader.js
+          node --check js/binder.js
+          node --check js/currency.js
+          node --check js/market-prices.js
+          node --check js/public-reader.js
+          node --check js/firebase-cloud.js
+      - run: node --test tests/legacy-backup.test.mjs tests/legacy-preview.test.mjs tests/legacy-import-state.test.mjs tests/legacy-import-files.test.mjs tests/currency.test.mjs tests/binder-ordering.test.mjs tests/collection-analytics.test.mjs tests/import-safety.test.mjs
+      - run: node --check tests/cloud-data-regression.mjs
+      - run: node scripts/build-index.mjs --check
+      - run: node tests/js-extraction-parity.mjs
+      - run: node tests/cloud-data-regression.mjs
+      - run: node --check deal-finder/live.js && node --check tests/deals-ui-regression.mjs
+      - run: node tests/deals-ui-regression.mjs
+      - run: node --check ebay-worker/index.js && node --check deal-finder/live.js
+      - run: node --test ebay-worker/*.test.mjs

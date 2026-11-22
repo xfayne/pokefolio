@@ -1,0 +1,69 @@
+name: Pokefolio Staging Preview
+on:
+  workflow_dispatch:
+    inputs:
+      enable_api:
+        description: Enable the verified independent Pokefolio staging API
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: [React Foundation]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pokefolio-staging-preview
+  cancel-in-progress: false
+jobs:
+  build:
+    if: >-
+      github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == 'xfayne/pokefolio' && github.event.workflow_run.head_sha == github.sha))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify current main and required checks
+        run: node scripts/verify-staging-source.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm ci --prefix frontend
+      - run: npm --prefix frontend run typecheck
+      - name: Package staging frontend only
+        run: node scripts/package-react-staging.mjs
+        env:
+          POKEFOLIO_STAGING_API_URL: ${{ (github.event_name == 'workflow_run' || inputs.enable_api) && 'https://pokefolio-api-staging.xfayne.workers.dev' || '' }}
+          POKEFOLIO_FIREBASE_WEB_CONFIG: ${{ vars.POKEFOLIO_FIREBASE_WEB_CONFIG }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/pokefolio-staging
+          retention-days: 1
+  deploy:
+    needs: build
+    if: github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pokefolio-staging
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy verified staging artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,47 @@
+name: React Foundation
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  react-foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Configure bounded downloads from the official Ubuntu mirror
+        run: |
+          printf 'Acquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::Retries "2";\n' | sudo tee /etc/apt/apt.conf.d/99-pokefolio-downloads >/dev/null
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+      - run: npx playwright install --with-deps chromium
+      - name: Verify staging artifact with synthetic public configuration
+        run: node ../scripts/package-react-staging.mjs
+        env:
+          POKEFOLIO_STAGING_API_URL: https://pokefolio-api-staging.xfayne.workers.dev
+          POKEFOLIO_FIREBASE_WEB_CONFIG: '{"apiKey":"AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","appId":"1:403637067452:web:ea6738aebf38f14c637ab9","authDomain":"pokefolio-staging.firebaseapp.com","projectId":"pokefolio-staging"}'
+      - run: npm run test:e2e
+      - name: Upload mobile visual checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-navigation-checks
+          path: frontend/test-results/
+          retention-days: 7
