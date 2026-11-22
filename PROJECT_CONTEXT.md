@@ -520,3 +520,13 @@ areas/RTL), zero outer padding and a bounded internal scroll region. Other
 routes retain document scrolling. Removed separate Take photo and Add close-up
 controls; Choose photos retains the native camera/library picker and multiple
 image selection. No grading, auth, cache or portfolio behavior changes.
+
+## Analyzer result feedback — 2026-11-22
+
+Owner requested a white main-lens on/off blink during analysis, alternating
+green/yellow small lamps, and completed-result lens colors from NM green through
+LP lime, MP yellow, HP orange to DMG red. Only the glass animates, preserving the
+metal rim and honoring reduced motion. Detected wear precedes photos. Removed
+the estimate chip and standalone disclaimer; breakdown/limitations is always
+open with a pixel heading, descending probabilities and bars >=5% only, without
+renormalization. No model, API, cache, auth or portfolio behavior changes.
