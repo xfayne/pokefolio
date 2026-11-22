@@ -57,6 +57,20 @@ export function movePage(pockets: readonly BinderPocket[], from: number, to: num
   if (result.length > capacity) throw Error('Binder is full');
   return result;
 }
+/** Insert a complete blank 3×3 page directly after the selected page.
+ * Preserve every existing pocket in order, including trailing implicit gaps.
+ * The final existing page is padded only when appending after it.
+ */
+export function insertEmptyPage(pockets: readonly BinderPocket[], after: number): BinderPocket[] {
+  const count=pageCount(pockets);
+  if (!Number.isInteger(after) || after<0 || after>=count) throw Error('Invalid page');
+  const index=(after+1)*9;
+  const result=[...pockets];
+  if (Math.max(result.length,index)+9>capacity) throw Error('Binder is full');
+  while (result.length<index) result.push(gap());
+  result.splice(index,0,...Array.from({length:9},()=>gap()));
+  return result;
+}
 export type PublicPocket = {cardId:string;kind:'owned'|'pending'|'wish'} | null;
 const publicToken = /^(o|p|w):((?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))$/;
 export function projectBinder(binder: Binder, copies: readonly CardCopy[]): PublicPocket[] {
