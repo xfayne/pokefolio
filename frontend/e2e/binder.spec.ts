@@ -110,6 +110,28 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await test.info().attach('binder-landscape',{body:await page.screenshot({path:test.info().outputPath('binder-landscape.png')}),contentType:'image/png'});
 });
 
+test('Add empty page inserts nine blank pockets after the current page, keeps adjacent pages and uses no account writes in sample mode',async({page})=>{
+  const privateWrites:string[]=[];
+  page.on('request',r=>{if(/firestore|workers\\.dev/.test(r.url())&&r.method()!=='GET')privateWrites.push(r.url());});
+  await page.goto('./#/collection/binder?inventory=sample');
+  const slots=page.locator('.binder-slot');
+  const firstCard=await slots.first().getAttribute('aria-label');
+  await page.getByRole('button',{name:'Binder options'}).click();
+  await page.getByRole('button',{name:'Add empty page'}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('[data-binder-page="1"] .binder-page-stamp')).toHaveText('2/4');
+  await expect(slots).toHaveCount(9);
+  await expect(slots.filter({has:page.locator('.binder-art')})).toHaveCount(0);
+  for(let i=0;i<9;i++) await expect(slots.nth(i)).toHaveAttribute('data-kind','empty');
+  await fixedLayout(page);
+  await page.getByRole('button',{name:'Previous page'}).click();
+  await expect(slots.first()).toHaveAttribute('aria-label',firstCard!);
+  await page.getByRole('button',{name:'Next page'}).click();
+  await page.getByRole('button',{name:'Next page'}).click();
+  await expect(slots.first()).toHaveAttribute('data-kind','owned');
+  await expect(page.locator('.binder-page-stamp').first()).toHaveText('3/4');
+  expect(privateWrites).toEqual([]);
+});
 test('empty pocket opens the shared eligible catalog and adds its sole copy in place',async({page})=>{
  await page.goto('./#/collection/binder?inventory=sample');
  const empty=page.locator('.binder-slot[data-kind="empty"]').first();
