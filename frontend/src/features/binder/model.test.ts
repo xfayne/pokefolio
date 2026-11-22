@@ -64,7 +64,8 @@ describe('legacy page and pocket invariants',()=>{
     expect(()=>insertEmptyPage([c('a')],0.5)).toThrow('Invalid page');
     const full=Array.from({length:capacity-10},(_,i)=>hole(`h-${i}`));
     expect(insertEmptyPage(full,pageCount(full)-1)).toHaveLength(1251);
-    expect(()=>insertEmptyPage(Array.from({length:capacity-9},(_,i)=>hole(`h-${i}`)),pageCount(full)-1)).toThrow('Binder is full');
+    const nearlyFull=Array.from({length:capacity-9},(_,i)=>hole(`h-${i}`));
+    expect(()=>insertEmptyPage(nearlyFull,pageCount(nearlyFull)-1)).toThrow('Binder is full');
     expect(full).toHaveLength(capacity-10);
   });
   it('reserves and explicitly clears holes, validates bounds and rejects duplicates',()=>{
