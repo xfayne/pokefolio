@@ -77,3 +77,15 @@ empty pockets/background turn pages; taps on cards do not navigate. A defect tha
 clamped trailing implicit targets to the final occupied index was removed: moving
 the only card to pocket nine now materializes gaps and retains that exact target.
 Keyboard empty-pocket activation and explicit move tools remain available.
+
+## Empty page insertion — 2026-11-22
+
+The approved overflow menu includes **Add empty page**. The action inserts a full
+nine-pocket blank page immediately after the current page, navigates to that page
+only after a confirmed save, and leaves every other page's cards and reserved
+pockets in their original relative order. If the current last page is partial,
+its trailing implicit pockets are first materialized as distinct empty slots.
+All new gaps receive unique stable tokens; additions beyond the existing binder
+capacity are disabled and rejected. Account saves use the existing owner-only,
+revision-checked transaction; sample changes remain in memory. No inventory,
+Wishlist, transaction or legacy production data is modified.
