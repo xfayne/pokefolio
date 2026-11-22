@@ -166,6 +166,7 @@ test('dragging a card outside removes only its binder placement and makes its co
   expect(frames).toEqual(['empty','empty','empty']);
   await expect(slots.nth(1)).toHaveAttribute('aria-label',untouched!);
   await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
+  await expect(page.locator('.binder-page')).toHaveAttribute('aria-busy','false');
   await slots.first().tap();
   const dialog=page.getByRole('dialog');
   await dialog.getByRole('searchbox').fill('Charizard');
