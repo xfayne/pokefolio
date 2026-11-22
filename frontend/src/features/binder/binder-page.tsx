@@ -1,6 +1,6 @@
 import { CatalogSearch } from '@/features/catalog/catalog-search';
 import { BinderPicker, eligibleBinderCopies } from './binder-picker';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -79,9 +79,6 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
   // revision reaches this component. Failed writes roll back to saved pockets.
   const [pendingLayout,setPendingLayout]=useState<{fromRevision:number;next:Binder}|null>(null);
   const visibleBinder=pendingLayout && pendingLayout.fromRevision===binder.revision ? pendingLayout.next : binder;
-  useEffect(()=>{
-    if(pendingLayout && pendingLayout.fromRevision!==binder.revision) setPendingLayout(null);
-  },[binder.revision,pendingLayout]);
   const current=Math.min(page,pageCount(visibleBinder.pockets)-1);
   const changePage=(next:number)=>{setPage(next);try{sessionStorage.setItem(pageKey,String(next));}catch{/* navigation remains usable */}};
   const save=async(next:Binder)=>{
