@@ -132,6 +132,42 @@ test('Add empty page inserts nine blank pockets after the current page, keeps ad
   await expect(page.locator('.binder-page-stamp').first()).toHaveText('3/4');
   expect(privateWrites).toEqual([]);
 });
+test('dragging a card outside removes only its binder placement and makes its copy selectable again',async({page})=>{
+  const privateWrites:string[]=[];
+  page.on('request',r=>{if(/firestore|workers\\.dev/.test(r.url()) && r.method()!=='GET')privateWrites.push(r.url());});
+  await page.goto('./#/collection/binder?inventory=sample');
+  const slots=page.locator('.binder-slot');
+  const source=(await slots.first().boundingBox())!;
+  const leaf=(await page.locator('.binder-leaf').boundingBox())!;
+  const untouched=await slots.nth(1).getAttribute('aria-label');
+  const touch=await page.context().newCDPSession(page);
+  const start={x:source.x+source.width/2,y:source.y+source.height/2};
+  const outside={x:start.x,y:Math.max(10,leaf.y-16)};
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
+  await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[outside]});
+  await expect(page.locator('.binder-drag-remove')).toContainText('Release to remove');
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  // The previous layout must not reappear for even one paint while saving.
+  const frames=await page.evaluate(async()=>{
+    const observed:string[]=[];
+    for(let i=0;i<3;i++) {
+      await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+      observed.push(document.querySelector('[data-pocket-index="0"]')?.getAttribute('data-kind') ?? 'missing');
+    }
+    return observed;
+  });
+  expect(frames).toEqual(['empty','empty','empty']);
+  await expect(slots.nth(1)).toHaveAttribute('aria-label',untouched!);
+  await expect(slots.nth(0)).toHaveAttribute('data-kind','empty');
+  await slots.first().tap();
+  const dialog=page.getByRole('dialog');
+  await dialog.getByRole('searchbox').fill('Charizard');
+  await expect(dialog.locator('.catalog-result')).toHaveCount(1);
+  await dialog.getByRole('button',{name:/Charizard/}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(slots.nth(0)).toHaveAttribute('aria-label',/Charizard/);
+  expect(privateWrites).toEqual([]);
+});
 test('empty pocket opens the shared eligible catalog and adds its sole copy in place',async({page})=>{
  await page.goto('./#/collection/binder?inventory=sample');
  const empty=page.locator('.binder-slot[data-kind="empty"]').first();
