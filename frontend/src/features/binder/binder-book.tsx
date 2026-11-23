@@ -106,7 +106,13 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
             {Array.from({length:9},(_,slot)=>{
               const index=number*9+slot,p=pockets[index];
               const kind=p?.kind ?? 'empty';
-              return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" onClick={()=>{if(kind==='empty'&&!busy&&!suppressClick.current)onEmpty?.(index);}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? t('binderUi.empty')}`}>
+              return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" onClick={event=>{if(kind==='empty'&&!busy&&!suppressClick.current){
+                // Pointer-driven selection must not leave a persistent focus ring
+                // when the sheet restores focus on close. Keyboard activation
+                // continues to preserve its visible focus for accessibility.
+                if(event.detail>0)event.currentTarget.blur();
+                onEmpty?.(index);
+              }}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? t('binderUi.empty')}`}>
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{t(kind==='empty'?'binderUi.empty':'binderUi.unavailable')}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
