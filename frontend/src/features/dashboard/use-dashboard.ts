@@ -53,7 +53,7 @@ export function useDashboard(month:string){
  // Current quotes are shared with Collection (same QueryClient/cache key).
  // History is optional and cannot replace missing or unverified current data.
  const currentSeries=dashboardPriceSeries(relevant,products,market.results,currentPrices.quotes);
- const series:PriceSeries[]=preview?[...new Map(relevant.filter(c=>c.catalog.kind==='identified'&&c.condition.status==='known').map(c=>[`${catalogIdentity(c.catalog)}:${c.condition.status==='known'?c.condition.value:''}`,sampleSeries(c,today)])).values()]:currentSeries;
+ const series:PriceSeries[]=preview?[...new Map<string,PriceSeries>(relevant.filter(c=>c.catalog.kind==='identified'&&c.condition.status==='known').map(c=>[`${catalogIdentity(c.catalog)}:${c.condition.status==='known'?c.condition.value:''}`,sampleSeries(c,today)] as const)).values()]:currentSeries;
  // The existing display currency service supplies a dated reference FX rate.
  // If the 1-year reference request fails, a recent genuine spot observation
  // can still convert today's market value; old purchase costs remain unknown.
