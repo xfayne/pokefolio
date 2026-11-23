@@ -30,7 +30,7 @@ test('dashboard follows the approved sections and links each physical copy safel
  expect(Math.abs((await page.locator('.dashboard-metric-kpis').boundingBox())!.y-originalKpis!.y)).toBeLessThan(1);
  await page.getByLabel('Chart metric').selectOption('realized');
  await expect(page.locator('.dashboard-big')).toHaveText('—');
- await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sales');
+ await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sale');
  await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','1');
  await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Net Sale Proceeds','Sold Cost Basis']);
  expect(Math.abs((await page.locator('.dashboard-big').boundingBox())!.y-baseline!.y)).toBeLessThan(1);
