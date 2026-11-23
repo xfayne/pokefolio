@@ -156,6 +156,22 @@ service cloud.firestore {
           && request.resource.data.includeWish is bool && request.resource.data.updatedAt == request.time;
         allow list, delete: if false;
       }
+      // Independent owner-only Wishlist priorities; never mutate binder/legacy progress.
+      match /wishlists/{id} {
+        allow get: if isOwner(uid) && id == 'main';
+        allow create, update: if isOwner(uid) && id == 'main'
+          && request.resource.data.keys().hasOnly(['schemaVersion','ownerUid','revision','ids','updatedAt'])
+          && request.resource.data.keys().hasAll(['schemaVersion','ownerUid','revision','ids','updatedAt'])
+          && request.resource.data.schemaVersion == 1 && request.resource.data.ownerUid == uid
+          && request.resource.data.revision is int
+          && request.resource.data.revision >= 1 && request.resource.data.revision <= 9007199254740991
+          && ((!exists(/databases/$(database)/documents/users/$(uid)/wishlists/$(id)) && request.resource.data.revision == 1)
+            || (exists(/databases/$(database)/documents/users/$(uid)/wishlists/$(id)) && request.resource.data.revision == resource.data.revision + 1))
+          && request.resource.data.ids is string && request.resource.data.ids.size() <= 40000
+          && (request.resource.data.ids == '' || request.resource.data.ids.matches('^((?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)(;((?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))*$'))
+          && request.resource.data.updatedAt == request.time;
+        allow list, delete: if false;
+      }
       match /preferences/{id} {
         allow read: if isOwner(uid) && id == 'display';
         allow create, update: if isOwner(uid) && id == 'display'

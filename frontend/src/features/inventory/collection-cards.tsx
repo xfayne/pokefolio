@@ -18,7 +18,7 @@ import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/d
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId }: { inspectCopyId?: string | undefined; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -82,16 +82,19 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
         </div>)}
       </div></DisclosureContent>
     </ListCard>)}</ul>
-    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
+    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} wishlistIds={wishlistIds} onToggleWishlist={onToggleWishlist} wishlistBusy={!!wishlistBusy} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
   </section>;
 }
 
-export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, initialInspection = null, onClose, onSave, onViewPurchase, livePrices = false, transition, priceStatus, onRetryPrice, onEditionChange, money, cost, metric }: { livePrices?: boolean; onEditionChange?: ((first: boolean) => void) | undefined; transition?: 'slide' | 'subtle'; priceStatus?: string | undefined; onRetryPrice?: (() => void) | undefined; group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; initialInspection?: string | null; onClose: () => void; onSave?: SaveCopy | undefined; onViewPurchase?: ((transactionId: string) => void) | undefined; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
+export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy, initialInspection = null, onClose, onSave, onViewPurchase, wishlistIds, onToggleWishlist, wishlistBusy = false, livePrices = false, transition, priceStatus, onRetryPrice, onEditionChange, money, cost, metric }: { livePrices?: boolean; onEditionChange?: ((first: boolean) => void) | undefined; transition?: 'slide' | 'subtle'; priceStatus?: string | undefined; onRetryPrice?: (() => void) | undefined; group: InventoryGroup; catalog: CatalogRef; quotes: readonly CopyQuote[]; currency: Money['currency']; initialCopy: string | null; initialInspection?: string | null; onClose: () => void; onSave?: SaveCopy | undefined; onViewPurchase?: ((transactionId: string) => void) | undefined; wishlistIds?: readonly string[] | undefined; onToggleWishlist?: ((cardId: string) => Promise<void>) | undefined; wishlistBusy?: boolean; money: (m: Money) => string; cost: (v: CopyView['paid']) => string; metric: (v: CopyView['market']) => string }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<string | null>(initialCopy);
   const [inspecting, setInspecting] = useState<string | null>(initialInspection);
   const [zoomed, setZoomed] = useState(false);
   const [purchase, setPurchase] = useState<string | null>(null);
+  const [wishError, setWishError] = useState(false);
+  const wishCardId = catalog.kind === 'identified' ? catalog.cardId : null;
+  const isWished = !!wishCardId && !!wishlistIds?.includes(wishCardId);
   const [copiesOpen, setCopiesOpen] = useState(() => group.copies.length === 1);
   const copiesId = useId();
   const selected = group.copies.find(v => v.copy.id === editing);
@@ -106,8 +109,8 @@ export function CardDetailsSheet({ group, catalog, quotes, currency, initialCopy
         <span className="min-w-0 text-sm text-slate-600">{t('inventory.paidShort')} {cost(v.paid)}{v.copy.possession !== 'received' && <span className="ms-2 text-xs text-slate-600">{t(`inventory.${v.copy.possession}`)}</span>}</span></button>
         {v.copy.acquisition.kind === 'purchase' && <button type="button" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-blue-700" onClick={() => { if (onViewPurchase && v.copy.acquisition.kind === 'purchase') onViewPurchase(v.copy.acquisition.transactionId); else setPurchase(v.copy.id); }}>{t('inventory.purchase')}<LuChevronRight aria-hidden className="ms-1 inline size-4 rtl:rotate-180" /></button>}
       </li>)}</ul></DisclosureContent></Card>}
-      <div className="card-detail-actions space-y-2"><p className="text-xs text-slate-600">{t('inventory.actionsSoon')}</p><div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" disabled><LuHeart aria-hidden />{t('inventory.addWishlist')}</Button>
+      <div className="card-detail-actions space-y-2"><p className="text-xs text-slate-600">{t('inventory.actionsSoon')}</p>{wishError && <p role="alert" className="text-xs text-red-700">{t('inventory.wishlistFailed')}</p>}<div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" disabled={!wishCardId || !onToggleWishlist || wishlistBusy} aria-pressed={isWished} onClick={() => { if (wishCardId && onToggleWishlist) void onToggleWishlist(wishCardId).then(() => setWishError(false)).catch(() => setWishError(true)); }}><LuHeart aria-hidden fill={isWished ? "currentColor" : "none"} />{t(isWished ? 'inventory.removeWishlist' : 'inventory.addWishlist')}</Button>
         <Button variant="outline" disabled><LuTag aria-hidden />{t('inventory.findDeals')}</Button>
       </div><Button className="w-full" disabled><LuPlus aria-hidden />{t('inventory.recordPurchase')}</Button></div>
     </div>}

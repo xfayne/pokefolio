@@ -1,3 +1,5 @@
+import { WishlistPage } from '@/features/wishlist/wishlist-page';
+import { useWishlist } from '@/features/wishlist/use-wishlist';
 import { AnalyzePage } from '@/features/analyze/analyze-page';
 import {StagingYearLoader} from '@/features/staging/year-loader';
 import { PurchaseReceiptAction } from '@/features/transactions/purchase-receipt-action';
@@ -73,7 +75,7 @@ function SectionPage({ name }: { name: Destination }) {
         <LuPlus aria-hidden className="size-5" />
       </button>
     </div> : tabNavigation)}
-    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -96,6 +98,7 @@ function Shell() {
   }, [contentLocation.pathname]);
   const demoTransactions = useDemoTransactionData();
   const account = usePortfolio();
+  const wish = useWishlist();
   const contextParams = new URLSearchParams(contentLocation.search);
   const tracking = useTrackingSync(account.owner, account.records, contextParams.get('transactions') !== 'sample' && contextParams.get('inventory') !== 'sample');
   const unread = account.records.reduce((sum,e) => sum + (e.collection === 'shipments' ? unreadTracking(e.record) : 0), 0);
@@ -131,7 +134,7 @@ function Shell() {
       <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
         <>{focusedTransaction ? <button type="button" onClick={backToHistory} aria-label={t('purchaseDetails.back')} className="flex size-7 shrink-0 items-center justify-center rounded-lg focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button> : <span aria-hidden className="brand-ball pokeball size-7 shrink-0" />}</>
         <h1 tabIndex={focusedTransaction ? -1 : undefined} className="brand-title min-w-0 flex-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{current==='dashboard'?'Pokefolio':t(isEditing ? editingSale ? 'sale.edit' : 'newPurchase.editTitle' : isNewPurchase ? 'newPurchase.title' : isSale ? 'sale.title' : isPurchase ? 'purchaseDetails.title' : current)}</h1>
-        {((contentLocation.pathname === '/dashboard'&&new URLSearchParams(contentLocation.search).get('dashboard')==='sample') || (contentLocation.pathname.startsWith('/collection/') && (new URLSearchParams(contentLocation.search).get('inventory') === 'sample'||new URLSearchParams(contentLocation.search).get('transactions')==='sample')) || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className={`rounded-full px-2 py-1 text-xs font-medium ${current==='dashboard'?'bg-blue-600':'bg-white/15'}`}>{t('inventory.demo')}</span>}
+        {((contentLocation.pathname.startsWith('/wishlist/') && new URLSearchParams(contentLocation.search).get('wishlist') === 'sample') || (contentLocation.pathname === '/dashboard'&&new URLSearchParams(contentLocation.search).get('dashboard')==='sample') || (contentLocation.pathname.startsWith('/collection/') && (new URLSearchParams(contentLocation.search).get('inventory') === 'sample'||new URLSearchParams(contentLocation.search).get('transactions')==='sample')) || (contentLocation.pathname.startsWith('/transactions/') && new URLSearchParams(contentLocation.search).get('transactions') === 'sample')) && <span className={`rounded-full px-2 py-1 text-xs font-medium ${current==='dashboard'?'bg-blue-600':'bg-white/15'}`}>{t('inventory.demo')}</span>}
         <div key={`header-actions-${contentLocation.pathname}`} className="flex shrink-0 gap-1">{isTransactionForm ? <div ref={setSaveTarget} /> : focusedTransaction ? isSale ? <SaleActions key={contentLocation.pathname} id={saleMatch!.params.transactionId!} /> : isPurchase ? <><PurchaseReceiptAction onBusy={setReceiptBusy} key={`receipt-${contentLocation.pathname}`} id={purchaseMatch?.params.transactionId ?? ''} preview={contextParams.get('transactions') === 'sample'} /><PurchaseActions disabled={editDisabled} key={`edit-${contentLocation.pathname}`} onEdit={canEditPurchase ? () => { void navigate(`/transactions/purchases/${purchaseMatch!.params.transactionId}/edit`); } : undefined} /></> : null : <>
           <button type="button" onClick={() => openUtility('search')} aria-label={t('search')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSearch aria-hidden className="size-6" /></button>
           <button type="button" onClick={() => openUtility('settings')} aria-label={t('settings')} className="flex size-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-800 focus-visible:outline-white"><LuSettings aria-hidden className="size-6" /></button>
@@ -165,7 +168,7 @@ function Shell() {
     {/* Keep Search mounted behind Card Details. Returning reveals the same
         scrollport and decoded images, without replaying the catalog entrance. */}
     {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><StagingYearLoader /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} wishlist={wish.wishlist.cardIds} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><StagingYearLoader /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
     {utility === 'search' && catalogCard && <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} />}
   </div>;

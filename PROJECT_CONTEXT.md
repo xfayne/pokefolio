@@ -618,3 +618,23 @@ and dated FX, never imputes missing amounts, and shows incomplete-data status
 in the existing chart slot. This is read-only, no staging/legacy writes and no
 changes to card-market provider data. Validation includes domain tests and
 Dashboard mobile E2E checks; source of truth is PR/CI/deployment verification.
+
+## Wishlist Cards implementation (2026-11-23, PR #124)
+
+- Owner-approved compact Wishlist/Cards mock adapted to the shared Collection
+  list styles; internal Wishlist/Deals navigation is unchanged. Rows have no
+  per-card Deals button. Custom priority can be changed by touch/pointer drag,
+  keyboard shortcuts, or in-page numeric modal after long press.
+- Wishlist membership is independent of physical copies, purchases and Binder
+  reservations. Card Details Add/Remove Wishlist is owner-scoped. No
+  migration or legacy production data was touched.
+- Isolated model, Firestore transaction/storage adapter and owner-only
+  rules are in `frontend/src/features/wishlist` and
+  `firebase/firestore.private.rules`. The dedicated synthetic sample uses
+  session memory. See `docs/WISHLIST.md`.
+- Deployment caveat: approval, CI and merging do **not** imply that new
+  Firestore rules have been published to staging; independently verify that
+  deployment before claiming live Wishlist writes work.
+- Remaining #14 scope: spotlight/design acceptance if separately approved,
+  higher-scale behavior and full manual-order acceptance. #115 remains
+  open for the Deals handoff under #15.
