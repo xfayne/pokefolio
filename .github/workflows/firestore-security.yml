@@ -28,6 +28,13 @@ jobs:
           node scripts/firebase-private-staging.mjs --check
       - name: Validate staging-only Firebase Rules REST publishing safeguards
         run: python3 -m unittest discover -s tests -p 'test_firebase_rules_rest.py'
+      - name: Test Git-to-Staging rules promotion and drift guards
+        run: python3 -m unittest discover -s tests -p 'test_firebase_rules_ci.py'
+      - name: Test keyless staging publisher wiring
+        run: |
+          python3 -m unittest discover -s tests -p 'test_firebase_rules_ci.py'
+          python3 -m unittest discover -s tests -p 'test_firebase_rules_oidc.py'
+          bash -n scripts/setup_firebase_rules_oidc.sh
       - name: Verify proposed production OIDC bootstrap stays isolated and inert
         run: |
           python3 -m unittest discover -s tests -p 'test_firebase_rules_oidc_production.py'
