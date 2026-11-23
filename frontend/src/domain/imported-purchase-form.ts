@@ -73,6 +73,7 @@ export function importedPurchaseFormCommit(
   return importedPurchaseEditCommit(owner,{
     id:draft.id,date:draft.date,notes:seed.original.notes,
     transactionCurrency:draft.currency,source,shipping:draft.shipping,
+    trackingNumber:draft.trackingNumber,carrier:draft.carrier,
     cards:draft.cards.map(card=>({...card,currency:draft.currency})),
   },at,records);
 }
