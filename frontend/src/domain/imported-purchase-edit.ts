@@ -287,14 +287,22 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     {status:'unknown' as const,reason:'Mixed currencies or incomplete card prices'};
   const nextCurrency = single ? {status:'known' as const,value:single.currency,source:'user' as const} :
     {status:'unknown' as const,reason:'No single purchase currency'};
+  const adjustedEvidence = (field: ImportedPurchase['shipping']) => {
+    if (!single || field.status==='unknown' || field.value.currency===single.currency) return field;
+    if (field.value.minor!==0) throw Error('Cannot silently convert historical expenses');
+    return {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const};
+  };
+  const previousShipping = adjustedEvidence(before.shipping);
+  const shipping = input.shipping?.trim() && parseMoney(input.shipping.trim(), single?.currency??'USD').minor===0 && single
+    ? {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const}
+    : previousShipping;
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
     ...before,transactionOn:nextDate,notes:input.notes,
     ...(sourceChanged ? {source} : {}),
     ...(membershipChanged ? {
       currency:nextCurrency,subtotal:nextTotal,payable:nextTotal,
       nativeCardTotals,unpricedCopyCount:unpriced,
-      shipping:single ? {status:'known',value:{currency:single.currency,minor:0},source:'user'} :
-        {status:'unknown',reason:'No single recorded currency'},
+      shipping, taxes:adjustedEvidence(before.taxes),fees:adjustedEvidence(before.fees),
     } : {}),
     revision:before.revision+1,updatedAt:updateAt,
   });
