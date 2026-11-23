@@ -117,6 +117,7 @@ export function selectPerformance(input:PerformanceInput) {
  // Use the same audited sale membership and dated FX for all three numbers:
  // net proceeds, frozen acquisition basis, and their difference.
  const saleFigures=activeSales.map(sale=>{
+  if(sale.kind!=='sale')return {basis:unavailable('Not a sale'),proceeds:unavailable('Not a sale'),profit:unavailable('Not a sale')};
   const lines=saleLines.filter(l=>l.transactionId===sale.id);
   const validMembership=lines.length>0&&(!sale.copyIds||(lines.length===sale.copyIds.length&&lines.every(l=>sale.copyIds!.includes(l.copyId))));
   const costs=validMembership?lines.map(line=>{
