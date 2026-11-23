@@ -43,13 +43,13 @@ export function WishlistPage() {
     {preview && <p className="wishlist-preview-note">{t('wishlistUi.sample')}</p>}
     {!preview && !account.owner && <div className="wishlist-feedback"><p>{t('wishlistUi.signIn')}</p><Button variant="outline" onClick={demo}>{t('wishlistUi.tryDemo')}</Button></div>}
     {!preview && !!account.owner && !wishlist.cardIds.length && <p className="wishlist-preview-note">{t('wishlistUi.addHint')}</p>}
-    <WishlistCardsView cardIds={wishlist.cardIds} busy={account.busy && !preview} onOrder={preview || !!account.owner ? reorder : undefined} priceEnabled={!!account.owner || preview} />
+    <WishlistCardsView cardIds={wishlist.cardIds} busy={account.busy && !preview} onOrder={preview || !!account.owner ? reorder : undefined} priceEnabled={!!account.owner || preview} sample={preview} />
   </section>;
 }
 
-export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true }: {
+export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true, sample = false }: {
   cardIds: readonly string[]; onOrder?: ((cardId: string, position: number) => Promise<void>) | undefined;
-  busy?: boolean; priceEnabled?: boolean;
+  busy?: boolean; priceEnabled?: boolean; sample?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const money = useDisplayMoney();
@@ -278,6 +278,6 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
         </div>
       </form>
     </dialog>}
-    {selected && catalog.has(selected) && <CatalogDetails card={catalog.get(selected)!} onClose={() => setSelected(null)} />}
+    {selected && catalog.has(selected) && <CatalogDetails card={catalog.get(selected)!} allowWishlist={!sample} onClose={() => setSelected(null)} />}
   </div>;
 }
