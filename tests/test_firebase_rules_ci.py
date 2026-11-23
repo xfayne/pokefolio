@@ -34,6 +34,15 @@ class RulesPromotionTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Refusing"):
                 mod.promotion_plan(active, modified, modified)
 
+    def test_release_patch_uses_official_wrapped_request(self):
+        name = "projects/pokefolio-staging/rulesets/test-ruleset-123"
+        self.assertEqual(mod.release_patch_payload(mod.RELEASE, name), {
+            "release": {"name": mod.RELEASE, "rulesetName": name},
+            "updateMask": "rulesetName",
+        })
+        with self.assertRaisesRegex(RuntimeError, "Unexpected staging"):
+            mod.release_patch_payload(mod.RELEASE, "projects/pokefolio-production/rulesets/other")
+
     def test_never_accepts_unknown_remote_rules(self):
         for active in ["rules_version = '2';", "", self.target.replace("if false", "if true", 1)]:
             with self.assertRaisesRegex(RuntimeError, "Refusing"):
