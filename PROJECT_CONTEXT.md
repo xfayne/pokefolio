@@ -638,3 +638,20 @@ Dashboard mobile E2E checks; source of truth is PR/CI/deployment verification.
 - Remaining #14 scope: spotlight/design acceptance if separately approved,
   higher-scale behavior and full manual-order acceptance. #115 remains
   open for the Deals handoff under #15.
+
+## Firebase rules CI/CD rollout (2026-11-23)
+
+The owner approved automatic staging Firestore Rules publication on protected
+main merges. The `ci/firebase-rules-oidc-staging` change integrates a
+GitHub-OIDC-authenticated, staging-only Rules REST promotion job into
+`.github/workflows/staging-preview.yml` ahead of Pages.
+Rules remain source-controlled at `firebase/firestore.private.rules` and are
+checked against the live policy before promotion; unknown drift blocks the
+release. Rules content is read back after publication, and existing security
+emulator tests are mandatory. No production/legacy project is touched.
+
+**Pending before merging/activating:** one-time WIF + dedicated staging
+service-account IAM setup by an authenticated Google Cloud owner. No Firebase
+admin/Google OAuth access is available in this ChatGPT GitHub connection.
+Until bootstrap plus a live run succeed, the Wishlist permission error remains
+unresolved. Full runbook: `docs/FIRESTORE_RULES_CICD.md`.
