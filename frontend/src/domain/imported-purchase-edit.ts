@@ -16,6 +16,7 @@ export type ImportedPurchaseEditDraft = Readonly<{
   transactionCurrency?: Currency;
   source?: NonNullable<ImportedPurchase['source']>;
   shipping?: string;
+  trackingNumber?: string; carrier?: string;
 }>;
 
 function purchaseEntries(records: readonly PortfolioRecord[], id: string) {
@@ -77,6 +78,8 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
   const txId = tx.before.record.id;
   const createdCopies = command.creates.filter(e => e.collection === 'copies');
   const createdLines = command.creates.filter(e => e.collection === 'lines');
+  const createdShipments = command.creates.filter(e => e.collection === 'shipments');
+  if (createdShipments.length > 1) throw Error('Only one new shipment can be added');
   for (const entry of command.creates) {
     if (entry.collection === 'revisions') continue;
     if (entry.collection === 'copies') {
@@ -84,10 +87,14 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
           entry.record.removedFromImport) throw Error('Invalid added imported copy');
     } else if (entry.collection === 'lines') {
       if (!('origin' in entry.record) || entry.record.transactionId !== txId) throw Error('Invalid added imported line');
+    } else if (entry.collection === 'shipments') {
+      if (!command.creates.some(e => e.collection === 'memberships' && e.record.shipmentId === entry.record.id))
+        throw Error('New imported shipment needs matching membership');
     } else if (entry.collection === 'memberships') {
-      if (entry.record.transactionId !== txId ||
-          !createdCopies.some(copy => copy.collection === 'copies' && copy.record.id === entry.record.copyId))
-        throw Error('Added shipment membership belongs to an imported copy');
+      const isNewCopy = createdCopies.some(copy => copy.collection === 'copies' && copy.record.id === entry.record.copyId);
+      const isNewShipment = createdShipments.some(shipment => shipment.collection === 'shipments' && shipment.record.id === entry.record.shipmentId);
+      if (entry.record.transactionId !== txId || (!isNewCopy && !isNewShipment))
+        throw Error('Added shipment membership must belong to this purchase');
     } else throw Error('Imported edits cannot create unrelated records');
   }
   if (createdCopies.length !== createdLines.length || createdCopies.some(entry => {
@@ -129,6 +136,9 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
       if (!('origin' in before.record) || !('origin' in after.record) || before.record.transactionId !== txId ||
           !unchangedExcept(before.record, after.record, ['pricing']))
         throw Error('Imported purchase line identity cannot change');
+    } else if (before.collection === 'shipments' && after.collection === 'shipments') {
+      if (!unchangedExcept(before.record, after.record, ['carrier','trackingNumber','tracking']))
+        throw Error('Shipment provenance and delivery cannot change');
     } else throw Error('Imported edits cannot modify unrelated records');
   }
   const updatedLines = command.updates.filter(u => u.before.collection === 'lines');
@@ -264,6 +274,36 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
   }
   if (input.transactionCurrency && (before.currency.status!=='known' || before.currency.value!==input.transactionCurrency))
     membershipChanged = true;
+  if (input.trackingNumber!==undefined || input.carrier!==undefined) {
+    const trackingNumber=input.trackingNumber?.trim()??'';
+    const carrier=input.carrier?.trim()??'';
+    const shipmentIds=[...new Set(memberships.map(m=>m.shipmentId))];
+    if (shipmentIds.length>1 && (trackingNumber || carrier)) throw Error('Multiple linked shipments need individual edits');
+    if (shipmentIds.length===1) {
+      const shipment=records.find(e=>e.collection==='shipments' && e.record.id===shipmentIds[0]);
+      if (shipment?.collection!=='shipments') throw Error('Linked shipment unavailable');
+      const changed = (shipment.record.trackingNumber??'')!==trackingNumber || (shipment.record.carrier??'')!==carrier;
+      if (changed) {
+        const {tracking:oldTracking,...unchanged}=shipment.record;
+        const trackingKept = (shipment.record.trackingNumber??'')===trackingNumber && oldTracking ? {tracking:oldTracking} : {};
+        audited(shipment,{collection:'shipments',record:{...unchanged,...trackingKept,
+          trackingNumber:trackingNumber||null,carrier:carrier||null,
+          revision:shipment.record.revision+1,updatedAt:updateAt}});
+      }
+    } else if (shipmentIds.length===0 && (trackingNumber || carrier)) {
+      const shipmentId='shipment-'+crypto.randomUUID();
+      const metadata={schemaVersion:1 as const,ownerUid:owner,revision:1,createdAt:updateAt,updatedAt:updateAt};
+      creates.push({collection:'shipments',record:{...metadata,id:shipmentId,
+        carrier:carrier||null,trackingNumber:trackingNumber||null,
+        deliveredOn:{status:'unknown',reason:'Not delivered'},notes:''}});
+      const activeIds=input.cards.map(card=>card.id);
+      for (const [ordinal,copyId] of activeIds.entries()) {
+        creates.push({collection:'memberships',record:shipmentMembershipSchema.parse({
+          ...metadata,id:'membership-'+crypto.randomUUID(),shipmentId,transactionId:before.id,copyId,ordinal,
+        })});
+      }
+    }
+  }
   const source = input.source && (before.source || input.source.kind!=='other' || input.source.seller || input.source.listingUrl || input.source.itemReference)
     ? input.source : before.source;
   const sourceChanged = JSON.stringify(source) !== JSON.stringify(before.source);
