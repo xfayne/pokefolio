@@ -72,6 +72,7 @@ export async function commitPortfolio(
     );
     const copies = writes.flatMap((e) =>
       e.collection === 'copies' &&
+      !e.record.removedFromImport && !e.record.removedFromPurchase &&
       e.record.acquisition.kind === 'purchase' &&
       e.record.acquisition.transactionId === purchase.id
         ? [e.record]

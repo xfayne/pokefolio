@@ -21,7 +21,7 @@ export function updateShipment(before: Shipment, patch: Partial<Shipment>, at: s
 export function receivePurchase(owner: string, id: string, records: readonly PortfolioRecord[], at: string): PortfolioCommit[] {
   const purchase = records.find(e => e.collection === 'transactions' && e.record.id === id);
   if (!purchase || purchase.record.ownerUid !== owner || purchase.collection !== 'transactions' || purchase.record.kind !== 'purchase') throw Error('Purchase unavailable');
-  const copies = records.filter(e => e.collection === 'copies' && !e.record.removedFromImport && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === id);
+  const copies = records.filter(e => e.collection === 'copies' && !e.record.removedFromImport && !e.record.removedFromPurchase && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === id);
   if (!copies.length) throw Error('Purchase has no copies');
   if (copies.some(e => e.collection === 'copies' && e.record.possession === 'unknown')) throw Error('Unknown possession requires an inventory correction');
   const changes = copies.flatMap(e => {

@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import { purchaseCommit } from './purchase-commit';
 import { createPurchaseDraft } from '@/features/transactions/purchase-draft-seed';
 import { importedPurchaseEditCommit, importedPurchaseEditDraft, validateImportedPurchaseEdit } from './imported-purchase-edit';
+import { importedPurchaseFormSeed, importedPurchaseFormCommit, requireCompleteImportedDraft } from './imported-purchase-form';
 import { portfolioRecordSchema, prepareCommit, type PortfolioRecord } from './persistence';
 import { importedPurchaseSchema } from './schema';
 
@@ -132,4 +133,31 @@ it('edits condition, adds a physical copy and reversibly removes an imported cop
   ];
   expect(importedPurchaseEditDraft(after,id).cards.map(card=>card.id))
     .toEqual([draft.cards[1]!.id,draft.cards[2]!.id,'copy-added']);
+});
+
+it('shares ordinary form validation: ambiguous imported currency and missing card prices block saving',()=>{
+  const original=fixture(), id=original[0]!.record.id;
+  const seed=importedPurchaseFormSeed(original,id);
+  expect(seed.currencyChosen).toBe(false);
+  expect(seed.draft.cards).toHaveLength(3);
+  expect(seed.draft.cards.every(card=>card.amount==='')).toBe(true);
+  expect(()=>requireCompleteImportedDraft(seed.draft,false)).toThrow('Choose');
+  expect(()=>importedPurchaseFormCommit('owner',seed.draft,'2026-11-23T09:00:00Z',original,false)).toThrow('Choose');
+  const chosen={...seed.draft,currency:'GBP' as const};
+  expect(()=>requireCompleteImportedDraft(chosen)).toThrow('All cards need prices');
+  const withPrices={...chosen,cards:chosen.cards.map((card,index)=>({...card,amount:['10.00','7.50','5.00'][index]!}))};
+  const command=importedPurchaseFormCommit('owner',withPrices,'2026-11-23T09:00:00Z',original)!;
+  expect(prepareCommit('owner',command,450)).toEqual(command);
+  expect(validateImportedPurchaseEdit(command)).toBe(true);
+  const purchase=command.updates.find(u=>u.after.collection==='transactions')?.after;
+  expect(purchase).toMatchObject({collection:'transactions',record:{
+    origin:'legacy-import',sourceParcelId:'parcel-1',
+    currency:{status:'known',value:'GBP'},
+    subtotal:{status:'known',value:{currency:'GBP',minor:2250}},
+    nativeCardTotals:[{currency:'GBP',minor:2250}],unpricedCopyCount:0,
+    shipping:{status:'unknown'},
+  }});
+  expect(command.updates.filter(u=>u.before.collection==='copies').every(u=>
+    u.before.collection==='copies' && u.after.collection==='copies' &&
+    JSON.stringify(u.before.record.acquiredOn)===JSON.stringify(u.after.record.acquiredOn))).toBe(true);
 });

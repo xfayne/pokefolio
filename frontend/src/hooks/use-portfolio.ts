@@ -25,7 +25,7 @@ export function usePortfolio() {
       e.collection === 'transactions' ? [e.record] : [],
     ),
     copies: records.flatMap((e) =>
-      e.collection === 'copies' && !e.record.removedFromImport ? [e.record] : [],
+      e.collection === 'copies' && !e.record.removedFromImport && !e.record.removedFromPurchase ? [e.record] : [],
     ),
     saleLines: records.flatMap(e => e.collection === 'lines' && 'copyId' in e.record ? [e.record] : []),
     // A private tracking number is not evidence that the carrier has the parcel.

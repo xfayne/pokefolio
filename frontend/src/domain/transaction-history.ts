@@ -34,7 +34,7 @@ function ownedUnique<T extends { ownerUid: string; id: string }>(ownerUid: strin
 export function selectHistory(data: HistoryData): readonly HistoryRow[] {
   idSchema.parse(data.ownerUid);
   const transactions = data.transactions.map(t => 'origin' in t ? importedPurchaseSchema.parse(t) : t.kind === 'purchase' ? purchaseSchema.parse(t) : saleSchema.parse(t));
-  const copies = data.copies.map(c => cardCopySchema.parse(c)).filter(c => !c.removedFromImport);
+  const copies = data.copies.map(c => cardCopySchema.parse(c)).filter(c => !c.removedFromImport && !c.removedFromPurchase);
   const lines = data.saleLines.map(l => saleLineSchema.parse(l));
   ownedUnique(data.ownerUid, transactions); ownedUnique(data.ownerUid, copies); ownedUnique(data.ownerUid, lines);
   const byCopy = new Map(copies.map(c => [c.id, c]));

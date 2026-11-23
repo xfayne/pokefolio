@@ -1,7 +1,7 @@
 import type { PreparedPurchaseDraft, PurchaseDraft } from './purchase-draft';
 import { preparePurchaseDraft } from './purchase-draft';
 import type { PortfolioCommit, PortfolioRecord } from './persistence';
-import { revisionSchema, shipmentMembershipSchema } from './schema';
+import { cardCopySchema, revisionSchema, shipmentMembershipSchema } from './schema';
 export function purchaseRecords(
   value: PreparedPurchaseDraft,
 ): PortfolioRecord[] {
@@ -53,17 +53,10 @@ export function purchaseCommit(
     (e) =>
       e.collection === 'copies' &&
       e.record.acquisition.kind === 'purchase' &&
-      e.record.acquisition.transactionId === draft.id,
+      e.record.acquisition.transactionId === draft.id && !e.record.removedFromPurchase && !e.record.removedFromImport,
   );
-  if (
-    oldCopies.some(
-      (e) =>
-        !draft.cards.some((c) => c.id === e.record.id) ||
-        e.collection !== 'copies' ||
-        (e.record.disposition !== 'held' || e.record.possession !== 'pending'),
-    )
-  )
-    throw Error('Cannot remove copies or edit received purchases');
+  if (oldCopies.some(e => e.collection !== 'copies' || e.record.disposition !== 'held' || e.record.possession !== 'pending'))
+    throw Error('Cannot edit received or sold copies');
   if (previous.record.pricingMode !== draft.pricingMode)
     throw Error('Cannot change pricing mode on an existing purchase');
   const oldShipment = existing.find(e => e.collection === 'shipments' && e.record.id === `${draft.id}-shipment`);
@@ -127,6 +120,20 @@ export function purchaseCommit(
     command.updates.push({ before, after });
     command.creates.push({ collection: 'revisions', record: audit });
   }
+  // Removing a physical copy is a reversible, audited correction rather than a
+  // destructive Firestore delete. Other references keep the original identity.
+  for (const entry of oldCopies) {
+    if (entry.collection !== 'copies' || draft.cards.some(card => card.id === entry.record.id)) continue;
+    const after: PortfolioRecord = {collection:'copies',record:cardCopySchema.parse({
+      ...entry.record,removedFromPurchase:true,revision:entry.record.revision+1,updatedAt:at,
+    })};
+    command.updates.push({before:entry,after});
+    command.creates.push({collection:'revisions',record:revisionSchema.parse({
+      schemaVersion:1,id:'audit-'+crypto.randomUUID(),ownerUid:owner,actorUid:owner,
+      revision:1,createdAt:at,updatedAt:at,recordId:entry.record.id,
+      operation:'edit',reason:'Copy removed from purchase',before:entry.record,after:after.record,
+    })});
+  }
   return command;
 }
 export function draftFromPurchase(
@@ -185,6 +192,7 @@ export function draftFromPurchase(
       .flatMap((line) =>
         records.flatMap((e) =>
           e.collection === 'copies' &&
+          !e.record.removedFromPurchase && !e.record.removedFromImport &&
           e.record.acquisition.kind === 'purchase' &&
           e.record.acquisition.lineId === line.record.id
             ? [

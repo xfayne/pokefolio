@@ -12,9 +12,10 @@ import { conditionSchema, currencySchema, type Money } from '@/domain/schema';
 import { previewPurchaseDraft, type PurchaseDraft } from '@/domain/purchase-draft';
 import type { InventoryCatalogCard } from '@/domain/inventory';
 
-export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, onSale, editing = false }: {
+export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, onSale, editing = false, currencyChosen = true, onCurrencyChosen }: {
   onSale?: () => void; editing?: boolean; draft: PurchaseDraft; catalog: readonly InventoryCatalogCard[]; onChange: (draft: PurchaseDraft) => void;
   onSave?: () => Promise<void>; onAddCard?: () => void;
+  currencyChosen?: boolean; onCurrencyChosen?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const [shipmentOpen, setShipmentOpen] = useState(false);
@@ -33,13 +34,15 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, o
   const errorText = (field: string) => { const issue = error(field); return issue ? t(`newPurchase.${issue.code}Error`) : ''; };
   function change(next: PurchaseDraft) { setUndoCurrency(null); setNotice(''); setFailed(false); onChange(next); }
   function changeCurrency(currency: PurchaseDraft['currency']) {
-    if (currency === draft.currency) return;
+    if (currency === draft.currency && currencyChosen) return;
+    onCurrencyChosen?.();
     setUndoCurrency(draft); setNotice(t('newPurchase.currencyChanged')); setFailed(false);
     onChange({ ...draft, currency, shipping: '', lotTotal: '', cards: draft.cards.map(c => ({ ...c, amount: '' })) });
   }
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy.current || !onSave) return;
     setSubmitted(true); setFailed(false);
+    if (!currencyChosen) { document.getElementById(`${id}-currency`)?.focus(); return; }
     if (preview.issues.length) { document.getElementById(`${id}-${preview.issues[0]!.field}`)?.focus(); return; }
     busy.current = true; setSaving(true);
     try { await onSave(); } catch { setFailed(true); } finally { busy.current = false; setSaving(false); }
@@ -61,7 +64,7 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, o
         <label className="new-purchase-field" htmlFor={`${id}-date`}><span>{t('newPurchase.date')}</span><Input {...inputProps('date')} className="new-purchase-input" type="date" value={draft.date} onChange={e => change({ ...draft, date: e.target.value })} />{fieldError('date')}</label>
         <label className="new-purchase-field"><span>{t('newPurchase.source')}</span><Select aria-label={t('newPurchase.source')} className="new-purchase-input" value={draft.source} onChange={e => change({ ...draft, source: e.target.value as PurchaseDraft['source'] })}>{(['ebay', 'manual', 'other'] as const).map(source => <option value={source} key={source}>{t(`transactionHistory.${source}`)}</option>)}</Select></label>
         <label className="new-purchase-field" htmlFor={`${id}-seller`}><span>{t('newPurchase.seller')}</span><Input {...inputProps('seller')} className="new-purchase-input" maxLength={200} value={draft.seller} onChange={e => change({ ...draft, seller: e.target.value })} />{fieldError('seller')}</label>
-        <label className="new-purchase-field"><span>{t('newPurchase.currency')}</span><Select aria-label={t('newPurchase.currency')} className="new-purchase-input" value={draft.currency} onChange={e => changeCurrency(currencySchema.parse(e.target.value))}>{currencySchema.options.map(c => <option key={c} value={c}>{c}</option>)}</Select></label>
+        <label className="new-purchase-field"><span>{t('newPurchase.currency')}</span><Select id={`${id}-currency`} aria-label={t('newPurchase.currency')} className="new-purchase-input" value={currencyChosen ? draft.currency : ''} onChange={e => changeCurrency(currencySchema.parse(e.target.value))}>{!currencyChosen && <option value="" disabled>{t('newPurchase.currency')}</option>}{currencySchema.options.map(c => <option key={c} value={c}>{c}</option>)}</Select></label>
         <label className="new-purchase-field"><span>{t('newPurchase.listingUrl')}</span><Input {...inputProps('listingUrl')} className="new-purchase-input" type="url" maxLength={2000} value={draft.listingUrl ?? ''} onChange={e => change({ ...draft, listingUrl: e.target.value })} />{fieldError('listingUrl')}</label>
         <label className="new-purchase-field"><span>{t('newPurchase.itemReference')}</span><Input className="new-purchase-input" maxLength={200} value={draft.itemReference ?? ''} onChange={e => change({ ...draft, itemReference: e.target.value })} /></label>
       </Card>
@@ -74,7 +77,7 @@ export function NewPurchaseForm({ draft, catalog, onChange, onSave, onAddCard, o
         {draft.pricingMode === 'lot-total' && <div className="new-purchase-lot">{amountInput('lotTotal', t('newPurchase.lotTotal'), draft.lotTotal, lotTotal => change({ ...draft, lotTotal }))}<p>{t('newPurchase.lotNote')}</p></div>}
         <ul>{draft.cards.map((copy, index) => { const card = copy.catalog.kind === 'identified' ? cards.get(copy.catalog.cardId) : undefined; const name = card?.name ?? (copy.catalog.kind === 'unidentified' ? copy.catalog.description : t('inventory.unidentified')); return <li key={copy.id} className="new-purchase-copy">
           <PokemonArt src={card?.imageUrl} alt={name} className="new-purchase-art" />
-          <div className="new-purchase-copy-body"><div className="new-purchase-copy-heading"><div><h3><bdi>{name}</bdi></h3><p>{card ? `${card.setName} · #${card.number}` : t('inventory.noCatalog')}</p></div><button type="button" disabled={editing} aria-label={`${t('newPurchase.remove')} ${index + 1}: ${name}`} onClick={() => change({ ...draft, cards: draft.cards.filter(c => c.id !== copy.id) })}><LuX aria-hidden /></button></div>
+          <div className="new-purchase-copy-body"><div className="new-purchase-copy-heading"><div><h3><bdi>{name}</bdi></h3><p>{card ? `${card.setName} · #${card.number}` : t('inventory.noCatalog')}</p></div><button type="button" aria-label={`${t('newPurchase.remove')} ${index + 1}: ${name}`} onClick={() => change({ ...draft, cards: draft.cards.filter(c => c.id !== copy.id) })}><LuX aria-hidden /></button></div>
             <div className="new-purchase-copy-fields">
               <label className="new-purchase-field"><span>{t('newPurchase.condition')}</span><Select className="new-purchase-input" aria-label={`${t('newPurchase.condition')} ${index + 1}`} value={copy.condition} onChange={e => change({ ...draft, cards: draft.cards.map(c => c.id === copy.id ? { ...c, condition: e.target.value as typeof c.condition } : c) })}><option value="unknown">{t('newPurchase.unknown')}</option>{conditionSchema.options.map(c => <option value={c} key={c}>{c}</option>)}</Select></label>
               {amountInput(`cost-${copy.id}`, t('newPurchase.cost'), copy.amount, amount => change({ ...draft, cards: draft.cards.map(c => c.id === copy.id ? { ...c, amount } : c) }), draft.pricingMode === 'lot-total', `${t('newPurchase.cost')} ${index + 1}`)}

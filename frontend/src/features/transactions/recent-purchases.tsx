@@ -32,7 +32,7 @@ export function RecentPurchases() {
               }}
             >
               <span>
-                {'source' in p ? (p.source.seller ?? p.source.kind) : p.id}
+                {'source' in p ? (p.source?.seller ?? p.source?.kind) : p.id}
                 <br />
                 <span className="text-xs text-slate-600">
                   {typeof p.transactionOn === 'string' ? p.transactionOn : ''}

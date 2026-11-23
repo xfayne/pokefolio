@@ -53,7 +53,7 @@ export function selectInventory(ownerUid: string, rawCopies: readonly unknown[],
   }
   const groups = new Map<string, CopyView[]>();
   for (const copy of copies) {
-    if (copy.disposition !== 'held' || copy.removedFromImport) continue;
+    if (copy.disposition !== 'held' || copy.removedFromImport || copy.removedFromPurchase) continue;
     const key = copy.catalog.kind === 'identified' ? copy.catalog.cardId : `unidentified:${copy.id}`;
     const quotes = copy.condition.status === 'known' && copy.catalog.kind === 'identified'
       ? quoteMap.get(`${catalogIdentity(copy.catalog)}:${copy.condition.value}`) ?? [] : [];
@@ -81,9 +81,9 @@ export function selectInventory(ownerUid: string, rawCopies: readonly unknown[],
   rows.sort((a, b) => (a.card?.name ?? a.key).localeCompare(b.card?.name ?? b.key) || a.key.localeCompare(b.key));
   return { groups: rows, counts: {
     catalogCards: rows.filter(g => g.copies.some(c => c.copy.catalog.kind === 'identified')).length,
-    received: copies.filter(c => !c.removedFromImport && c.disposition === 'held' && c.possession === 'received').length,
-    pending: copies.filter(c => !c.removedFromImport && c.disposition === 'held' && c.possession === 'pending').length,
-    unknownPossession: copies.filter(c => !c.removedFromImport && c.disposition === 'held' && c.possession === 'unknown').length,
+    received: copies.filter(c => !c.removedFromImport && !c.removedFromPurchase && c.disposition === 'held' && c.possession === 'received').length,
+    pending: copies.filter(c => !c.removedFromImport && !c.removedFromPurchase && c.disposition === 'held' && c.possession === 'pending').length,
+    unknownPossession: copies.filter(c => !c.removedFromImport && !c.removedFromPurchase && c.disposition === 'held' && c.possession === 'unknown').length,
     sold: copies.filter(c => c.disposition === 'sold').length,
     otherDisposed: copies.filter(c => c.disposition !== 'held' && c.disposition !== 'sold').length,
   }, market: { currency, minor: safeInteger(total), pricedCount, missingCount } };

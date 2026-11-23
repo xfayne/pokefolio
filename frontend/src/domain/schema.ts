@@ -55,6 +55,7 @@ export const cardCopySchema = z.strictObject({
   possession: z.enum(['pending', 'received', 'unknown']),
   // Reversible correction for mistakenly linked legacy-import copies; original evidence remains auditable.
   removedFromImport: z.literal(true).optional(),
+  removedFromPurchase: z.literal(true).optional(),
   disposition: z.enum(['held', 'sold', 'returned', 'gifted', 'lost']),
   cardCost: costSchema, shippingCost: costSchema, taxCost: costSchema, feeCost: costSchema,
   dispositionRecordId: idSchema.nullable(), notes: z.string().max(2000),
@@ -105,6 +106,8 @@ export const importedPurchaseSchema = z.strictObject({
   ...metadata, kind: z.literal('purchase'), origin: z.literal('legacy-import'),
   transactionOn: evidenceSchema(dateSchema), currency: evidenceSchema(currencySchema),
   sourceParcelId: z.string().min(1).max(128), notes: z.string().max(2000),
+  // Optional editing metadata; historical imported records remain valid without it.
+  source: sourceSchema.optional(),
   subtotal: amountEvidenceSchema, payable: amountEvidenceSchema,
   totalBasis: z.literal('recorded-card-prices'),
   nativeCardTotals: z.array(z.strictObject({ currency: currencySchema, minor: minorSchema })).max(4).optional(),

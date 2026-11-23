@@ -12,6 +12,11 @@ export type ImportedPurchaseEditCard = Readonly<{
 }>;
 export type ImportedPurchaseEditDraft = Readonly<{
   id: string; date: string; notes: string; cards: readonly ImportedPurchaseEditCard[];
+  // Set only by the shared transaction form after an explicit, single-currency edit.
+  transactionCurrency?: Currency;
+  source?: NonNullable<ImportedPurchase['source']>;
+  shipping?: string;
+  trackingNumber?: string; carrier?: string;
 }>;
 
 function purchaseEntries(records: readonly PortfolioRecord[], id: string) {
@@ -58,7 +63,7 @@ function unchangedExcept(before: object, after: object, allowed: readonly string
     .filter(([key]) => !allowed.includes(key) && key !== 'revision' && key !== 'updatedAt')));
   return stable(before) === stable(after);
 }
-const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping'];
+const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping', 'source'];
 const stableCopy = ['cardCost', 'shippingCost', 'condition', 'removedFromImport'];
 
 export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean {
@@ -73,6 +78,8 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
   const txId = tx.before.record.id;
   const createdCopies = command.creates.filter(e => e.collection === 'copies');
   const createdLines = command.creates.filter(e => e.collection === 'lines');
+  const createdShipments = command.creates.filter(e => e.collection === 'shipments');
+  if (createdShipments.length > 1) throw Error('Only one new shipment can be added');
   for (const entry of command.creates) {
     if (entry.collection === 'revisions') continue;
     if (entry.collection === 'copies') {
@@ -80,10 +87,14 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
           entry.record.removedFromImport) throw Error('Invalid added imported copy');
     } else if (entry.collection === 'lines') {
       if (!('origin' in entry.record) || entry.record.transactionId !== txId) throw Error('Invalid added imported line');
+    } else if (entry.collection === 'shipments') {
+      if (!command.creates.some(e => e.collection === 'memberships' && e.record.shipmentId === entry.record.id))
+        throw Error('New imported shipment needs matching membership');
     } else if (entry.collection === 'memberships') {
-      if (entry.record.transactionId !== txId ||
-          !createdCopies.some(copy => copy.collection === 'copies' && copy.record.id === entry.record.copyId))
-        throw Error('Added shipment membership belongs to an imported copy');
+      const isNewCopy = createdCopies.some(copy => copy.collection === 'copies' && copy.record.id === entry.record.copyId);
+      const isNewShipment = createdShipments.some(shipment => shipment.collection === 'shipments' && shipment.record.id === entry.record.shipmentId);
+      if (entry.record.transactionId !== txId || (!isNewCopy && !isNewShipment))
+        throw Error('Added shipment membership must belong to this purchase');
     } else throw Error('Imported edits cannot create unrelated records');
   }
   if (createdCopies.length !== createdLines.length || createdCopies.some(entry => {
@@ -125,6 +136,9 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
       if (!('origin' in before.record) || !('origin' in after.record) || before.record.transactionId !== txId ||
           !unchangedExcept(before.record, after.record, ['pricing']))
         throw Error('Imported purchase line identity cannot change');
+    } else if (before.collection === 'shipments' && after.collection === 'shipments') {
+      if (!unchangedExcept(before.record, after.record, ['carrier','trackingNumber','tracking']))
+        throw Error('Shipment provenance and delivery cannot change');
     } else throw Error('Imported edits cannot modify unrelated records');
   }
   const updatedLines = command.updates.filter(u => u.before.collection === 'lines');
@@ -139,6 +153,14 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
   const before = importedPurchaseSchema.parse(purchase.record);
   if (input.notes.length > 2000 || new Set(input.cards.map(c=>c.id)).size !== input.cards.length)
     throw Error('Invalid imported edit');
+  if (input.transactionCurrency && (input.cards.some(card=>card.currency!==input.transactionCurrency || !card.amount.trim())))
+    throw Error('All imported card prices must match the selected transaction currency');
+  if (input.shipping?.trim()) {
+    const entered = parseMoney(input.shipping.trim(), input.transactionCurrency ?? (before.currency.status==='known' ? before.currency.value : 'USD'));
+    const original = before.shipping.status==='known' ? before.shipping.value : null;
+    if (entered.minor !== 0 && (!original || entered.minor!==original.minor || entered.currency!==original.currency))
+      throw Error('Imported historical shipping cannot be reassigned without an approved cost correction');
+  }
   const date = input.date.trim();
   if (date && !dateSchema.safeParse(date).success) throw Error('Invalid purchase date');
   const updateAt = new Date(at).toISOString();
@@ -172,8 +194,10 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     if (JSON.stringify(catalogRefSchema.parse(field.catalog)) !== JSON.stringify(entry.record.catalog))
       throw Error('Use card selection to add a different card');
     const originalCurrency = entry.record.cardCost.status === 'exact' ? entry.record.cardCost.value.currency : field.currency;
-    if (currencySchema.parse(field.currency) !== originalCurrency) throw Error('Original card currency cannot be changed');
-    const parsed = field.amount.trim() ? parseMoney(field.amount.trim(), originalCurrency) : null;
+    if (!input.transactionCurrency && currencySchema.parse(field.currency) !== originalCurrency)
+      throw Error('Original card currency cannot be changed');
+    const editedCurrency = input.transactionCurrency ?? originalCurrency;
+    const parsed = field.amount.trim() ? parseMoney(field.amount.trim(), editedCurrency) : null;
     const old = entry.record.cardCost;
     const sameCost = parsed ? old.status === 'exact' && old.value.minor === parsed.minor &&
       old.value.currency === parsed.currency : old.status === 'unknown';
@@ -189,7 +213,7 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     const nextCopy = cardCopySchema.parse({
       ...entry.record,cardCost:cost,condition:nextCondition,
       shippingCost:entry.record.shippingCost.status === 'exact' && entry.record.shippingCost.value.minor === 0 && parsed
-        ? {...entry.record.shippingCost,value:{currency:originalCurrency,minor:0}}
+        ? {...entry.record.shippingCost,value:{currency:editedCurrency,minor:0}}
         : entry.record.shippingCost,
       revision:entry.record.revision+1,updatedAt:updateAt,
     });
@@ -248,11 +272,46 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
       {status:'unknown',reason:'No recorded card price'});
     membershipChanged = true;
   }
+  if (input.transactionCurrency && (before.currency.status!=='known' || before.currency.value!==input.transactionCurrency))
+    membershipChanged = true;
+  if (input.trackingNumber!==undefined || input.carrier!==undefined) {
+    const trackingNumber=input.trackingNumber?.trim()??'';
+    const carrier=input.carrier?.trim()??'';
+    const shipmentIds=[...new Set(memberships.map(m=>m.shipmentId))];
+    if (shipmentIds.length>1 && (trackingNumber || carrier)) throw Error('Multiple linked shipments need individual edits');
+    if (shipmentIds.length===1) {
+      const shipment=records.find(e=>e.collection==='shipments' && e.record.id===shipmentIds[0]);
+      if (shipment?.collection!=='shipments') throw Error('Linked shipment unavailable');
+      const changed = (shipment.record.trackingNumber??'')!==trackingNumber || (shipment.record.carrier??'')!==carrier;
+      if (changed) {
+        const {tracking:oldTracking,...unchanged}=shipment.record;
+        const trackingKept = (shipment.record.trackingNumber??'')===trackingNumber && oldTracking ? {tracking:oldTracking} : {};
+        audited(shipment,{collection:'shipments',record:{...unchanged,...trackingKept,
+          trackingNumber:trackingNumber||null,carrier:carrier||null,
+          revision:shipment.record.revision+1,updatedAt:updateAt}});
+      }
+    } else if (shipmentIds.length===0 && (trackingNumber || carrier)) {
+      const shipmentId='shipment-'+crypto.randomUUID();
+      const metadata={schemaVersion:1 as const,ownerUid:owner,revision:1,createdAt:updateAt,updatedAt:updateAt};
+      creates.push({collection:'shipments',record:{...metadata,id:shipmentId,
+        carrier:carrier||null,trackingNumber:trackingNumber||null,
+        deliveredOn:{status:'unknown',reason:'Not delivered'},notes:''}});
+      const activeIds=input.cards.map(card=>card.id);
+      for (const [ordinal,copyId] of activeIds.entries()) {
+        creates.push({collection:'memberships',record:shipmentMembershipSchema.parse({
+          ...metadata,id:'membership-'+crypto.randomUUID(),shipmentId,transactionId:before.id,copyId,ordinal,
+        })});
+      }
+    }
+  }
+  const source = input.source && (before.source || input.source.kind!=='other' || input.source.seller || input.source.listingUrl || input.source.itemReference)
+    ? input.source : before.source;
+  const sourceChanged = JSON.stringify(source) !== JSON.stringify(before.source);
   const oldDate = before.transactionOn.status === 'known' ? before.transactionOn.value : '';
   const nextDate = date === oldDate ? before.transactionOn : date
     ? {status:'known' as const,value:date,source:'user' as const} :
       {status:'unknown' as const,reason:'Purchase date cleared by owner'};
-  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes) return null;
+  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes && !sourceChanged) return null;
   const totals = new Map<Currency,bigint>();
   let unpriced = 0;
   for (const cost of nextCosts) {
@@ -268,13 +327,22 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     {status:'unknown' as const,reason:'Mixed currencies or incomplete card prices'};
   const nextCurrency = single ? {status:'known' as const,value:single.currency,source:'user' as const} :
     {status:'unknown' as const,reason:'No single purchase currency'};
+  const adjustedEvidence = (field: ImportedPurchase['shipping']) => {
+    if (!single || field.status==='unknown' || field.value.currency===single.currency) return field;
+    if (field.value.minor!==0) throw Error('Cannot silently convert historical expenses');
+    return {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const};
+  };
+  const previousShipping = adjustedEvidence(before.shipping);
+  const shipping = input.shipping?.trim() && parseMoney(input.shipping.trim(), single?.currency??'USD').minor===0 && single
+    ? {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const}
+    : previousShipping;
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
     ...before,transactionOn:nextDate,notes:input.notes,
+    ...(sourceChanged ? {source} : {}),
     ...(membershipChanged ? {
       currency:nextCurrency,subtotal:nextTotal,payable:nextTotal,
       nativeCardTotals,unpricedCopyCount:unpriced,
-      shipping:single ? {status:'known',value:{currency:single.currency,minor:0},source:'user'} :
-        {status:'unknown',reason:'No single recorded currency'},
+      shipping, taxes:adjustedEvidence(before.taxes),fees:adjustedEvidence(before.fees),
     } : {}),
     revision:before.revision+1,updatedAt:updateAt,
   });
