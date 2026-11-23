@@ -158,7 +158,11 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
     if (!current.active && Math.hypot(event.clientX-current.x,event.clientY-current.y) >= 6) current.active = true;
     if (!current.active) return;
     const hit = document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>('[data-wish-id]');
-    current.over = hit?.dataset.wishId ?? null;
+    // Touch pointer capture can retarget the event to the handle. Find the row
+    // by its current Y-position if hit-testing returns no list item.
+    const byY = Array.from(document.querySelectorAll<HTMLElement>('.wishlist-rows [data-wish-id]'))
+      .find(row => { const rect = row.getBoundingClientRect(); return event.clientY >= rect.top && event.clientY <= rect.bottom; });
+    current.over = hit?.dataset.wishId ?? byY?.dataset.wishId ?? null;
     setDraggedOver(current.over);
     setDrag({id:current.id,over:current.over,x:event.clientX,y:event.clientY});
     // Keep a dense list navigable during a touch drag without blocking document scroll elsewhere.
@@ -169,7 +173,9 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
     const hit = document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>('[data-wish-id]');
-    const target = hit?.dataset.wishId ?? current.over;
+    // Prefer the last deliberate hover position. Touchend/pointercancel may
+    // provide stale coordinates after moving out of the captured handle.
+    const target = current.over ?? hit?.dataset.wishId;
     if (current.active && target && target !== current.id && cardIds.includes(target)) {
       setSaveFailed(false);
       void onOrder?.(current.id,cardIds.indexOf(target)+1).catch(() => setSaveFailed(true));
@@ -235,7 +241,7 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
           <button type="button" data-drag-handle className="wishlist-grip" disabled={!draggable} aria-label={t('wishlistUi.move',{name:card.name})}
             title={t('wishlistUi.move',{name:card.name})}
             onPointerDown={event => beginDrag(event,id)} onPointerMove={moveDrag}
-            onPointerUp={endDrag} onPointerCancel={() => {gesture.current=null;setDrag(null);setDraggedOver(null);}}
+            onPointerUp={endDrag} onPointerCancel={endDrag}
             onKeyDown={event => keyboardMove(event,id)}><LuGripVertical aria-hidden /></button>
           <button type="button" className="wishlist-card-link" onClick={() => {
             if (suppressTap.current?.id === id && suppressTap.current.expires > Date.now()) {
