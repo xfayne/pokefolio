@@ -45,7 +45,7 @@ export function dashboardPriceSeries(
 
     const current = currentQuote
       ? { minor: currentQuote.money.minor, observedAt: currentQuote.observedAt }
-      : variant?.current !== null && variant?.observedAt
+      : variant && variant.current !== null && variant.observedAt
         ? { minor: variant.current, observedAt: variant.observedAt }
         : null;
     series.push({
