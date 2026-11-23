@@ -423,7 +423,6 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard h2 { margin: 0; font-size: clamp(1rem, 4.6vw, 1.25rem); font-weight: var(--font-weight-bold); line-height: 1.2; letter-spacing: -0.035em; }
 .dashboard-value-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
 .dashboard-coverage { display: inline-block; background: #b0f5e4; color: #032b2d; font-size: 0.75rem; font-weight: var(--font-weight-bold); border-radius: 0.625rem; padding: 0.0625rem 0.625rem; margin-top: 0.1875rem; }
-.dashboard-coverage[data-hidden="true"] { opacity: 0; pointer-events: none; }
 .dashboard-icon-control { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.25rem; width: 3.625rem; height: 2rem; flex-shrink: 0; border: 1px solid var(--surface-border); border-radius: 0.625rem; color: #101074; background: var(--surface-field); box-shadow: 0 1px 2px #216dc21a; }
 .dashboard-icon-control > svg { width: 1.25rem; height: 1.25rem; }
 .dashboard-icon-control > .dashboard-chevron { width: 0.875rem; height: 0.875rem; }
