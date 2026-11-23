@@ -190,3 +190,19 @@ test('empty pocket opens the shared eligible catalog and adds its sole copy in p
  await expect(page.locator('[data-pocket-index="8"]')).toHaveAttribute('aria-label',/Pikachu/);
  await expect(page.locator('[data-pocket-index="0"]')).toHaveAttribute('aria-label',/Charizard/);
 });
+
+test('an empty pocket offers Wishlist-only cards without creating an owned copy', async ({page}) => {
+  const writes:string[]=[];
+  page.on('request',request=>{if(/firestore\.googleapis|workers\.dev/.test(request.url()) && request.method()!=='GET')writes.push(request.url());});
+  await page.goto('./#/collection/binder?inventory=sample');
+  const pocket=page.locator('.binder-slot').nth(8);
+  await expect(pocket).toHaveAttribute('data-kind','empty');
+  await pocket.tap();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('searchbox').fill("Blaine's Moltres");
+  await page.getByRole('button',{name:/Blaine's Moltres/}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(pocket).toHaveAttribute('data-kind','wish');
+  await expect(pocket).toContainText('Wishlist');
+  expect(writes).toEqual([]);
+});

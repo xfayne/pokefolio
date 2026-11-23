@@ -39,6 +39,22 @@ placements, and does not attempt to migrate legacy Wishlist data.
 `#/wishlist/cards?wishlist=sample` is explicit, synthetic and session-only,
 for visual verification. No account writes occur from reordering the sample.
 
+## Binder pocket picker and shared section navigation (2026-11-23)
+
+- The empty-pocket picker searches eligible physical copies **and** cards currently
+  on the owner's Wishlist. Selecting a Wishlist-only entry reserves a `wish`
+  pocket, not a physical copy. When there is one eligible owned copy it is
+  selected immediately, as before; cards with multiple physical copies and a
+  Wishlist reservation offer an explicit choice.
+- Existing Wishlist placements are excluded to maintain unique pocket identities.
+  No Wishlist membership, order, physical copy, or transaction is changed when
+  reserving a wish pocket. Sample binder uses only synthetic sample wishes.
+- Collection/Wishlist/Transactions use the same sticky section-tabs component;
+  the Cards/Wishlist sticky toolbars stack underneath it. Transaction form
+  Purchase/Sale controls remain inside their existing fixed header.
+- The two explanatory notes beneath Wishlist cards/count are omitted by design;
+  Wishlist removal in Card Details uses a compact label with a full accessible name.
+
 ## Rollout
 
 Security rules must be published **to pokefolio-staging only** before testing

@@ -154,3 +154,16 @@ test('each section remembers its last tab after switching sections and reloading
   await page.goto('./#/transactions');
   await expect(page).toHaveURL(/transactions\/history$/);
 });
+
+test('section tabs stay fixed under the app header when pages scroll',async({page})=>{
+  await page.route('https://openapi.tcgtracking.com/**',route=>route.fulfill({json:{sets:[]}}));
+  for(const route of ['collection/cards?inventory=sample','wishlist/cards?wishlist=sample','transactions/history?transactions=sample']){
+    await page.goto(`./#/${route}`);
+    const bar=page.locator('.section-tabs-sticky');
+    await expect(bar).toBeVisible();
+    await page.locator('#main-content > div').first().evaluate(el=>{(el as HTMLElement).style.minHeight='2000px';});
+    await page.evaluate(()=>window.scrollTo(0,400));
+    await expect.poll(()=>page.evaluate(()=>Math.round(document.querySelector('.section-tabs-sticky')!.getBoundingClientRect().top))).toBe(64);
+    await expect(bar).toBeInViewport();
+  }
+});
