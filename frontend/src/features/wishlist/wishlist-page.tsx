@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { useQueries } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { LuChevronRight, LuGripVertical, LuHeart } from 'react-icons/lu';
+import { LuChevronRight, LuGripVertical } from 'react-icons/lu';
 import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
 import { ListCard } from '@/components/ui/list-card';
