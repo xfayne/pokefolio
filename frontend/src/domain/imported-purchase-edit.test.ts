@@ -106,15 +106,16 @@ it('edits condition, adds a physical copy and reversibly removes an imported cop
   const records = fixture(), id = records[0]!.record.id;
   const draft = importedPurchaseEditDraft(records, id);
   const newCard = { ...draft.cards[0]!, id: 'copy-added', amount: '8.00', condition: 'LP' as const };
+  const correctedCondition = draft.cards[1]!.condition === 'NM' ? 'LP' as const : 'NM' as const;
   const input = { ...draft, cards: [...draft.cards.slice(1).map((card,index) =>
-    index === 0 ? { ...card, condition: 'NM' as const } : card), newCard] };
+    index === 0 ? { ...card, condition: correctedCondition } : card), newCard] };
   const command = importedPurchaseEditCommit('owner', input, '2026-11-23T09:00:00Z', records)!;
   expect(validateImportedPurchaseEdit(command)).toBe(true);
   expect(prepareCommit('owner', command, 450)).toEqual(command);
   const removed = command.updates.find(u => u.before.record.id === draft.cards[0]!.id);
   expect(removed?.after).toMatchObject({ collection: 'copies', record: { removedFromImport: true } });
   const corrected = command.updates.find(u => u.before.record.id === draft.cards[1]!.id);
-  expect(corrected?.after).toMatchObject({ collection: 'copies', record: { condition: { status: 'known', value: 'NM', source: 'user' } } });
+  expect(corrected?.after).toMatchObject({ collection: 'copies', record: { condition: { status: 'known', value: correctedCondition, source: 'user' } } });
   const added = command.creates.find(e => e.collection === 'copies' && e.record.id === 'copy-added');
   expect(added).toMatchObject({collection:'copies',record:{
     acquisition:{kind:'purchase',transactionId:id},acquiredOn:{status:'known',value:'2026-11-20',source:'user'},
