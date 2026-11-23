@@ -1,3 +1,11 @@
+> **Update 2026-11-23:** The normal release path is now automatic.
+> The staging OIDC bootstrap is complete and PR #127 shipped. Firebase Rules
+> were published and read back successfully in
+> [Staging Preview run #45150232434](https://github.com/xfayne/pokefolio/actions/runs/45150232434);
+> Pages also deployed. The manual procedures below are retained for
+> emergency recovery only. Live signed-in Wishlist UI acceptance is still
+> pending. See [the current CI/CD runbook](FIRESTORE_RULES_CICD.md).
+>
 # Wishlist Cards — staging Firestore rules release
 
 ## Incident

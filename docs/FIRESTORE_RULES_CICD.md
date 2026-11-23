@@ -24,7 +24,7 @@ The legacy Vintage Binder and independent `pokefolio-production` projects
 are never used. No service-account key, long-lived secret or Google API key
 is committed to GitHub. Production releases remain a separately approved task.
 
-## One-time owner bootstrap (required before merging the workflow PR)
+## One-time owner bootstrap (completed on 2026-11-23)
 
 This ChatGPT session can edit GitHub but cannot administer Google Cloud IAM.
 To allow future GitHub runs to publish rules, an authorized owner must use
@@ -61,11 +61,27 @@ Workload identity permissions may take several minutes to propagate.
 The GitHub workflow hardcodes these nonsecret identifiers; the user does
 **not** have to configure GitHub secrets or variables.
 
-After completing the bootstrap, merge the CI PR. Its first successful main
-Staging Preview run should reconcile the missing Binder/Wishlist policy and
-unblock the existing Wishlist page, subject to the usual propagation delay.
-Verify Add to Wishlist, reload, priority change and reload. Do not claim
-a live fix from emulator checks or a GitHub merge alone.
+### First verified live release (2026-11-23)
+
+The authorized owner completed the bootstrap and PR #127 was merged as
+`4334e6b401a682ae5b94320abe712809649f94f2`. All five main CI
+checks passed. The subsequent [Staging Preview run #45150232434](https://github.com/xfayne/pokefolio/actions/runs/45150232434)
+completed successfully with Rules, Pages build and Pages deployment green.
+
+The Rules API comparison reported `initial-wishlist-activation` and the
+publisher returned `SUCCESS: rules deployed to pokefolio-staging and exact
+content read back`. Source SHA-256 was
+`f5fb126ae58a6392dad9db0c85e82302333fc4563839f5302ded4ca3919b67ed`.
+The immutable prior Ruleset for rollback is
+`projects/pokefolio-staging/rulesets/39c717b6-7163-462c-87a5-6e82b5f0cc83`.
+The now-active Ruleset is
+`projects/pokefolio-staging/rulesets/937820cd-5c6a-4f25-bbda-9fd46c3560e3`.
+
+**Still to verify in the live signed-in app:** owner Wishlist read, Add/Remove
+Wishlist from Catalog Details, order updates, reload persistence and
+cross-owner isolation (live). All security emulator checks passed, but
+the Rules API readback does not prove user-facing authorization.
+#14 remains open until the browser smoke checks pass.
 
 ## Drift, rollback and failure safety
 
