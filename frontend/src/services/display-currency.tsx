@@ -59,7 +59,6 @@ type Display = {
   convert: (minor: number, from: Currency) => number | null;
   setCurrency: (value: Currency) => Promise<void>;
   date: string | null;
-  rates: Rates;
   failed: boolean;
 };
 const Context = createContext<Display | null>(null);
@@ -118,7 +117,6 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
           convertDisplay(minor, from, currency, fx.data?.rates ?? { USD: 1 }),
         setCurrency,
         date: fx.data?.date ?? null,
-        rates: fx.data?.rates ?? { USD: 1 },
         failed: fx.isError || pref.isError,
       }}
     >
