@@ -83,5 +83,8 @@ export function materializeLegacyImport(report: unknown, ownerUid: string, recor
       currency: currencies[0] ? { status: 'known', value: currencies[0], source: 'legacy' } : unknown('No original currency'),
       subtotal: total, payable: total, totalBasis: 'recorded-card-prices', shipping: unknown('Not separately recorded'), taxes: unknown('Not separately recorded'), fees: unknown('Not separately recorded'), settlement: 'unknown' });
   });
-  return { copies, acquisitions, shipments, memberships, lines, preservedProgress: structuredClone(input.preservedProgress), transactions, cashMovements: [] };
+  // Keep old analytics snapshots in the immutable source archive, not the active portfolio.
+  const preservedProgress = structuredClone(input.preservedProgress);
+  delete preservedProgress.analyticsSnapshots;
+  return { copies, acquisitions, shipments, memberships, lines, preservedProgress, transactions, cashMovements: [] };
 }
