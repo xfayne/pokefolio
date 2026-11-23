@@ -26,7 +26,11 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   const rows = useMemo(() => selectHistory(data), [data]);
   const months = useMemo(() => groupHistory(rows, filters), [rows, filters]);
   const display=useDisplayCurrency(); const formatDisplay=useDisplayMoney();
-  const monthlyTotal=(month:ReturnType<typeof groupHistory>[number])=>{const values=month.rows.map(r=>r.minor!==null&&r.currency?display!.convert(r.minor,r.currency):null);return values.some(v=>v===null)?null:values.reduce<number>((sum,v,i)=>sum+v!*(month.rows[i]!.kind==='sale'?1:-1),0);};
+  const monthlyTotal=(month:ReturnType<typeof groupHistory>[number])=>{
+    if (!display) return null;
+    const converted=month.totals.map(total=>display.convert(total.minor,total.currency)).filter((value):value is number=>value!==null);
+    return converted.length ? converted.reduce((sum,value)=>sum+value,0) : null;
+  };
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
   const money = (minor: number, currency: NonNullable<HistoryRow['currency']>, signed = false) => display ? formatDisplay({minor,currency}) : new Intl.NumberFormat(locale, {
     style: 'currency', currency, ...(signed ? { signDisplay: 'exceptZero' as const } : {}),
@@ -67,7 +71,6 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
         <div className="history-month-totals" title={t('transactionHistory.monthTotal')}>
           <span className="sr-only">{t('transactionHistory.monthTotal')}: </span>
           {display ? <bdi>{monthlyTotal(month)===null?'—':new Intl.NumberFormat(locale,{style:'currency',currency:display.currency,signDisplay:'exceptZero'}).format(monthlyTotal(month)!/100).replace('-', '−')}</bdi> : month.totals.map(total => <bdi key={total.currency}>{money(total.minor, total.currency, true)}</bdi>)}
-          {month.missingCount > 0 && <span className="text-xs text-amber-800">{t('transactionHistory.missing')}</span>}
         </div>
       </div>
       <ul className="history-rows">{month.rows.map(row => <ListCard key={row.id} className="history-row" aria-label={`${t(`transactionHistory.${row.kind}`)} · ${row.source || t(`transactionHistory.${row.sourceKind}`)} · ${row.date ?? t('transactionHistory.undated')}`}>

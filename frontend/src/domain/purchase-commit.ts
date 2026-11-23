@@ -100,6 +100,7 @@ export function purchaseCommit(
       after.record = {
         ...after.record,
         possession: before.record.possession,
+        acquiredOn: before.record.acquiredOn,
         notes: before.record.notes,
       };
     }

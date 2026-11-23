@@ -17,6 +17,8 @@ export type HistoryRow = Readonly<{
   createdAt?: string; id: string; kind: 'purchase' | 'sale'; date: string | null; currency: Currency | null;
   minor: number | null; source: string; sourceKind: 'manual' | 'ebay' | 'other';
   cards: readonly InventoryCatalogCard[]; copyCount: number; status: HistoryStatus; search: string;
+  // Imported purchases may have evidenced native-currency costs even when their full total is unknown.
+  nativeCardTotals?: readonly Readonly<{ currency: Currency; minor: number }>[];
 }>;
 export type HistoryFilters = Readonly<{ query: string; kind: 'all' | 'purchase' | 'sale'; currency: 'all' | Currency; status: 'all' | HistoryStatus }>;
 export type HistoryMonth = Readonly<{
@@ -74,6 +76,7 @@ export function selectHistory(data: HistoryData): readonly HistoryRow[] {
       : linked.some(c => c.possession === 'received') ? 'partial'
       : inTransit.has(transaction.id) ? 'inTransit' : 'pending';
     return { createdAt: transaction.createdAt, id: transaction.id, kind: transaction.kind, date, currency, minor: total?.minor ?? null,
+      nativeCardTotals: imported ? transaction.nativeCardTotals ?? [] : [],
       source, sourceKind, cards, copyCount: linked.length, status,
       search: [transaction.id, source, sourceKind, transaction.notes, imported ? transaction.sourceParcelId : transaction.source.itemReference,
         ...cards.map(c => `${c.name} ${c.setName} ${c.number}`), ...linked.flatMap(c => c.catalog.kind === 'unidentified' ? [c.catalog.description] : [])].join(' ').toLowerCase() };
@@ -92,8 +95,10 @@ export function groupHistory(rows: readonly HistoryRow[], filters: HistoryFilter
   return [...months].sort(([a], [b]) => b.localeCompare(a)).map(([month, group]) => {
     const totals = new Map<Currency, bigint>();
     for (const row of group) {
-      if (row.currency === null || row.minor === null) continue;
-      totals.set(row.currency, (totals.get(row.currency) ?? 0n) + BigInt(row.minor) * (row.kind === 'sale' ? 1n : -1n));
+      // A fully known payable wins; otherwise retain only evidenced import subtotals.
+      const amounts = row.currency !== null && row.minor !== null
+        ? [{ currency: row.currency, minor: row.minor }] : row.nativeCardTotals ?? [];
+      for (const amount of amounts) totals.set(amount.currency, (totals.get(amount.currency) ?? 0n) + BigInt(amount.minor) * (row.kind === 'sale' ? 1n : -1n));
     }
     return { month: month || null, rows: group,
       totals: [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([currency, minor]) => ({ currency, minor: safeInteger(minor) })),

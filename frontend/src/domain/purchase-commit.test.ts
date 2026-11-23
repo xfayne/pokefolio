@@ -72,3 +72,17 @@ it('edits tracking atomically and supports adding and clearing tracking evidence
  const cleared=purchaseCommit('owner',draft,'2026-11-21T10:00:00Z',current);
  expect(cleared.updates.find(u=>u.after.collection==='shipments')?.after.record).toMatchObject({trackingNumber:null});
 });
+
+it('never changes physical card acquiredOn when an ordinary purchase transaction date changes', () => {
+  const draft = createPurchaseDraft(true);
+  const original = purchaseCommit('owner', draft, at).creates;
+  const changed = purchaseCommit('owner', { ...draft, date: '2026-11-23' }, '2026-11-23T09:00:00Z', original);
+  const copyChanges = changed.updates.filter(e => e.before.collection === 'copies' && e.after.collection === 'copies');
+  expect(copyChanges).toHaveLength(draft.cards.length);
+  for (const change of copyChanges) {
+    if (change.before.collection !== 'copies' || change.after.collection !== 'copies') throw Error('Missing copy');
+    expect(change.after.record.acquiredOn).toEqual(change.before.record.acquiredOn);
+    expect(change.after.record.acquisition).toEqual(change.before.record.acquisition);
+  }
+  expect(changed.updates.find(e => e.after.collection === 'transactions')?.after.record).toMatchObject({ transactionOn: '2026-11-23' });
+});
