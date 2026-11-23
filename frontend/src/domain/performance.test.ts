@@ -44,6 +44,7 @@ it('reconciles partial sales with frozen acquisition basis and skips reversals',
  expect(result.realized).toMatchObject({minor:1700,covered:1,total:1});
  expect(result.realizedProceeds).toMatchObject({minor:2800,covered:1,total:1});
  expect(result.soldCostBasis).toMatchObject({minor:1100,covered:1,total:1});
+ expect(result.saleEvents).toMatchObject([{id:'sale',date:'2026-11-21',profit:{minor:1700},proceeds:{minor:2800},basis:{minor:1100}}]);
  expect(result.value.minor).toBe(2000);
  expect(result.points[0]?.held).toBe(2);expect(result.points[1]?.held).toBe(1);
  const records=[{collection:'copies' as const,record:sold},...sale.creates];
@@ -52,6 +53,7 @@ it('reconciles partial sales with frozen acquisition basis and skips reversals',
  for(const e of [...reversal.creates,...reversal.updates.map(u=>u.after)])merged.set(`${e.collection}/${e.record.id}`,e);
  const reversed=selectPerformance({...input(),records:[...merged.values()]});
  expect(reversed.realized.minor).toBe(0);
+ expect(reversed.saleEvents).toHaveLength(0);
  expect(reversed.realizedProceeds).toMatchObject({minor:0,total:0});
  expect(reversed.soldCostBasis).toMatchObject({minor:0,total:0});
 });
@@ -97,4 +99,5 @@ it('keeps sale proceeds available while the frozen cost basis and realized profi
  expect(result.realizedProceeds).toMatchObject({minor:2800,covered:1,total:1});
  expect(result.soldCostBasis).toMatchObject({minor:null,covered:0,total:1});
  expect(result.realized).toMatchObject({minor:null,covered:0,total:1});
+ expect(result.saleEvents).toMatchObject([{date:'2026-11-21',profit:{status:'unavailable'}}]);
 });
