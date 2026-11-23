@@ -206,3 +206,35 @@ test('an empty pocket offers Wishlist-only cards without creating an owned copy'
   await expect(pocket).toContainText('Wishlist');
   expect(writes).toEqual([]);
 });
+
+test('Binder reuses exactly the same Collection tabs sizing as Cards',async({page})=>{
+  for(const width of [320,390,768]){
+    await page.setViewportSize({width,height:844});
+    const dimensions=[];
+    for(const path of ['/collection/cards?inventory=sample','/collection/binder?inventory=sample']){
+      await page.goto(`./#${path}`);
+      const tabs=page.getByRole('navigation',{name:'Section navigation'});
+      await expect(tabs).toBeVisible();
+      const metrics=await tabs.evaluate(nav=>{
+        const pill=nav.getBoundingClientRect();
+        const container=nav.parentElement!.getBoundingClientRect();
+        const style=getComputedStyle(nav);
+        return {width:pill.width,height:pill.height,containerWidth:container.width,
+          left:pill.left,top:pill.top,flexGrow:style.flexGrow,borderRadius:style.borderRadius,
+          backgroundColor:style.backgroundColor,padding:style.padding};
+      });
+      // The shared pill must occupy the whole available tab bar, not
+      // shrink to fit only its labels when inside the fixed Binder layout.
+      expect(metrics.width).toBeGreaterThanOrEqual(metrics.containerWidth-16);
+      expect(metrics.flexGrow).toBe('1');
+      dimensions.push(metrics);
+    }
+    expect(dimensions[1]!.width).toBeCloseTo(dimensions[0]!.width,0);
+    expect(dimensions[1]!.height).toBeCloseTo(dimensions[0]!.height,0);
+    expect(dimensions[1]!.left).toBeCloseTo(dimensions[0]!.left,0);
+    expect(dimensions[1]!.top).toBeCloseTo(dimensions[0]!.top,0);
+    expect(dimensions[1]!.borderRadius).toBe(dimensions[0]!.borderRadius);
+    expect(dimensions[1]!.backgroundColor).toBe(dimensions[0]!.backgroundColor);
+    expect(dimensions[1]!.padding).toBe(dimensions[0]!.padding);
+  }
+});
