@@ -105,6 +105,9 @@ export const importedPurchaseSchema = z.strictObject({
   sourceParcelId: z.string().min(1).max(128), notes: z.string().max(2000),
   subtotal: amountEvidenceSchema, payable: amountEvidenceSchema,
   totalBasis: z.literal('recorded-card-prices'),
+  nativeCardTotals: z.array(z.strictObject({ currency: currencySchema, minor: minorSchema })).max(4).optional(),
+  unpricedCopyCount: minorSchema.optional(),
+  shippingIncludedInCardPrices: z.literal(true).optional(),
   shipping: amountEvidenceSchema, taxes: amountEvidenceSchema, fees: amountEvidenceSchema,
   settlement: z.literal('unknown'),
 }).superRefine((record, ctx) => {
@@ -112,6 +115,13 @@ export const importedPurchaseSchema = z.strictObject({
       (record.subtotal.status === 'known' && record.payable.status === 'known' &&
        (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
     ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+  }
+  const native = record.nativeCardTotals ?? [];
+  if (new Set(native.map(value => value.currency)).size !== native.length ||
+      (native.length > 1 && (record.currency.status !== 'unknown' || record.subtotal.status !== 'unknown' || record.payable.status !== 'unknown')) ||
+      (native.length === 1 && record.unpricedCopyCount === 0 && record.payable.status === 'known' &&
+        (record.payable.value.currency !== native[0]!.currency || record.payable.value.minor !== native[0]!.minor))) {
+    ctx.addIssue({ code: 'custom', message: 'Imported native-currency totals conflict with the aggregate' });
   }
   const amounts = [record.subtotal, record.payable, record.shipping, record.taxes, record.fees];
   if (amounts.some(a => a.status === 'known' && (record.currency.status !== 'known' || a.value.currency !== record.currency.value))) {

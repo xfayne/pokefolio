@@ -39,7 +39,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     if (!received && !pending) continue;
     if (received && pending) { issue(`owned.${cardId}`, 'OWNED_PENDING_CONFLICT', { owned: maps.owned[cardId], pending: maps.pendingPurchase[cardId] }); continue; }
     if (!catalogIds.includes(cardId)) issue(`inventory.${cardId}`, 'UNKNOWN_CATALOG_ID', cardId);
-    const copyId = 'legacy-' + digest({ source: backup.sha256, cardId, mapping: 2 });
+    const copyId = 'legacy-' + digest({ source: backup.sha256, cardId, mapping: 3 });
     const linked = parcels.filter(s => object(s) && Array.isArray(s.cardIds) && s.cardIds.includes(cardId));
     if (linked.length > 1) issue(`shipments.${cardId}`, 'AMBIGUOUS_COPY_MEMBERSHIP', linked);
     const dates = [...new Set(linked.map(s => s.purchaseDate).filter(v => v !== undefined))];
@@ -89,17 +89,27 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     const prices = linkedCopies.map(c => c?.cardCost ?? unknown('Unresolved copy'));
     const currencies = [...new Set(prices.filter(c => c.status === 'exact').map(c => c.value.currency))];
     if (!links.length) issue(`shipments[${parcelIndex}]`, 'EMPTY_PURCHASE', parcel);
-    if (currencies.length > 1) issue(`shipments[${parcelIndex}]`, 'MIXED_TRANSACTION_CURRENCY', currencies);
-    const completeCardPrices = prices.length > 0 && prices.every(c => c.status === 'exact') && currencies.length === 1;
+    // One parcel, one purchase: retain prices in their native currencies.
+    const native = new Map();
+    for (const price of prices) if (price.status === 'exact') {
+      native.set(price.value.currency, (native.get(price.value.currency) ?? 0n) + BigInt(price.value.minor));
+    }
+    const nativeCardTotals = [...native].map(([currency, minor]) => {
+      if (minor > BigInt(Number.MAX_SAFE_INTEGER)) issue(`shipments[${parcelIndex}]`, 'UNSAFE_TOTAL', currency);
+      return { currency, minor: Number(minor) };
+    });
+    const unpricedCopyCount = prices.filter(c => c.status !== 'exact').length;
+    const completeCardPrices = prices.length > 0 && unpricedCopyCount === 0 && currencies.length === 1;
     const subtotal = completeCardPrices ? prices.reduce((sum, c) => sum + c.value.minor, 0) : null;
     return {
-      id: 'legacy-purchase-' + digest({ source: backup.sha256, parcelIndex, mapping: 2 }),
+      id: 'legacy-purchase-' + digest({ source: backup.sha256, parcelIndex, mapping: 3 }),
       kind: 'purchase', origin: 'legacy-import', sourceParcelIndex: parcelIndex, sourceParcelId: parcel.id ?? null,
       currency: currencies.length === 1 ? { status: 'known', value: currencies[0], source: 'legacy' } : unknown('No single evidenced currency'),
       transactionOn: validDate(parcel.purchaseDate) ? { status: 'known', value: parcel.purchaseDate, source: 'legacy' } : unknown('No valid original purchase date'),
       lines: links.map((link, ordinal) => ({ ordinal, cardId: link.cardId, copyId: link.copyId, cardCost: prices[ordinal] })),
+      nativeCardTotals, unpricedCopyCount, shippingIncludedInCardPrices: true,
       cardSubtotal: subtotal !== null && Number.isSafeInteger(subtotal) ? { status: 'known', value: { currency: currencies[0], minor: subtotal }, source: 'legacy' } : unknown('Missing, mixed-currency or invalid individual prices'),
-      shipping: unknown('Not recorded in legacy parcel'), taxes: unknown('Not recorded in legacy parcel'), fees: unknown('Not recorded in legacy parcel'),
+      shipping: currencies.length === 1 ? { status: 'known', value: {currency: currencies[0], minor: 0}, source: 'legacy' } : unknown('Zero additional shipping, no single transaction currency'), taxes: unknown('Not recorded in legacy parcel'), fees: unknown('Not recorded in legacy parcel'),
       payable: subtotal !== null && Number.isSafeInteger(subtotal) ? { status: 'known', value: { currency: currencies[0], minor: subtotal }, source: 'legacy' } : unknown('Incomplete card prices'),
       totalBasis: 'recorded-card-prices', settlement: 'unknown',
       evidenceStatus: exceptions.length ? 'requires-review' : 'partial',
@@ -111,7 +121,7 @@ export function previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) {
     amounts[currency] = (amounts[currency] ?? 0) + minor;
     if (!Number.isSafeInteger(amounts[currency])) issue('totals', 'UNSAFE_TOTAL', currency);
   }
-  const result = { mappingVersion: 2, backupDigest: backup.sha256, source: backup.payload.source,
+  const result = { mappingVersion: 3, backupDigest: backup.sha256, source: backup.payload.source,
     status: exceptions.length || missingCoverage.length ? 'BLOCKED' : 'PASS', missingCoverage, exceptions,
     copies, memberships, binderReferences, preservedProgress: p, transactions, cashMovements: [],
     counts: { received: copies.filter(c => c.possession === 'received').length, pending: copies.filter(c => c.possession === 'pending').length, unknownCardCost: copies.filter(c => c.cardCost.status === 'unknown').length },

@@ -31,14 +31,15 @@ test('accepts v4 menu backup without mutation or fake live-source verification',
   assert.deepEqual(previewLegacyUiExport(source, options), result);
 });
 
-test('flags mixed-currency parcels without converting or losing original prices', () => {
+test('previews mixed-currency parcels without converting or losing original prices', () => {
   const source = fixture();
   source.owned['base1-4'] = true;
   source.purchasePrices['base1-4'] = { amount: 5, currency: 'USD' };
   source.shipments[0].cardIds.push('base1-4');
   const r = previewLegacyUiExport(source, { ...options, catalogIds: [...options.catalogIds, 'base1-4'] });
-  assert.equal(r.report.status, 'BLOCKED');
-  assert.ok(r.report.exceptions.some(x => x.code === 'MIXED_TRANSACTION_CURRENCY'));
+  assert.equal(r.report.status, 'PASS');
+  assert.deepEqual(r.report.transactions[0].nativeCardTotals,[{currency:'GBP',minor:1200},{currency:'USD',minor:500}]);
+  assert.equal(r.report.transactions[0].cardSubtotal.status,'unknown');
   assert.equal(r.report.transactions[0].lines.length, 2);
 });
 

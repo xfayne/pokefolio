@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 
 const stamp = '2026-11-20T00:00:00Z';
 const unknown = { status: 'unknown', reason: 'Missing source evidence' };
-const input = () => ({ mappingVersion: 2, status: 'PASS', source: { ownerUid: 'test' }, copies: [{ id: 'legacy-copy', cardId: 'base-1', possession: 'pending', condition: unknown, edition: 'unknown', acquiredOn: unknown, cardCost: { status: 'exact', value: { currency: 'GBP', minor: 2000 }, sourcePath: 'purchasePrices.base-1' } }], transactions: [{ id: 'legacy-purchase', sourceParcelIndex: 0 }], memberships: [{ parcelIndex: 0, ordinal: 0, cardId: 'base-1', copyId: 'legacy-copy' }], preservedProgress: { notes: { 'base-1': 'Private note' }, shipments: [{ id: 'original-parcel', cardIds: ['base-1'], number: 'ABC123', initialized: true }], binderOrder: ['base-1', '__binder_empty__:1'], wishOrder: ['other'], analyticsSnapshots: [{ date: '2026-11-19', index: 100.24 }] } });
+const input = () => ({ mappingVersion: 3, status: 'PASS', source: { ownerUid: 'test' }, copies: [{ id: 'legacy-copy', cardId: 'base-1', possession: 'pending', condition: unknown, edition: 'unknown', acquiredOn: unknown, cardCost: { status: 'exact', value: { currency: 'GBP', minor: 2000 }, sourcePath: 'purchasePrices.base-1' } }], transactions: [{ id: 'legacy-purchase', sourceParcelIndex: 0 }], memberships: [{ parcelIndex: 0, ordinal: 0, cardId: 'base-1', copyId: 'legacy-copy' }], preservedProgress: { notes: { 'base-1': 'Private note' }, shipments: [{ id: 'original-parcel', cardIds: ['base-1'], number: 'ABC123', initialized: true }], binderOrder: ['base-1', '__binder_empty__:1'], wishOrder: ['other'], analyticsSnapshots: [{ date: '2026-11-19', index: 100.24 }] } });
 
 describe('legacy domain draft', () => {
   it('runs backup  preview  domain  isolated apply/replay  rollback without source changes', () => {
@@ -77,7 +77,7 @@ describe('legacy domain draft', () => {
     expect(result.copies.map(c => c.possession)).toEqual(['pending', 'received']);
     expect(result.copies.every(c => c.acquisition.kind === 'purchase' && c.acquisition.transactionId === result.transactions[0]!.id)).toBe(true);
     expect(result.memberships.every(m => m.transactionId === result.transactions[0]!.id)).toBe(true);
-    expect(result.transactions[0]!.shipping.status).toBe('unknown');
+    expect(result.transactions[0]!.shipping).toEqual({status:'known',value:{currency:'GBP',minor:0},source:'legacy'});
     expect(result.transactions[0]!.transactionOn.status).toBe('unknown');
   });
   it('keeps cards without parcel evidence as opening inventory and refuses incomplete membership', () => {
@@ -89,4 +89,19 @@ describe('legacy domain draft', () => {
     const broken = input(); broken.memberships = [];
     expect(() => materializeLegacyImport(broken, 'test', stamp)).toThrow('INCOMPLETE');
   });
+});
+
+it('retains a single purchase with native prices in two currencies', () => {
+  const source = input();
+  source.copies.push({...structuredClone(source.copies[0]!),id:'second-copy',cardId:'base-2',
+    cardCost:{status:'exact',value:{currency:'USD',minor:1400},sourcePath:'purchasePrices.base-2'}});
+  source.memberships.push({parcelIndex:0,ordinal:1,cardId:'base-2',copyId:'second-copy'});
+  source.preservedProgress.shipments[0]!.cardIds.push('base-2');
+  const result = materializeLegacyImport(source, 'test', stamp);
+  expect(result.transactions).toHaveLength(1);
+  expect(result.transactions[0]).toMatchObject({currency:{status:'unknown'},subtotal:{status:'unknown'},
+    payable:{status:'unknown'},nativeCardTotals:[{currency:'GBP',minor:2000},{currency:'USD',minor:1400}],
+    unpricedCopyCount:0,shippingIncludedInCardPrices:true});
+  expect(result.copies.map(c=>c.cardCost.status==='exact'?c.cardCost.value.currency:'unknown')).toEqual(['GBP','USD']);
+  expect(result.copies.every(c=>c.shippingCost.status==='exact' && c.shippingCost.value.minor===0)).toBe(true);
 });
