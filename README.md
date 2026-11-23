@@ -201,9 +201,10 @@ now offer Add/Remove Wishlist actions rather than a disabled stub.
 The data is stored independently under `users/{uid}/wishlists/main` with
 revision-checked Firestore transactions. It never removes acquired wishes or
 changes Binder pockets. [Sample Wishlist](https://xfayne.github.io/pokefolio/#/wishlist/cards?wishlist=sample)
-is synthetic and session-only. Owner persistence requires deployment of the
-new private rules to **Pokefolio staging only**; merging a frontend PR alone
-does not publish Firestore rules. See [Wishlist contracts](docs/WISHLIST.md).
+is synthetic and session-only. The private Wishlist rules were deployed and independently read back from
+**Pokefolio staging** on 2026-11-23. Authenticated UI read/write/reorder
+acceptance remains to be verified. Frontend merges now require successful
+staging Rules promotion before Pages deployment. See [Wishlist contracts](docs/WISHLIST.md).
 
 ## Automatic staging Firestore Rules deployment
 
@@ -211,8 +212,8 @@ After the one-time Google Cloud keyless OIDC trust setup, the protected-main
 Staging Preview workflow publishes only changed `firebase/firestore.private.rules`
 to `pokefolio-staging` and reads the live release back **before** publishing
 GitHub Pages. Unexpected policy drift stops the deployment; no separate
-automatic production workflow exists. Initial Google Cloud IAM setup must be
-completed before enabling this new deployment gate.
+automatic production workflow exists. The one-time Google Cloud IAM bootstrap is complete and the gate is active;
+the first staged Rules release and Pages deployment both succeeded on 2026-11-23.
 
 See [Staging Rules CI/CD](docs/FIRESTORE_RULES_CICD.md) for exact fixed project
 identifiers, the no-key setup, acceptance tests and rollback.

@@ -650,8 +650,25 @@ checked against the live policy before promotion; unknown drift blocks the
 release. Rules content is read back after publication, and existing security
 emulator tests are mandatory. No production/legacy project is touched.
 
-**Pending before merging/activating:** one-time WIF + dedicated staging
-service-account IAM setup by an authenticated Google Cloud owner. No Firebase
-admin/Google OAuth access is available in this ChatGPT GitHub connection.
-Until bootstrap plus a live run succeed, the Wishlist permission error remains
-unresolved. Full runbook: `docs/FIRESTORE_RULES_CICD.md`.
+**Activated and verified on 2026-11-23:** the owner configured staging
+Workload Identity + the dedicated `pokefolio-rules-ci` service account via
+Google Cloud Shell, with no private-key export. PR #127 merged to protected
+main as `4334e6b401a682ae5b94320abe712809649f94f2`. All five
+main checks passed. In Staging Preview run #45150232434, the Rules job
+used OIDC to compare the active staging release, detected exactly the
+missing Wishlist rule (`initial-wishlist-activation`), created a new
+Ruleset, and read back the exact Git source (SHA-256
+`f5fb126ae58a6392dad9db0c85e82302333fc4563839f5302ded4ca3919b67ed`).
+Previous rollback Ruleset:
+`projects/pokefolio-staging/rulesets/39c717b6-7163-462c-87a5-6e82b5f0cc83`.
+Current Ruleset:
+`projects/pokefolio-staging/rulesets/937820cd-5c6a-4f25-bbda-9fd46c3560e3`.
+The same run then passed Pages build and deployment.
+
+**Remaining acceptance:** the signed-in owner's Wishlist load, Add/Remove
+from Catalog Details, reorder and persistence after reload have not been
+verified in the live UI, and live cross-owner denial is not claimed beyond
+emulator coverage. Keep #14 open until this smoke check passes.
+Only `pokefolio-staging` rules were published; no Firestore documents,
+`pokefolio-production`, or Vintage Binder production were modified.
+Full runbook: `docs/FIRESTORE_RULES_CICD.md`.
