@@ -25,7 +25,7 @@ export function EditPurchasePage() {
   if (imported) {
     let initial: ImportedPurchaseEditDraft | null = null;
     try { initial = importedPurchaseEditDraft(account.records, transactionId); } catch { /* incomplete import relationship */ }
-    return initial && copies.length > 0 && copies.every(e => e.collection === 'copies' && e.record.disposition === 'held')
+    return initial && copies.filter(e => e.collection === 'copies' && !e.record.removedFromImport).every(e => e.collection === 'copies' && e.record.disposition === 'held')
       ? <ImportedEditor key={account.owner + '-' + transactionId} initial={initial} account={account} />
       : <EmptyState title={t('purchaseDetails.notFound')} description={t('purchaseDetails.notFoundDetail')} />;
   }
@@ -96,8 +96,15 @@ function ImportedEditor({ initial, account }: { initial: ImportedPurchaseEditDra
   const [baseline] = useState(account.records);
   const navigate = useNavigate();
   const prepared = useRef<{ key: string; command: PortfolioCommit | null } | null>(null);
-  const copies = baseline.flatMap(entry => entry.collection === 'copies' && entry.record.acquisition.kind === 'purchase' && entry.record.acquisition.transactionId === initial.id ? [entry.record] : []);
-  return <ImportedPurchaseEditForm initial={initial} copies={copies} catalog={catalogCards} onSave={async draft => {
+  const copies = baseline.flatMap(entry => entry.collection === 'copies' && !entry.record.removedFromImport && entry.record.acquisition.kind === 'purchase' && entry.record.acquisition.transactionId === initial.id ? [entry.record] : []);
+  const [picking,setPicking] = useState(false);
+  const [query,setQuery] = useState('');
+  const [catalogUi,setCatalogUi] = useState(initialCatalogSearch);
+  const pendingAddition = useRef<{draft:ImportedPurchaseEditDraft;setDraft:(draft:ImportedPurchaseEditDraft)=>void}|null>(null);
+  const {t} = useTranslation();
+  return <><ImportedPurchaseEditForm initial={initial} copies={copies} catalog={catalogCards}
+    onAddCard={(draft,setDraft)=>{pendingAddition.current={draft,setDraft};setPicking(true);}}
+    onSave={async draft => {
     const key = JSON.stringify(draft);
     if (prepared.current?.key !== key) prepared.current = {
       key,
@@ -105,5 +112,14 @@ function ImportedEditor({ initial, account }: { initial: ImportedPurchaseEditDra
     };
     if (prepared.current.command) await account.save(prepared.current.command);
     await navigate('/transactions/purchases/' + draft.id, { replace: true });
-  }} />;
+  }} />{picking && <UtilitySheet title={t('searchCards')} onClose={()=>setPicking(false)} contentMode="contained">
+    <CatalogSearch query={query} onQuery={setQuery} state={catalogUi} onState={setCatalogUi} onSelect={card=>{
+      const pending = pendingAddition.current;
+      if (pending) pending.setDraft({...pending.draft,cards:[...pending.draft.cards,{
+        id:'copy-'+crypto.randomUUID(),catalog:purchaseCatalogReference(card.id),
+        condition:'unknown',amount:'',currency:pending.draft.cards[0]?.currency ?? 'USD',
+      }]});
+      setPicking(false);
+    }} />
+  </UtilitySheet>}</>;
 }

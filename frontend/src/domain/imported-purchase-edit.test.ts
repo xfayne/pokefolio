@@ -101,3 +101,35 @@ it('rejects changing acquiredOn or a sale-linked copy during imported edits', ()
   const sold = original.map(e => e.collection === 'copies' ? portfolioRecordSchema.parse({ ...e, record: { ...e.record, disposition: 'sold', dispositionRecordId: 'sale-1' } }) : e);
   expect(() => importedPurchaseEditDraft(sold, original[0]!.record.id)).toThrow('cannot be edited');
 });
+
+it('edits condition, adds a physical copy and reversibly removes an imported copy without deleting original evidence', () => {
+  const records = fixture(), id = records[0]!.record.id;
+  const draft = importedPurchaseEditDraft(records, id);
+  const newCard = { ...draft.cards[0]!, id: 'copy-added', amount: '8.00', condition: 'LP' as const };
+  const correctedCondition = draft.cards[1]!.condition === 'NM' ? 'LP' as const : 'NM' as const;
+  const input = { ...draft, cards: [...draft.cards.slice(1).map((card,index) =>
+    index === 0 ? { ...card, condition: correctedCondition } : card), newCard] };
+  const command = importedPurchaseEditCommit('owner', input, '2026-11-23T09:00:00Z', records)!;
+  expect(validateImportedPurchaseEdit(command)).toBe(true);
+  expect(prepareCommit('owner', command, 450)).toEqual(command);
+  const removed = command.updates.find(u => u.before.record.id === draft.cards[0]!.id);
+  expect(removed?.after).toMatchObject({ collection: 'copies', record: { removedFromImport: true } });
+  const corrected = command.updates.find(u => u.before.record.id === draft.cards[1]!.id);
+  expect(corrected?.after).toMatchObject({ collection: 'copies', record: { condition: { status: 'known', value: correctedCondition, source: 'user' } } });
+  const added = command.creates.find(e => e.collection === 'copies' && e.record.id === 'copy-added');
+  expect(added).toMatchObject({collection:'copies',record:{
+    acquisition:{kind:'purchase',transactionId:id},acquiredOn:{status:'known',value:'2026-11-20',source:'user'},
+    condition:{status:'known',value:'LP',source:'user'},cardCost:{status:'exact',value:{minor:800,currency:'GBP'}},
+  }});
+  expect(command.creates.some(e => e.collection === 'lines' && e.record.transactionId === id)).toBe(true);
+  expect(command.creates.some(e => e.collection === 'revisions' && e.record.recordId === draft.cards[0]!.id)).toBe(true);
+  expect(command.updates.filter(e=>e.before.collection==='copies').every(e=>
+    e.before.collection==='copies' && e.after.collection==='copies' &&
+    JSON.stringify(e.before.record.acquiredOn)===JSON.stringify(e.after.record.acquiredOn))).toBe(true);
+  const after = [
+    ...records.map(entry => command.updates.find(u=>u.before.collection===entry.collection && u.before.record.id===entry.record.id)?.after??entry),
+    ...command.creates.filter(entry=>entry.collection!=='revisions'),
+  ];
+  expect(importedPurchaseEditDraft(after,id).cards.map(card=>card.id))
+    .toEqual([draft.cards[1]!.id,draft.cards[2]!.id,'copy-added']);
+});
