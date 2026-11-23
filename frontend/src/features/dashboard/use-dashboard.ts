@@ -10,6 +10,7 @@ import {useDemoTransactionData} from '@/features/transactions/demo-data';
 import {useDemoPortfolio} from '@/features/transactions/demo-context';
 import {cardCopySchema,type CardCopy,type Currency} from '@/domain/schema';
 import {selectPerformance,type PriceSeries,type FxRow} from '@/domain/performance';
+import {catalogIdentity} from '@/domain/inventory';
 import type {PortfolioRecord} from '@/domain/persistence';
 import {useHistoricalFx} from '@/services/historical-fx';
 import {usePortfolioAudit} from '@/services/portfolio-audit';
@@ -52,7 +53,7 @@ export function useDashboard(month:string){
  // Current quotes are shared with Collection (same QueryClient/cache key).
  // History is optional and cannot replace missing or unverified current data.
  const currentSeries=dashboardPriceSeries(relevant,products,market.results,currentPrices.quotes);
- const series:PriceSeries[]=preview?[...new Map(relevant.filter(c=>c.catalog.kind==='identified'&&c.condition.status==='known').map(c=>[`${c.catalog.kind==='identified'?c.catalog.cardId:''}:${c.condition.status==='known'?c.condition.value:''}`,sampleSeries(c,today)])).values()]:currentSeries;
+ const series:PriceSeries[]=preview?[...new Map(relevant.filter(c=>c.catalog.kind==='identified'&&c.condition.status==='known').map(c=>[`${catalogIdentity(c.catalog)}:${c.condition.status==='known'?c.condition.value:''}`,sampleSeries(c,today)])).values()]:currentSeries;
  // The existing display currency service supplies a dated reference FX rate.
  // If the 1-year reference request fails, a recent genuine spot observation
  // can still convert today's market value; old purchase costs remain unknown.
