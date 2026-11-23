@@ -21,7 +21,7 @@ export function PurchaseReceiptAction({ id, preview, onBusy }: { id: string; pre
     ...demo.history.transactions.map(record => ({collection:'transactions' as const,record})),
     ...demo.history.copies.map(record => ({collection:'copies' as const,record})),
   ] : account.records;
-  const copies = records.flatMap(e => e.collection === 'copies' && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === id ? [e.record] : []);
+  const copies = records.flatMap(e => e.collection === 'copies' && !e.record.removedFromImport && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === id ? [e.record] : []);
   if (!copies.length) return null;
   const received = copies.every(c => c.possession === 'received');
   const eligible = copies.some(c => c.possession === 'pending' && c.disposition === 'held') && copies.every(c => c.possession !== 'unknown');
