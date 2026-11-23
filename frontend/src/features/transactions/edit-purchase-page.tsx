@@ -65,7 +65,7 @@ function Editor({initial,imported,initialCurrencyChosen,account}: {
       editing draft={draft} catalog={catalogCards} onChange={setDraft}
       onAddCard={() => setPicking(true)}
       currencyChosen={currencyChosen}
-      onCurrencyChosen={imported ? () => setCurrencyChosen(true) : undefined}
+      {...(imported ? {onCurrencyChosen:() => setCurrencyChosen(true)} : {})}
       onSave={async () => {
         const key = JSON.stringify({draft,currencyChosen});
         if (prepared.current?.key !== key) prepared.current = {
