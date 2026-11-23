@@ -16,7 +16,49 @@ concurrency:
   group: pokefolio-staging-preview
   cancel-in-progress: false
 jobs:
+  rules:
+    if: >-
+      github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == 'xfayne/pokefolio' && github.event.workflow_run.head_sha == github.sha))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pokefolio-staging
+    permissions:
+      contents: read
+      checks: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify protected current main and all five required checks
+        run: node scripts/verify-staging-source.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Obtain short-lived Firebase Rules token from GitHub OIDC
+        id: google-auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: pokefolio-staging
+          workload_identity_provider: projects/403637067452/locations/global/workloadIdentityPools/pokefolio-github/providers/github
+          service_account: pokefolio-rules-ci@pokefolio-staging.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/firebase
+          create_credentials_file: false
+          export_environment_variables: false
+      - name: Promote current Git Firestore rules only if necessary
+        run: python3 scripts/firebase_rules_ci.py --deploy
+        env:
+          FIREBASE_RULES_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
   build:
+    needs: rules
     if: >-
       github.repository == 'xfayne/pokefolio' && github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_dispatch' ||

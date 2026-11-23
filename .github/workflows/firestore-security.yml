@@ -28,5 +28,7 @@ jobs:
           node scripts/firebase-private-staging.mjs --check
       - name: Validate staging-only Firebase Rules REST publishing safeguards
         run: python3 -m unittest discover -s tests -p 'test_firebase_rules_rest.py'
+      - name: Test Git-to-Staging rules promotion and drift guards
+        run: python3 -m unittest discover -s tests -p 'test_firebase_rules_ci.py'
       - name: Verify bootstrap and prototype rules in a demo-only emulator
         run: npx -y firebase-tools@latest emulators:exec --only firestore --project demo-pokefolio-isolation --config firebase/emulator.json "npm --prefix firebase/testing test"
