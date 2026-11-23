@@ -1,8 +1,10 @@
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
 SPEC = importlib.util.spec_from_file_location("firebase_rules_ci", ROOT / "scripts" / "firebase_rules_ci.py")
 mod = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mod)
