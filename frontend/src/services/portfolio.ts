@@ -95,7 +95,12 @@ export async function commitPortfolio(
       }),
       null,
     );
-    if (!same([...plan.copies].sort((a,b)=>a.id.localeCompare(b.id)), copies.map(c => ({...c,revision:1,createdAt:purchase.createdAt,updatedAt:purchase.updatedAt})).sort((a,b)=>a.id.localeCompare(b.id))))
+    // Existing physical copies retain their original acquisition date even if the transaction date is corrected.
+    const expectedCopies = plan.copies.map(copy => {
+      const original = command.updates.find(update => update.before.collection === 'copies' && update.before.record.id === copy.id);
+      return original?.before.collection === 'copies' ? { ...copy, acquiredOn: original.before.record.acquiredOn } : copy;
+    });
+    if (!same(expectedCopies.sort((a,b)=>a.id.localeCompare(b.id)), copies.map(c => ({...c,revision:1,createdAt:purchase.createdAt,updatedAt:purchase.updatedAt})).sort((a,b)=>a.id.localeCompare(b.id))))
       throw Error('Purchase copy costs or references do not reconcile');
   }
   if (
