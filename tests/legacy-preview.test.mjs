@@ -22,7 +22,8 @@ test('opening inventory retains costs, dates, holes, pending positions and all r
   assert.equal(result.transactions[0].kind, 'purchase');
   assert.equal(result.transactions[0].transactionOn.value, '2026-11-12');
   assert.equal(result.transactions[0].lines[0].copyId, result.copies.find(c => c.cardId === 'b').id);
-  assert.equal(result.transactions[0].shipping.status, 'unknown');
+  assert.equal(result.transactions[0].shipping.status, 'known');
+  assert.equal(result.transactions[0].shipping.value.minor, 0);
   assert.deepEqual(result.binderReferences.map(r => r.token), input.binderOrder);
   assert.deepEqual(preview(input), result);
 });
@@ -39,4 +40,16 @@ test('rejects malformed price/date and unresolved references', () => {
   const r = preview(fixture({ purchasePrices: { a: { amount: 1.111, currency: 'GBP' } }, shipments: [{ id: 'parcel', cardIds: ['b', 'unknown'], purchaseDate: '2026-02-30' }], binderOrder: ['missing'] }));
   for (const code of ['INVALID_PRICE', 'INVALID_OR_CONFLICTING_DATE', 'UNRESOLVED_COPY', 'UNRESOLVED_BINDER_REFERENCE']) assert.ok(r.exceptions.some(x => x.code === code), code);
   assert.equal(r.status, 'BLOCKED');
+});
+
+test('mixed original currencies remain one purchase with native subtotals', () => {
+  const r = preview(fixture({owned:{a:true,childhood:true},pendingPurchase:{b:{wasWish:true}},
+    purchasePrices:{a:{amount:20,currency:'GBP'},b:{amount:14,currency:'USD'}},
+    shipments:[{id:'parcel',cardIds:['a','b'],purchaseDate:'2026-11-12'}]}));
+  assert.equal(r.status,'PASS');
+  assert.equal(r.mappingVersion,3);
+  assert.equal(r.transactions.length,1);
+  assert.deepEqual(r.transactions[0].nativeCardTotals,[{currency:'GBP',minor:2000},{currency:'USD',minor:1400}]);
+  assert.equal(r.transactions[0].cardSubtotal.status,'unknown');
+  assert.equal(r.transactions[0].shippingIncludedInCardPrices,true);
 });
