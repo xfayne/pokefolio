@@ -183,11 +183,16 @@ test('catalog return reveals the same mounted search and ready artwork without r
   await expect(art).toHaveAttribute('data-image-state', 'ready');
   await searchDialog.evaluate(el => { el.dataset.searchIdentity = 'original-dialog'; });
   await art.evaluate(el => { el.dataset.artIdentity = 'decoded-card'; });
-  await art.scrollIntoViewIfNeeded();
+  const cardButton = art.locator('..');
+  await cardButton.scrollIntoViewIfNeeded();
   const before = await list.evaluate(el => el.scrollTop);
   expect(before).toBeGreaterThan(0);
-  await art.locator('..').click();
+  await cardButton.click();
   await expect(page.locator('.utility-dialog')).toHaveCount(2);
+  // Playwright may scroll when focusing the clicked button. Measure the real
+  // selection offset after the click, then verify modal teardown preserves it.
+  // The preceding test separately asserts the exact pre-click search offset.
+  const selectedOffset = await list.evaluate(el => el.scrollTop);
   await expect(searchDialog).toHaveAttribute('data-search-identity', 'original-dialog');
   await expect(page.getByRole('dialog').last()).toHaveAttribute('data-transition', 'subtle');
   await page.getByRole('button', { name: 'Back to card', exact: true }).click();
@@ -196,5 +201,9 @@ test('catalog return reveals the same mounted search and ready artwork without r
   await expect(searchDialog).toHaveAttribute('data-entered', 'true');
   await expect(art).toHaveAttribute('data-art-identity', 'decoded-card');
   await expect(art).toHaveAttribute('data-image-state', 'ready');
-  expect(Math.abs((await list.evaluate(el => el.scrollTop)) - before)).toBeLessThanOrEqual(2);
+  // Wait for the dialog close/focus restoration to settle before measuring.
+  // A persistent jump still fails; only the transient animation is tolerated.
+  await expect.poll(async () => Math.abs((await list.evaluate(el => el.scrollTop)) - selectedOffset), {
+    timeout: 5_000,
+  }).toBeLessThanOrEqual(2);
 });
