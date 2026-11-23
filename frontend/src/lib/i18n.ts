@@ -1,3 +1,4 @@
+import { wishlistTranslations } from '@/features/wishlist/translations';
 import { binderTranslations } from '@/features/binder/translations';
 import { analyzeTranslations } from '@/features/analyze/translations';
 import { saleTranslations } from '@/features/transactions/sale-translations';
@@ -11,7 +12,7 @@ import { transactionTranslations } from '@/features/transactions/translations';
 
 export const resources = {
   en: { translation: {
-    binderUi: binderTranslations.en, analyzer: analyzeTranslations.en, sale: saleTranslations.en, inventory: inventoryTranslations.en, transactionHistory: transactionTranslations.en, purchaseDetails: purchaseTranslations.en, newPurchase: newPurchaseTranslations.en, shipments: 'Shipments',
+    wishlistUi: wishlistTranslations.en, binderUi: binderTranslations.en, analyzer: analyzeTranslations.en, sale: saleTranslations.en, inventory: inventoryTranslations.en, transactionHistory: transactionTranslations.en, purchaseDetails: purchaseTranslations.en, newPurchase: newPurchaseTranslations.en, shipments: 'Shipments',
     overview: 'Overview', cards: 'Cards', binder: 'Binder', history: 'History', back: 'Back', close: 'Close', skip: 'Skip to content', sectionNavigation: 'Section navigation', language: 'Language', comingTitle: 'Your portfolio is taking shape', searchCards: 'Search cards', searchPlaceholder: 'Search the catalog', catalogPending: 'Catalog coming soon', catalogDescription: 'Catalog search will be available in a future update.', missingDescription: 'Choose a destination from the navigation below.', foundation: 'Application foundation', staging: 'Staging · Test environment',
     description: 'Your portfolio screens are being built. This is the new application foundation.',
     dashboard: 'Dashboard', collection: 'Collection', wishlist: 'Wishlist', deals: 'Deals', transactions: 'Transactions',
@@ -19,7 +20,7 @@ export const resources = {
     loading: 'Loading…', failed: 'Something went wrong. Reload to try again.', reload: 'Reload', navigation: 'Main navigation',
   } },
   he: { translation: {
-    binderUi: binderTranslations.he, analyzer: analyzeTranslations.he, sale: saleTranslations.he, inventory: inventoryTranslations.he, transactionHistory: transactionTranslations.he, purchaseDetails: purchaseTranslations.he, newPurchase: newPurchaseTranslations.he, shipments: 'משלוחים',
+    wishlistUi: wishlistTranslations.he, binderUi: binderTranslations.he, analyzer: analyzeTranslations.he, sale: saleTranslations.he, inventory: inventoryTranslations.he, transactionHistory: transactionTranslations.he, purchaseDetails: purchaseTranslations.he, newPurchase: newPurchaseTranslations.he, shipments: 'משלוחים',
     overview: 'סקירה', cards: 'קלפים', binder: 'בינדר', history: 'היסטוריה', back: 'חזרה', close: 'סגירה', skip: 'דילוג לתוכן', sectionNavigation: 'ניווט פנימי', language: 'שפה', comingTitle: 'תיק האוסף שלך בדרך', searchCards: 'חיפוש קלפים', searchPlaceholder: 'חיפוש בקטלוג', catalogPending: 'הקטלוג בקרוב', catalogDescription: 'החיפוש בקטלוג יהיה זמין בעדכון עתידי.', missingDescription: 'בחר יעד מסרגל הניווט למטה.', foundation: 'תשתית האפליקציה', staging: 'Staging · סביבת בדיקה',
     description: 'מסכי תיק האוסף נמצאים בבנייה. זו התשתית של האפליקציה החדשה.',
     dashboard: 'דשבורד', collection: 'אוסף', wishlist: 'רשימת משאלות', deals: 'מציאות', transactions: 'עסקאות',
