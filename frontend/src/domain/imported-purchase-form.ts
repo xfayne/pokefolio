@@ -1,7 +1,6 @@
-import { importedPurchaseEditDraft, type ImportedPurchaseEditDraft } from './imported-purchase-edit';
+import { importedPurchaseEditDraft, importedPurchaseEditCommit, type ImportedPurchaseEditDraft } from './imported-purchase-edit';
 import { previewPurchaseDraft, type PurchaseDraft } from './purchase-draft';
-import { type Currency } from './schema';
-import type { PortfolioRecord } from './persistence';
+import type { PortfolioRecord, PortfolioCommit } from './persistence';
 
 export type ImportedFormSeed = Readonly<{
   draft: PurchaseDraft;
@@ -61,4 +60,19 @@ export function sourceEvidence(draft: PurchaseDraft) {
     listingUrl: draft.listingUrl?.trim() || null,
     itemReference: draft.itemReference?.trim() || null,
   };
+}
+
+/** Shared form -> historical evidence-aware commit; missing prices never become zero. */
+export function importedPurchaseFormCommit(
+  owner: string, draft: PurchaseDraft, at: string, records: readonly PortfolioRecord[],
+  currencyChosen=true,
+): PortfolioCommit | null {
+  requireCompleteImportedDraft(draft,currencyChosen);
+  const seed = importedPurchaseFormSeed(records,draft.id);
+  const source = sourceEvidence(draft);
+  return importedPurchaseEditCommit(owner,{
+    id:draft.id,date:draft.date,notes:seed.original.notes,
+    transactionCurrency:draft.currency,source,shipping:draft.shipping,
+    cards:draft.cards.map(card=>({...card,currency:draft.currency})),
+  },at,records);
 }
