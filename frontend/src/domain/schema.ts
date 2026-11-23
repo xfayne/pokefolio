@@ -55,6 +55,7 @@ export const cardCopySchema = z.strictObject({
   possession: z.enum(['pending', 'received', 'unknown']),
   // Reversible correction for mistakenly linked legacy-import copies; original evidence remains auditable.
   removedFromImport: z.literal(true).optional(),
+  removedFromPurchase: z.literal(true).optional(),
   disposition: z.enum(['held', 'sold', 'returned', 'gifted', 'lost']),
   cardCost: costSchema, shippingCost: costSchema, taxCost: costSchema, feeCost: costSchema,
   dispositionRecordId: idSchema.nullable(), notes: z.string().max(2000),
