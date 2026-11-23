@@ -54,3 +54,33 @@ and it never writes Firestore documents. It does not authenticate itself:
 a legitimate staging-authorized Firebase session is needed for publication.
 The existing deny-all bootstrap wrapper remains an explicit emergency
 rollback mechanism, not the standard feature-promotion method.
+
+## Single-command Google Cloud Shell alternative (REST API)
+
+For the signed-in staging project owner who has access to Google Cloud Shell,
+the API-based deploy script uses **the Cloud Shell user's existing OAuth token**.
+It does not require a service-account key, Firebase CLI login, or a Work session.
+
+Open https://shell.cloud.google.com/?show=terminal (the standard personal Cloud
+Shell; do not use an untrusted/repository-cloned temporary Cloud Shell).
+After authorizing the Cloud Shell session, paste the single command below:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/xfayne/pokefolio/main/scripts/firebase_rules_rest.py -o /tmp/pokefolio-wishlist-rules.py && python3 /tmp/pokefolio-wishlist-rules.py --deploy
+```
+
+The pinned source is the audited full private Firestore rules at commit
+\`ac2dcae853f11738ecefbc326c514ff3d76ba42d\`. Before deploying, the
+script reads the currently active live staging release and refuses to replace
+it unless adding the new Wishlist rule is the **only** change. It saves a
+local backup and prints the previous ruleset ID for rollback. It then creates
+a ruleset, updates only \`cloud.firestore\` on \`pokefolio-staging\`, and
+checks the published release and complete contents. It does not mutate user
+documents or alter any production Firebase project.
+
+The script intentionally stops on a mismatched active policy, missing OAuth
+permission, or API error. In that case do **not** blindly override with
+a whole-file manual publish: first reconcile the unexpected rules difference.
+
+Google Cloud Shell is not controlled by ChatGPT. The command must be run
+by an authenticated principal with Firebase Rules publishing permissions.
