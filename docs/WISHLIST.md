@@ -62,5 +62,9 @@ signed-in Wishlist writes. Publishing a Git commit does not deploy Firestore
 rules. Verify readback and the first add/reorder/reload cycle; never deploy
 to or import from the legacy production Firebase project.
 
-Issue #14 retains other promised Wishlist experience items (spotlight, larger
-scale/performance acceptance) and #115 retains its Deals action handoff.
+Issue #14 was closed on 2026-11-23 per owner approval. The Spotlight was
+explicitly removed from scope, and the owner waived additional authenticated
+staging Add/Remove/reorder/reload and measured hundreds-of-cards performance
+tests. Existing unit, emulator authorization, and mobile E2E regression checks
+passed, but the waived checks are not claimed as verified. New regressions should
+be tracked as separate focused issues. #115 still owns the Deals action handoff.

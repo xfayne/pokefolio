@@ -202,8 +202,7 @@ The data is stored independently under `users/{uid}/wishlists/main` with
 revision-checked Firestore transactions. It never removes acquired wishes or
 changes Binder pockets. [Sample Wishlist](https://xfayne.github.io/pokefolio/#/wishlist/cards?wishlist=sample)
 is synthetic and session-only. The private Wishlist rules were deployed and independently read back from
-**Pokefolio staging** on 2026-11-23. Authenticated UI read/write/reorder
-acceptance remains to be verified. Frontend merges now require successful
+**Pokefolio staging** on 2026-11-23. Authenticated live Add/Remove/reorder/reload acceptance remains unverified (owner waived this extra smoke test for #14 closure). Frontend merges now require successful
 staging Rules promotion before Pages deployment. See [Wishlist contracts](docs/WISHLIST.md).
 
 ## Automatic staging Firestore Rules deployment
@@ -227,3 +226,14 @@ and Wishlist reservations offer a choice. Wishlist membership and priority order
 never mutated by binder placement. Collection/Wishlist/Transactions use shared
 sticky section navigation; Card Details uses a compact Wishlist removal action.
 See [Wishlist behavior and verification](docs/WISHLIST.md).
+
+## Wishlist experience scope closed (#14, 2026-11-23)
+
+The owner accepted the compact Wishlist Cards implementation and explicitly
+removed the proposed 3–5-card Spotlight from scope. Issue #14 is closed by owner
+acceptance; #115 still owns the Deals handoff. Existing automated unit, security
+emulator and mobile E2E checks passed. A separately authenticated staging
+Add/Remove/reorder/reload round-trip and a measured several-hundred-card
+performance benchmark **were not independently run** and must not be presented
+as verified. If a practical issue appears, track it in a focused regression.
+The Binder bottom-bar round-corner regression was fixed separately by #132.

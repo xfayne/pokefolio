@@ -635,9 +635,11 @@ Dashboard mobile E2E checks; source of truth is PR/CI/deployment verification.
 - Deployment caveat: approval, CI and merging do **not** imply that new
   Firestore rules have been published to staging; independently verify that
   deployment before claiming live Wishlist writes work.
-- Remaining #14 scope: spotlight/design acceptance if separately approved,
-  higher-scale behavior and full manual-order acceptance. #115 remains
-  open for the Deals handoff under #15.
+- #14 closed on 2026-11-23 after the owner explicitly removed Spotlight and
+  waived additional large-list and live signed-in reorder/reload smoke tests.
+  The approved compact Cards list is the final Wishlist design. Existing
+  unit, emulator and mobile E2E tests passed, but those waived checks are not
+  claimed to have passed. #115 remains open for Deals under #15.
 
 ## Firebase rules CI/CD rollout (2026-11-23)
 
@@ -672,3 +674,17 @@ emulator coverage. Keep #14 open until this smoke check passes.
 Only `pokefolio-staging` rules were published; no Firestore documents,
 `pokefolio-production`, or Vintage Binder production were modified.
 Full runbook: `docs/FIRESTORE_RULES_CICD.md`.
+
+## Wishlist final acceptance and Binder shell regression — 2026-11-23
+
+Issue #14 closed as completed by explicit owner direction. No separate 3–5-card
+Wishlist Spotlight should be implemented without a future product decision.
+The Wishlist load blocker was resolved by deploying staging-only rules through
+OIDC, and the owner confirmed successful signed-in screen loading. Live
+Add/Remove → reorder → reload end-to-end verification and a measured large-list
+benchmark were explicitly waived for #14, **not** marked as tested.
+Purchase/collection and Binder remain separate from the owner Wishlist document.
+PR #132 corrected the Binder navbar's visually missing 20px rounded top corners
+by changing the fixed Binder shell's backdrop to the shared light content
+background, without modifying the common navbar component or Binder geometry.
+A mobile pixel-based visual regression compares Binder and Cards at three widths.
