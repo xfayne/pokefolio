@@ -12,7 +12,10 @@ export async function prepareOfflineImport({ backupPath, expectedBackup, scope, 
   if (backup.payload.source.ownerUid !== ownerUid) throw Error('OWNER_MISMATCH');
   const report = previewLegacy(backup, scope);
   if (report.status !== 'PASS') throw Error('BLOCKED_PREVIEW');
-  if (canonical(payload.preservedProgress) !== canonical(report.preservedProgress) || payload.copies.length !== report.copies.length || payload.transactions.length !== report.transactions.length) throw Error('PAYLOAD_COVERAGE_MISMATCH');
+  // Archived analytics snapshots never enter the activated Pokefolio payload.
+  const importableProgress = cloneJson(report.preservedProgress);
+  delete importableProgress.analyticsSnapshots;
+  if (canonical(payload.preservedProgress) !== canonical(importableProgress) || payload.copies.length !== report.copies.length || payload.transactions.length !== report.transactions.length) throw Error('PAYLOAD_COVERAGE_MISMATCH');
   const body = cloneJson({ formatVersion: 1, ownerUid, backupDigest: backup.sha256, previewDigest: report.previewDigest, mappingVersion: report.mappingVersion, scope, sourceArchive: backup.payload, payload });
   return { ...body, planDigest: digest(body) };
 }
