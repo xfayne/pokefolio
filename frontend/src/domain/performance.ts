@@ -3,6 +3,7 @@ import {portfolioRecordSchema,recordKey,type PortfolioRecord} from './persistenc
 import {catalogIdentity,type InventoryCatalogCard} from './inventory';
 import {costBasis,netSaleProceeds,safeInteger,type Metric} from './money';
 import {selectHistory,type HistoryData} from './transaction-history';
+import type {RealizedSaleEvent} from './realized-period';
 
 export type PriceSeries=Readonly<{catalog:CatalogRef;condition:Condition;currency:Currency;current:Readonly<{minor:number;observedAt:string}>|null;history:readonly Readonly<{date:string;minor:number}>[];source:string;stale:boolean}>;
 export type FxRow=Readonly<{date:string;quote:Currency;rate:number}>; // USD base, dated reference observations
@@ -116,8 +117,9 @@ export function selectPerformance(input:PerformanceInput) {
  const activeSales=transactions.filter(t=>t.kind==='sale'&&!t.reversedAt);
  // Use the same audited sale membership and dated FX for all three numbers:
  // net proceeds, frozen acquisition basis, and their difference.
- const saleFigures=activeSales.map(sale=>{
-  if(sale.kind!=='sale')return {basis:unavailable('Not a sale'),proceeds:unavailable('Not a sale'),profit:unavailable('Not a sale')};
+ const saleFigures:RealizedSaleEvent[]=activeSales.flatMap(sale=>{
+  if(sale.kind!=='sale')return [];
+
   const lines=saleLines.filter(l=>l.transactionId===sale.id);
   const validMembership=lines.length>0&&(!sale.copyIds||(lines.length===sale.copyIds.length&&lines.every(l=>sale.copyIds!.includes(l.copyId))));
   const costs=validMembership?lines.map(line=>{
@@ -130,7 +132,7 @@ export function selectPerformance(input:PerformanceInput) {
    :unavailable('Incomplete sale basis');
   const net=netSaleProceeds(sale);
   const proceeds=validMembership?(net.status==='unavailable'?net:convert(net,currency,sale.transactionOn)):unavailable('Incomplete sale membership');
-  return {basis,proceeds,profit:subtract(proceeds,basis)};
+  return [{id:sale.id,date:sale.transactionOn,basis,proceeds,profit:subtract(proceeds,basis)}];
  });
  const realized=sum(saleFigures.map(s=>s.profit),currency);
  const realizedProceeds=sum(saleFigures.map(s=>s.proceeds),currency);
@@ -165,5 +167,5 @@ export function selectPerformance(input:PerformanceInput) {
  const monthCopyCount=copies.filter(c=>c.acquisition.kind==='purchase'&&monthPurchases.some(p=>p.id===(c.acquisition.kind==='purchase'?c.acquisition.transactionId:null))).length;
  const recent=copies.filter(c=>c.acquisition.kind==='purchase'&&purchases.some(p=>p.id===(c.acquisition.kind==='purchase'?c.acquisition.transactionId:null))).sort((a,b)=>(acquired(b)??'').localeCompare(acquired(a)??'')||b.createdAt.localeCompare(a.createdAt)||a.id.localeCompare(b.id)).slice(0,3).map(copy=>({copy,paid:copy.cardCost.status==='exact'||copy.cardCost.status==='estimated'?convert(copy.cardCost.value,currency,acquired(copy)):unavailable('Unknown acquisition cost')}));
  const top=holdings.filter(h=>h.market.status!=='unavailable').sort((a,b)=>(b.market.status==='unavailable'?0:b.market.minor)-(a.market.status==='unavailable'?0:a.market.minor)||a.copy.id.localeCompare(b.copy.id)).slice(0,3);
- return {value,knownCost,unrealized,realized,realizedProceeds,soldCostBasis,roi,holdings,points,recent,top,month:{month,spend,copies:monthCopyCount,undatedPurchases:purchases.filter(p=>purchaseDate(p)===null).length},pending:copies.filter(c=>c.possession==='pending'&&c.disposition==='held').length,stale:holdings.some(h=>h.stale),historicalFrom:points[0]?.date??null};
+ return {value,knownCost,unrealized,realized,realizedProceeds,soldCostBasis,saleEvents:saleFigures,roi,holdings,points,recent,top,month:{month,spend,copies:monthCopyCount,undatedPurchases:purchases.filter(p=>purchaseDate(p)===null).length},pending:copies.filter(c=>c.possession==='pending'&&c.disposition==='held').length,stale:holdings.some(h=>h.stale),historicalFrom:points[0]?.date??null};
 }

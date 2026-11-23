@@ -101,3 +101,31 @@ recorded purchases, not confirmed cash settlements. Exact-copy links preserve th
 purchase's physical ID or open that copy in Collection. The opt-in
 `#/dashboard?dashboard=sample` uses synthetic, memory-only data, with its extra
 revision and authenticated pricing fetches disabled. No user data is written by Dashboard.
+
+## Realized P/L chart and time selection
+
+Dashboard's **Realized P/L** mode displays the same read-only, dated sale
+accounting as the engine: each active (not reversed) completed sale contributes
+net proceeds after sale fees, seller-paid shipping and taxes, minus its immutable
+acquisition basis including allocated purchase shipping, taxes and fees.
+Dated reference FX is used as before, with no current-rate substitution.
+
+Time buttons 1M / 3M / 1Y / All filter sales by their recorded transaction date,
+not by purchase or shipment date. The large profit number, completed-sales badge,
+Net Sale Proceeds and Sold Cost Basis all use the *same filtered sales*. The SVG
+chart displays running net realized profit, starting at zero at the selected
+period's boundary; it remains flat between sale dates and moves down for losses.
+“All” starts at the first active sale and can extend beyond the one-year market
+price-history boundary because sale records are independent of quote history.
+
+Incomplete sale membership, missing frozen basis, expenses or dated FX cannot
+be treated as zero. The selector keeps incomplete totals unavailable and the
+chart shows an accessible unavailable-cost message instead of fabricating
+a gain. Empty periods show zero sums and a no-sales message. Reversals are
+excluded from all time ranges, including All; partial sales still use the
+corresponding physical copies' frozen acquisition costs.
+
+The panel title remains **Realized P/L** (not "Cumulative...") and the same
+chart dimensions, animation, date picker layout, currency and Hebrew/RTL
+formatting are retained. Rendering is read-only and does not touch Firestore,
+legacy collection data or price-provider caches.
