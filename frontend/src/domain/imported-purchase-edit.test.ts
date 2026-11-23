@@ -123,7 +123,8 @@ it('edits condition, adds a physical copy and reversibly removes an imported cop
   expect(command.creates.some(e => e.collection === 'lines' && e.record.transactionId === id)).toBe(true);
   expect(command.creates.some(e => e.collection === 'revisions' && e.record.recordId === draft.cards[0]!.id)).toBe(true);
   expect(command.updates.filter(e=>e.before.collection==='copies').every(e=>
-    e.after.collection==='copies' && JSON.stringify(e.before.record.acquiredOn)===JSON.stringify(e.after.record.acquiredOn))).toBe(true);
+    e.before.collection==='copies' && e.after.collection==='copies' &&
+    JSON.stringify(e.before.record.acquiredOn)===JSON.stringify(e.after.record.acquiredOn))).toBe(true);
   const after = [
     ...records.map(entry => command.updates.find(u=>u.before.collection===entry.collection && u.before.record.id===entry.record.id)?.after??entry),
     ...command.creates.filter(entry=>entry.collection!=='revisions'),
