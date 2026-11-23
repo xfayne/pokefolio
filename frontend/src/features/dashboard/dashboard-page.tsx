@@ -108,7 +108,7 @@ function chartPoints(points:readonly PerformancePoint[],change:boolean):ChartPoi
   return {date:p.date,value:index-100};
  });
 }
-function ValueChart({points,label,format,empty,explore}:{points:ChartPoint[];label:string;format:(v:number)=>string;empty:string;explore:string}){
+function ValueChart({points,label,format,empty,explore}:{points:readonly ChartPoint[];label:string;format:(v:number)=>string;empty:string;explore:string}){
  const id=useId().replace(/:/g,''),[active,setActive]=useState<number|null>(null);
  const valid=points.filter((p):p is ChartPoint&{value:number}=>p.value!==null);
  if(valid.length<2)return <div className="dashboard-chart-empty" role="status">{empty}</div>;
