@@ -4,7 +4,7 @@ import { acquisitionRecordSchema, cardCopySchema, shipmentSchema, shipmentMember
 // Offline draft materialization only: recordedAt is a planning timestamp.
 // A future adapter must supply authoritative server timestamps on commit.
 const reportSchema = z.object({
-  mappingVersion: z.literal(2), status: z.literal('PASS'),
+  mappingVersion: z.literal(3), status: z.literal('PASS'),
   source: z.object({ ownerUid: idSchema }),
   copies: z.array(z.object({
     id: idSchema, cardId: idSchema, possession: z.enum(['pending', 'received']),
@@ -52,7 +52,10 @@ export function materializeLegacyImport(report: unknown, ownerUid: string, recor
     acquisition: transaction && membership ? { kind: 'purchase', transactionId: transaction.id, lineId: `${transaction.id}-line-${membership.ordinal}`, unitOrdinal: 0 } : { kind: 'opening-inventory', recordId: evidenceRef },
     possession: c.possession, disposition: 'held', dispositionRecordId: null,
     cardCost: c.cardCost.status === 'exact' ? { status: 'exact', value: c.cardCost.value, evidenceRef } : c.cardCost,
-    shippingCost: unknown('Not evidenced'), taxCost: unknown('Not evidenced'), feeCost: unknown('Not evidenced'),
+    shippingCost: c.cardCost.status === 'exact'
+      ? { status: 'exact', value: { currency: c.cardCost.value.currency, minor: 0 }, evidenceRef }
+      : unknown('Zero additional shipping; no recorded card-price currency'),
+    taxCost: unknown('Not evidenced'), feeCost: unknown('Not evidenced'),
     notes: Object.hasOwn(noteMap, c.cardId) ? noteMap[c.cardId] : '',
     });
   });
@@ -73,15 +76,26 @@ export function materializeLegacyImport(report: unknown, ownerUid: string, recor
   const transactions = rawParcels.map((parcel, index) => {
     const transaction = transactionFor(index);
     const prices = lines.filter(l => l.transactionId === transaction.id).map(l => l.pricing.unitPrice);
-    const currencies = [...new Set(prices.flatMap(p => p.status === 'known' ? [p.value.currency] : []))];
-    if (currencies.length > 1) throw Error('MIXED_TRANSACTION_CURRENCY');
-    const sum = prices.reduce((total, p) => total + (p.status === 'known' ? BigInt(p.value.minor) : 0n), 0n);
-    if (sum > BigInt(Number.MAX_SAFE_INTEGER)) throw Error('UNSAFE_TOTAL');
-    const total = prices.every(p => p.status === 'known') && currencies[0] ? { status: 'known' as const, value: { currency: currencies[0], minor: Number(sum) }, source: 'legacy' as const } : unknown('Incomplete card prices');
+    const totals = new Map<string, bigint>();
+    for (const price of prices) if (price.status === 'known') {
+      totals.set(price.value.currency, (totals.get(price.value.currency) ?? 0n) + BigInt(price.value.minor));
+    }
+    const nativeCardTotals = [...totals].map(([currency, minor]) => {
+      if (minor > BigInt(Number.MAX_SAFE_INTEGER)) throw Error('UNSAFE_TOTAL');
+      return { currency, minor: Number(minor) };
+    });
+    const unpricedCopyCount = prices.filter(p => p.status !== 'known').length;
+    const currency = nativeCardTotals.length === 1 ? nativeCardTotals[0]!.currency : null;
+    const total = unpricedCopyCount === 0 && currency
+      ? { status: 'known' as const, value: { currency, minor: nativeCardTotals[0]!.minor }, source: 'legacy' as const }
+      : unknown(nativeCardTotals.length > 1 ? 'Mixed original currencies: no aggregate payable' : 'Incomplete card prices');
     return importedPurchaseSchema.parse({ ...meta(transaction.id), kind: 'purchase', origin: 'legacy-import', sourceParcelId: parcel.id, notes: parcel.note ?? '',
       transactionOn: parcel.purchaseDate ? { status: 'known', value: parcel.purchaseDate, source: 'legacy' } : unknown('No original purchase date'),
-      currency: currencies[0] ? { status: 'known', value: currencies[0], source: 'legacy' } : unknown('No original currency'),
-      subtotal: total, payable: total, totalBasis: 'recorded-card-prices', shipping: unknown('Not separately recorded'), taxes: unknown('Not separately recorded'), fees: unknown('Not separately recorded'), settlement: 'unknown' });
+      currency: currency ? { status: 'known', value: currency, source: 'legacy' } : unknown('No single evidenced currency'),
+      subtotal: total, payable: total, totalBasis: 'recorded-card-prices',
+      nativeCardTotals, unpricedCopyCount, shippingIncludedInCardPrices: true,
+      shipping: currency ? { status: 'known', value: {currency, minor: 0}, source: 'legacy' } : unknown('Zero additional shipping without a single transaction currency'),
+      taxes: unknown('Not separately recorded'), fees: unknown('Not separately recorded'), settlement: 'unknown' });
   });
   // Keep old analytics snapshots in the immutable source archive, not the active portfolio.
   const preservedProgress = structuredClone(input.preservedProgress);
