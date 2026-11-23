@@ -2,7 +2,7 @@ export const transactionTranslations = {
   en: {
     reversed: 'Reversed', title: 'Transaction history', new: 'New transaction', search: 'Search transactions', searchShort: 'Search', type: 'Transaction type', all: 'All', purchases: 'Purchases', sales: 'Sales',
     purchase: 'Purchase', sale: 'Sale', filters: 'Filter transactions', currency: 'Currency', status: 'Status', any: 'All', reset: 'Reset filters',
-    total: 'Transaction total', monthTotal: 'Net transaction total · sales minus purchases · display currency · not cash flow or profit',
+    total: 'Transaction total', knownAmounts: 'Known card costs', monthTotal: 'Net transaction total · sales minus purchases · display currency · not cash flow or profit',
     copies_one: '{{count}} copy', copies_other: '{{count}} copies', noCopies: 'No copies linked',
     inTransit: 'In transit', received: 'Received', pending: 'Pending', partial: 'Part received', unknown: 'Status unknown', completed: 'Completed',
     unavailable: 'Unknown', undated: 'Date unknown', missing: 'Incomplete totals', ebay: 'eBay', manual: 'Manual', other: 'Other',
@@ -14,7 +14,7 @@ export const transactionTranslations = {
   he: {
     reversed: 'בוטלה', title: 'היסטוריית עסקאות', new: 'עסקה חדשה', search: 'חיפוש עסקאות', searchShort: 'חיפוש', type: 'סוג עסקה', all: 'הכול', purchases: 'רכישות', sales: 'מכירות',
     purchase: 'רכישה', sale: 'מכירה', filters: 'סינון עסקאות', currency: 'מטבע', status: 'סטטוס', any: 'הכול', reset: 'איפוס סינון',
-    total: 'סכום העסקה', monthTotal: 'סכום עסקאות נטו · מכירות פחות רכישות · במטבע התצוגה · אינו תזרים או רווח',
+    total: 'סכום העסקה', knownAmounts: 'עלויות קלפים ידועות', monthTotal: 'סכום עסקאות נטו · מכירות פחות רכישות · במטבע התצוגה · אינו תזרים או רווח',
     copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_other: '{{count}} עותקים', noCopies: 'אין עותקים מקושרים',
     inTransit: 'בדרך', received: 'התקבל', pending: 'ממתין למשלוח', partial: 'התקבל חלקית', unknown: 'סטטוס לא ידוע', completed: 'הושלמה',
     unavailable: 'לא ידוע', undated: 'תאריך לא ידוע', missing: 'סכומים חלקיים', ebay: 'eBay', manual: 'ידני', other: 'אחר',
