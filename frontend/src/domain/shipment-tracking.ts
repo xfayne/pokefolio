@@ -15,7 +15,8 @@ export function shipmentSnapshots(records: readonly PortfolioRecord[]): Purchase
   return records.flatMap(e => {
     if (e.collection !== 'shipments') return [];
     const s = e.record;
-    const members = records.flatMap(m => m.collection === 'memberships' && m.record.shipmentId === s.id ? [m.record] : []).sort((a,b) => a.ordinal-b.ordinal);
+    const activeCopyIds = new Set(records.flatMap(c => c.collection === 'copies' && !c.record.removedFromImport ? [c.record.id] : []));
+    const members = records.flatMap(m => m.collection === 'memberships' && m.record.shipmentId === s.id && activeCopyIds.has(m.record.copyId) ? [m.record] : []).sort((a,b) => a.ordinal-b.ordinal);
     const transactionId = members[0]?.transactionId;
     if (!transactionId || members.some(m => m.transactionId !== transactionId)) return [];
     const copies = members.flatMap(m => records.flatMap(c => c.collection === 'copies' && c.record.id === m.copyId ? [c.record] : []));
