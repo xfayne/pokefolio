@@ -17,6 +17,8 @@ export type HistoryRow = Readonly<{
   createdAt?: string; id: string; kind: 'purchase' | 'sale'; date: string | null; currency: Currency | null;
   minor: number | null; source: string; sourceKind: 'manual' | 'ebay' | 'other';
   cards: readonly InventoryCatalogCard[]; copyCount: number; status: HistoryStatus; search: string;
+  nativeCardTotals?: readonly Readonly<{ currency: Currency; minor: number }>[];
+  unpricedCopyCount?: number;
 }>;
 export type HistoryFilters = Readonly<{ query: string; kind: 'all' | 'purchase' | 'sale'; currency: 'all' | Currency; status: 'all' | HistoryStatus }>;
 export type HistoryMonth = Readonly<{
@@ -74,6 +76,8 @@ export function selectHistory(data: HistoryData): readonly HistoryRow[] {
       : linked.some(c => c.possession === 'received') ? 'partial'
       : inTransit.has(transaction.id) ? 'inTransit' : 'pending';
     return { createdAt: transaction.createdAt, id: transaction.id, kind: transaction.kind, date, currency, minor: total?.minor ?? null,
+      nativeCardTotals: imported ? transaction.nativeCardTotals ?? [] : [],
+      unpricedCopyCount: imported ? transaction.unpricedCopyCount ?? 0 : 0,
       source, sourceKind, cards, copyCount: linked.length, status,
       search: [transaction.id, source, sourceKind, transaction.notes, imported ? transaction.sourceParcelId : transaction.source.itemReference,
         ...cards.map(c => `${c.name} ${c.setName} ${c.number}`), ...linked.flatMap(c => c.catalog.kind === 'unidentified' ? [c.catalog.description] : [])].join(' ').toLowerCase() };
