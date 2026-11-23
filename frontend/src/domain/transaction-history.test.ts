@@ -49,3 +49,21 @@ it('orders purchases with the same purchase date by newest creation first',()=>{
  const newer={...purchase,id:'zzz-newer',createdAt:'2026-11-20T02:00:00Z',updatedAt:'2026-11-20T02:00:00Z'};
  expect(selectHistory({...sampleHistory,transactions:[older,newer],copies:[],saleLines:[],inTransit:[]}).map(r=>r.id)).toEqual(['zzz-newer','aaa-older']);
 });
+
+it('exposes an imported parcel original-currency breakdown without a fake total', () => {
+  const unknown={status:'unknown',reason:'Native currencies differ'} as const;
+  const imported=importedPurchaseSchema.parse({
+    schemaVersion:1,ownerUid:sampleHistory.ownerUid,id:'legacy-mixed',revision:1,
+    createdAt:'2026-11-23T10:00:00Z',updatedAt:'2026-11-23T10:00:00Z',
+    kind:'purchase',origin:'legacy-import',sourceParcelId:'legacy-shipment',notes:'',
+    transactionOn:{status:'known',value:'2026-11-16',source:'legacy'},currency:unknown,
+    subtotal:unknown,payable:unknown,shipping:unknown,taxes:unknown,fees:unknown,
+    nativeCardTotals:[{currency:'GBP',minor:10000},{currency:'USD',minor:1400}],
+    unpricedCopyCount:0,shippingIncludedInCardPrices:true,
+    totalBasis:'recorded-card-prices',settlement:'unknown',
+  });
+  const rows=selectHistory({...sampleHistory,transactions:[imported]});
+  expect(rows[0]).toMatchObject({id:'legacy-mixed',currency:null,minor:null,
+    nativeCardTotals:[{currency:'GBP',minor:10000},{currency:'USD',minor:1400}]});
+  expect(groupHistory(rows,all)[0]).toMatchObject({missingCount:1,totals:[]});
+});
