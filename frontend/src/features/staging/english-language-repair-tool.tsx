@@ -44,7 +44,7 @@ export function StagingEnglishLanguageRepair() {
       unknownFinishes: copies.filter(copy =>
         copy.catalog.kind === 'identified' && copy.catalog.finish.status === 'unknown').length,
       // A revision change invalidates the prior backup consent.
-      key: JSON.stringify(copies.map(copy => [copy.id, copy.revision, copy.catalog.language])),
+      key: JSON.stringify(copies.map(copy => [copy.id, copy.revision, copy.catalog.kind === 'identified' ? copy.catalog.language : null])),
     };
   }, [enabled, account.owner, account.loading, account.error, account.records]);
 
