@@ -24,6 +24,7 @@ RULES_URL = (
 API = "https://firebaserules.googleapis.com/v1/"
 RELEASE = f"projects/{PROJECT}/releases/cloud.firestore"
 START = "      // Independent owner-only Wishlist priorities; never mutate binder/legacy progress.\n"
+BINDER_START = "      // Layout only: no copy, transaction, legacy progress or Wishlist writes.\n"
 END = "      match /preferences/{id} {\n"
 
 
@@ -42,24 +43,38 @@ def without_wishlist(source):
     return source[:a] + source[b:]
 
 
+def without_binder_and_wishlist(source):
+    if source.count(BINDER_START) != 1:
+        raise RuntimeError("Reviewed Binder rule marker is missing or ambiguous")
+    a = source.index(BINDER_START)
+    b = source.index(START)
+    c = source.index(END)
+    if not a < b < c or "match /binders/{id}" not in source[a:b] or "allow list, delete: if false;" not in source[a:b]:
+        raise RuntimeError("Unexpected Binder rule section order or contents")
+    return source[:a] + source[c:]
+
+
 def normalized(content):
     return content.replace("\r\n", "\n").strip()
 
 
 def ensure_only_wishlist_added(active, target):
     expected_previous = without_wishlist(target)
+    expected_pre_binder = without_binder_and_wishlist(target)
     if normalized(active) == normalized(target):
         return "already"
-    if normalized(active) != normalized(expected_previous):
+    # The actual staging release may predate the independently tested Binder
+    # rule as well as Wishlist. These are the ONLY two authorized additions.
+    if normalized(active) not in [normalized(expected_previous), normalized(expected_pre_binder)]:
         diff = list(difflib.unified_diff(
             normalized(active).splitlines(),
-            normalized(expected_previous).splitlines(),
+            normalized(expected_pre_binder).splitlines(),
             fromfile="currently-published-staging-policy",
             tofile="expected-previous-policy", lineterm=""
         ))
         detail = "\n".join(diff[:35])
         raise RuntimeError(
-            "Published staging policy differs from the expected base. "
+            "Published staging policy differs from both reviewed bases. "
             "Refusing to replace unrelated permissions.\n" + detail
         )
     return "update"
