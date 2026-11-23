@@ -86,10 +86,12 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
         throw Error('Added shipment membership belongs to an imported copy');
     } else throw Error('Imported edits cannot create unrelated records');
   }
-  if (createdCopies.length !== createdLines.length || createdCopies.some(entry =>
-    entry.collection !== 'copies' || entry.record.acquisition.kind !== 'purchase' ||
-    !createdLines.some(line => line.collection === 'lines' && line.record.id === entry.record.acquisition.lineId &&
-      line.record.catalog.kind === entry.record.catalog.kind && JSON.stringify(line.record.catalog) === JSON.stringify(entry.record.catalog))))
+  if (createdCopies.length !== createdLines.length || createdCopies.some(entry => {
+    if (entry.collection !== 'copies' || entry.record.acquisition.kind !== 'purchase') return true;
+    const lineId = entry.record.acquisition.lineId;
+    return !createdLines.some(line => line.collection === 'lines' && 'catalog' in line.record && line.record.id === lineId &&
+      JSON.stringify(line.record.catalog) === JSON.stringify(entry.record.catalog));
+  }))
     throw Error('Every added imported copy must have its own line');
   const modifiedPriceLines = new Set<string>();
   for (const change of command.updates) {
@@ -194,7 +196,8 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     audited(entry,{collection:'copies',record:nextCopy});
     if (!sameCost) {
       membershipChanged = true;
-      const originalLine = lines.find(l=>l.collection==='lines' && l.record.id===entry.record.acquisition.lineId);
+      const lineId = entry.record.acquisition.lineId;
+      const originalLine = lines.find(l=>l.collection==='lines' && l.record.id===lineId);
       if (!originalLine || originalLine.collection!=='lines') throw Error('Imported purchase line unavailable');
       const nextLine = importedPurchaseLineSchema.parse({...originalLine.record,
         pricing:{mode:'per-copy',unitPrice:parsed ? {status:'known',value:parsed,source:'user'} :
