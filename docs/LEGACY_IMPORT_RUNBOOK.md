@@ -38,8 +38,9 @@ when it appears in the required scope.
    prices give an unknown transaction total; mixed currencies block conversion.
    Unrecorded shipping adds no amount but stays explicitly uncovered. No purchase
    payment cash movement/date is fabricated. Cards without parcels remain opening
-   inventory. Raw organization/provider/history state remains byte-value equivalent
-   as JSON, including duplicate binder tokens, holes and pending positions.
+   inventory. Raw Binder/Wishlist/provider state remains value-equivalent, including duplicate
+   tokens, holes and pending positions. Legacy `analyticsSnapshots` stay in the
+   immutable source archive, not the active import payload.
 
 ## Isolated filesystem apply
 
@@ -51,6 +52,8 @@ not only progress. Apply recomputes the scoped preview and rejects a changed map
 version or result before activating anything. expectedBackup is the
 independent captured value, not a digest inferred from the same reopened file.
 This storage layer relies on the caller to run materializeLegacyImport first.
+The offline gate rejects payloads that restore `analyticsSnapshots`, while the
+original remains in `sourceArchive` for recovery.
 
 applyOfflineImport receives that plan plus approval containing the exact planDigest,
 ownerUid, absolute destination and environment 'offline-isolated'. It checks the
