@@ -7,6 +7,9 @@ import { useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { draftFromPurchase, purchaseCommit } from '@/domain/purchase-commit';
+import { importedPurchaseEditCommit, importedPurchaseEditDraft } from '@/domain/imported-purchase-edit';
+import type { ImportedPurchaseEditDraft } from '@/domain/imported-purchase-edit';
+import { ImportedPurchaseEditForm } from './imported-purchase-edit-form';
 import type { PortfolioCommit } from '@/domain/persistence';
 import type { PurchaseDraft } from '@/domain/purchase-draft';
 import { NewPurchaseForm } from './new-purchase-form';
@@ -17,13 +20,21 @@ export function EditPurchasePage() {
   const { transactionId = '' } = useParams();
   const { t } = useTranslation();
   if (account.loading) return <LoadingState label={t('loading')} />;
+  const imported = account.records.find(e => e.collection === 'transactions' && e.record.id === transactionId && e.record.kind === 'purchase' && 'origin' in e.record);
+  const copies = account.records.filter(e => e.collection === 'copies' && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === transactionId);
+  if (imported) {
+    let initial: ImportedPurchaseEditDraft | null = null;
+    try { initial = importedPurchaseEditDraft(account.records, transactionId); } catch { /* incomplete import relationship */ }
+    return initial && copies.length > 0 && copies.every(e => e.collection === 'copies' && e.record.disposition === 'held')
+      ? <ImportedEditor key={account.owner + '-' + transactionId} initial={initial} account={account} />
+      : <EmptyState title={t('purchaseDetails.notFound')} description={t('purchaseDetails.notFoundDetail')} />;
+  }
   let draft: PurchaseDraft | null = null;
   try {
     draft = draftFromPurchase(account.records, transactionId);
   } catch {
     /* Invalid or unavailable purchase. */
   }
-  const copies = account.records.filter(e => e.collection === 'copies' && e.record.acquisition.kind === 'purchase' && e.record.acquisition.transactionId === transactionId);
   const editable = copies.length > 0 && copies.every(e => e.collection === 'copies' && e.record.possession === 'pending' && e.record.disposition === 'held');
   return draft && editable ? (
     <Editor key={`${account.owner}-${transactionId}`} initial={draft} account={account} />
@@ -78,4 +89,21 @@ function Editor({
       }}
     />{picking && <UtilitySheet title={t('searchCards')} onClose={() => setPicking(false)} contentMode="contained"><CatalogSearch state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={card => {setDraft({...draft,cards:[...draft.cards,{id:`copy-${crypto.randomUUID()}`,catalog:purchaseCatalogReference(card.id),condition:'unknown',amount:''}]});setPicking(false);}} /></UtilitySheet>}</>
   );
+}
+
+function ImportedEditor({ initial, account }: { initial: ImportedPurchaseEditDraft; account: ReturnType<typeof usePortfolio> }) {
+  // Hold the exact opening version, including each copy's acquiredOn date.
+  const [baseline] = useState(account.records);
+  const navigate = useNavigate();
+  const prepared = useRef<{ key: string; command: PortfolioCommit | null } | null>(null);
+  const copies = baseline.flatMap(entry => entry.collection === 'copies' && entry.record.acquisition.kind === 'purchase' && entry.record.acquisition.transactionId === initial.id ? [entry.record] : []);
+  return <ImportedPurchaseEditForm initial={initial} copies={copies} catalog={catalogCards} onSave={async draft => {
+    const key = JSON.stringify(draft);
+    if (prepared.current?.key !== key) prepared.current = {
+      key,
+      command: importedPurchaseEditCommit(account.owner!, draft, new Date().toISOString(), baseline),
+    };
+    if (prepared.current.command) await account.save(prepared.current.command);
+    await navigate('/transactions/purchases/' + draft.id, { replace: true });
+  }} />;
 }
