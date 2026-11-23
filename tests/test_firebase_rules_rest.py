@@ -49,6 +49,15 @@ class WishlistRulesPreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "markers"):
             mod.without_wishlist(self.target + mod.START)
 
+    def test_release_patch_body_contract_and_isolation(self):
+        name = "projects/pokefolio-staging/rulesets/new"
+        self.assertEqual(mod.release_patch_payload(mod.RELEASE, name), {
+            "release": {"name": mod.RELEASE, "rulesetName": name},
+            "updateMask": "rulesetName",
+        })
+        with self.assertRaisesRegex(RuntimeError, "Unexpected staging"):
+            mod.release_patch_payload(mod.RELEASE, "projects/pokefolio-production/rulesets/bad")
+
     def test_target_pinned_to_staging(self):
         self.assertEqual(mod.PROJECT, "pokefolio-staging")
         self.assertIn("ac2dcae853f11738", mod.RULES_URL)
