@@ -15,7 +15,10 @@ export function PurchaseDetails({ view, onInspect, onRefresh, refreshing, tracki
   const imported = 'origin' in transaction;
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
   const money = useDisplayMoney();
-  const cost = (c: Cost) => c.status === 'exact' ? money(c.value) : c.status === 'estimated' ? `${money(c.value)} · ${t('purchaseDetails.estimated')}` : t(`purchaseDetails.${c.status === 'unallocated' ? 'unallocated' : 'unknownCost'}`);
+  const nativeMoney = (value: {currency: string;minor: number}) => new Intl.NumberFormat(locale,{style:'currency',currency:value.currency}).format(value.minor/100);
+  const nativeTotals = imported ? transaction.nativeCardTotals ?? [] : [];
+  const knownAmounts = nativeTotals.length ? nativeTotals.map(nativeMoney).join(' + ') : null;
+  const cost = (c: Cost) => c.status === 'exact' ? imported ? nativeMoney(c.value) : money(c.value) : c.status === 'estimated' ? `${money(c.value)} · ${t('purchaseDetails.estimated')}` : t(`purchaseDetails.${c.status === 'unallocated' ? 'unallocated' : 'unknownCost'}`);
   const amount = (value: typeof transaction.shipping) => value.status === 'known' ? money(value.value) : t('purchaseDetails.unknownCost');
   const source = imported ? t('purchaseDetails.legacyImport') : [t(`transactionHistory.${row.sourceKind}`), row.source].filter((s, index, all) => s && all.indexOf(s) === index && !(row.sourceKind === 'manual' && index === 0 && row.source)).join(' · ');
   return <article className="purchase-details" aria-label={t('purchaseDetails.title')}>
@@ -46,9 +49,11 @@ export function PurchaseDetails({ view, onInspect, onRefresh, refreshing, tracki
     </Card>
     <Card className="purchase-breakdown" aria-labelledby={`${id}-breakdown`}>
       <h2 id={`${id}-breakdown`}>{t('purchaseDetails.breakdown')}</h2>
-      <dl>{([['cards', transaction.subtotal], ['shipping', transaction.shipping], ['taxes', transaction.taxes], ['fees', transaction.fees]] as const).filter(([key, value]) => key === 'cards' || key === 'shipping' || value.status === 'unknown' || value.value.minor !== 0).map(([key, value]) => <div key={key}><dt>{t(`purchaseDetails.${key}`)}</dt><dd><bdi>{amount(value)}</bdi></dd></div>)}
-        <div className="purchase-total"><dt>{t(imported ? 'purchaseDetails.recordedTotal' : transaction.settlement === 'paid' ? 'purchaseDetails.totalPaid' : 'transactionHistory.total')}</dt><dd><bdi>{row.currency && row.minor !== null ? money({ currency: row.currency, minor: row.minor }) : t('purchaseDetails.unknownCost')}</bdi></dd></div>
+      <dl>{([['cards', transaction.subtotal], ['shipping', transaction.shipping], ['taxes', transaction.taxes], ['fees', transaction.fees]] as const).filter(([key, value]) => key === 'cards' || key === 'shipping' || value.status === 'unknown' || value.value.minor !== 0).map(([key, value]) => <div key={key}><dt>{t(`purchaseDetails.${key}`)}</dt><dd><bdi>{key === 'shipping' && imported && transaction.shippingIncludedInCardPrices && value.status !== 'known'
+          ? '0' : key === 'cards' && row.minor === null && knownAmounts ? knownAmounts : amount(value)}</bdi></dd></div>)} 
+        <div className="purchase-total"><dt>{t(imported && row.minor === null && knownAmounts ? 'purchaseDetails.knownAmounts' : imported ? 'purchaseDetails.recordedTotal' : transaction.settlement === 'paid' ? 'purchaseDetails.totalPaid' : 'transactionHistory.total')}</dt><dd><bdi>{row.currency && row.minor !== null ? money({ currency: row.currency, minor: row.minor }) : knownAmounts ?? t('purchaseDetails.unknownCost')}</bdi></dd></div>
       </dl>
+      {imported && (transaction.unpricedCopyCount ?? 0) > 0 && <p className="text-xs text-slate-600">{t('purchaseDetails.unpricedCopies',{count:transaction.unpricedCopyCount})}</p>}
       {view.cardCostMismatch && <p role="alert" className="text-sm text-amber-800">{t('purchaseDetails.costMismatch')}</p>}
     </Card>
     {shipments.length ? shipments.map(shipment => <ShipmentDetails key={shipment.id} shipment={shipment} trackingError={!!shipment.trackingNumber && (!!trackingFailed || !!trackingErrors?.[shipment.trackingNumber.trim().toUpperCase()])} onRefresh={onRefresh} refreshing={refreshing} />) : <Card className="purchase-shipment"><h2>{t('purchaseDetails.shipment')}</h2><p className="text-sm text-slate-600">{t('purchaseDetails.noShipment')}</p></Card>}
