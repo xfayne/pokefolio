@@ -23,8 +23,9 @@ test('dashboard follows the approved sections and links each physical copy safel
  const baseline=await page.locator('.dashboard-big').boundingBox();
  const originalKpis=await page.locator('.dashboard-metric-kpis').boundingBox();
  await page.getByLabel('Chart metric').selectOption('change');
- await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','0');
- await expect(page.locator('.dashboard-coverage')).toHaveAttribute('aria-hidden','true');
+ await expect(page.locator('.dashboard-coverage')).toHaveText('Price History');
+ await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','1');
+ await expect(page.locator('.dashboard-coverage')).not.toHaveAttribute('aria-hidden','true');
  await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Unrealized P/L','Unrealized ROI']);
  expect(Math.abs((await page.locator('.dashboard-big').boundingBox())!.y-baseline!.y)).toBeLessThan(1);
  expect(Math.abs((await page.locator('.dashboard-metric-kpis').boundingBox())!.y-originalKpis!.y)).toBeLessThan(1);
