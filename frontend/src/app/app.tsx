@@ -1,4 +1,5 @@
 import { WishlistPage } from '@/features/wishlist/wishlist-page';
+import { SectionTabsBar } from '@/components/ui/section-tabs-bar';
 import { useWishlist } from '@/features/wishlist/use-wishlist';
 import { AnalyzePage } from '@/features/analyze/analyze-page';
 import {StagingYearLoader} from '@/features/staging/year-loader';
@@ -29,7 +30,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState, LoadingState } from '@/components/ui/surfaces';
 import { UtilitySheet } from '@/components/ui/utility-sheet';
 import { useUIStore } from '@/state/ui';
-import { readSectionTabs, saveSectionTabs, sectionTabFromPath, sections } from '@/state/section-tabs';
+import { readSectionTabs, saveSectionTabs, sectionTabFromPath, sections, type Section } from '@/state/section-tabs';
 import { createQueryClient } from './query-client';
 import { DemoPortfolioProvider } from '@/features/transactions/demo-provider';
 import { ErrorBoundary } from './error-boundary';
@@ -60,21 +61,13 @@ function SectionPage({ name }: { name: Destination }) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const tabs = name in sections ? sections[name as keyof typeof sections] : null;
+  const hasTabs = name in sections;
   const isTransactions = name === 'transactions';
-  const tabNavigation = tabs && <nav aria-label={t('sectionNavigation')} className="section-tabs flex min-w-0 flex-1 gap-1 rounded-full bg-blue-100/80 p-1">
-    {tabs.map(tab => <NavLink key={tab} to={{ pathname: `/${name}/${tab}`, search: isTransactions ? location.search : '' }} className={({ isActive }) => `flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-full px-2 text-sm font-semibold transition-colors duration-150 ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-white/60'}`}>{t(tab)}</NavLink>)}
-  </nav>;
   const createTransaction = () => {
     void navigate({ pathname: '/transactions/new', search: location.search }, { state: { purchaseFrom: 'history' } });
   };
   return <div className={location.pathname === '/collection/binder' ? 'binder-section' : ['/collection/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-2' : 'space-y-6'}>
-    {tabNavigation && (isTransactions ? <div className="transactions-nav-sticky">
-      {tabNavigation}
-      <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800">
-        <LuPlus aria-hidden className="size-5" />
-      </button>
-    </div> : tabNavigation)}
+    {hasTabs && <SectionTabsBar section={name as Section} search={isTransactions ? location.search : ''} action={isTransactions ? <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800"><LuPlus aria-hidden className="size-5" /></button> : undefined} />}
     {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }

@@ -1,7 +1,7 @@
 import {it,expect,vi} from 'vitest';
 import {render,screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {BinderPicker,eligibleBinderCopies} from './binder-picker';
+import {BinderPicker,eligibleBinderCopies,eligibleBinderWishes} from './binder-picker';
 import {emptyBinder} from './model';
 import {createSampleCopies,sampleOwner} from '@/features/inventory/sample';
 import '@/lib/i18n';
@@ -23,4 +23,26 @@ it('requires a physical copy choice when the catalog card has duplicates',async(
  expect(pick).not.toHaveBeenCalled();
  await userEvent.click(screen.getByRole('button',{name:/Copy 2.*LP/}));
  expect(pick).toHaveBeenCalledWith(expect.objectContaining({id:'charizard-b'}));
+});
+
+it('offers Wishlist-only entries without creating a physical copy',async()=>{
+ const pick=vi.fn();const pickWish=vi.fn();
+ render(<BinderPicker binder={emptyBinder(sampleOwner)} copies={[]} wishCardIds={['neo2-13']} busy={false} failed={false} onClose={()=>{}} onPick={pick} onPickWish={pickWish} />);
+ await userEvent.type(screen.getByRole('searchbox'),'Umbreon');
+ await userEvent.click(screen.getByRole('button',{name:/Umbreon/}));
+ expect(pickWish).toHaveBeenCalledWith('neo2-13');
+ expect(pick).not.toHaveBeenCalled();
+});
+it('excludes already placed Wishlist reservations and invalid catalog IDs',()=>{
+ const binder={...emptyBinder(sampleOwner),pockets:[{kind:'wish' as const,cardId:'neo2-13'}]};
+ expect(eligibleBinderWishes(binder,['neo2-13','basep-9','basep-9','unknown-card'])).toEqual(['basep-9']);
+});
+it('asks whether to place a copy or a Wishlist reservation when both are available',async()=>{
+ const pick=vi.fn();const pickWish=vi.fn();
+ render(<BinderPicker binder={emptyBinder(sampleOwner)} copies={createSampleCopies()} wishCardIds={['base1-4']} busy={false} failed={false} onClose={()=>{}} onPick={pick} onPickWish={pickWish} />);
+ await userEvent.type(screen.getByRole('searchbox'),'Charizard');
+ await userEvent.click(screen.getByRole('button',{name:/Charizard/}));
+ expect(pick).not.toHaveBeenCalled();expect(pickWish).not.toHaveBeenCalled();
+ await userEvent.click(screen.getByRole('button',{name:'Wishlist pocket'}));
+ expect(pickWish).toHaveBeenCalledWith('base1-4');expect(pick).not.toHaveBeenCalled();
 });

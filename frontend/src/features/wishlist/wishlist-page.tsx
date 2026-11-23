@@ -15,11 +15,11 @@ import { fetchMarketQuotes } from '@/features/catalog/market-prices';
 import { publicPriceClient } from '@/services/public-price-client';
 import { useDisplayMoney } from '@/services/display-currency';
 import { positionWish, emptyWishlist } from './model';
+import { sampleWishlistIds } from './sample';
 import { useWishlist } from './use-wishlist';
 import './wishlist.css';
 
 const catalog = new Map(catalogCards.map(card => [card.id, card]));
-const sampleIds = ['neo2-13','base3-5','base1-15','neo2-1','gym2-12','basep-9','base2-11','neo1-9','base1-4','neo2-4','base3-2','gym1-1'];
 type Sort = 'custom' | 'name' | 'priceAsc' | 'priceDesc';
 type Grade = 'NM' | 'LP' | 'MP' | 'HP' | 'DAMAGED';
 type Gesture = { pointerId: number; id: string; x: number; y: number; active: boolean; over: string | null };
@@ -29,7 +29,7 @@ export function WishlistPage() {
   const [params, setParams] = useSearchParams();
   const preview = params.get('wishlist') === 'sample';
   const account = useWishlist();
-  const [sample, setSample] = useState(() => ({ ...emptyWishlist('sample-wishlist'), cardIds: sampleIds }));
+  const [sample, setSample] = useState(() => ({ ...emptyWishlist('sample-wishlist'), cardIds: [...sampleWishlistIds] }));
   const wishlist = preview ? sample : account.wishlist;
   const reorder = async (id: string, position: number) => {
     if (preview) setSample(current => ({ ...current, revision: current.revision + 1, cardIds: positionWish(current.cardIds, id, position) }));
@@ -216,7 +216,6 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
       <div className="wishlist-controls collection-list-controls">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">{t('wishlistUi.count',{count:ordered.length})}</p>
-          <p className="text-xs text-slate-600">{t(sort === 'custom' && !term ? 'wishlistUi.dragHint' : 'wishlistUi.sortedHint')}</p>
         </div>
         <label className="wishlist-grade-label"><span className="sr-only">{t('wishlistUi.grade')}</span><Select aria-label={t('wishlistUi.grade')} value={condition} onChange={event => setCondition(event.target.value as Grade)}>{(['NM','LP','MP','HP','DAMAGED'] as const).map(value => <option key={value} value={value}>{value === 'DAMAGED' ? 'DMG' : value}</option>)}</Select></label>
         <label className="wishlist-sort-label"><span className="sr-only">{t('wishlistUi.sort')}</span><Select aria-label={t('wishlistUi.sort')} value={sort} onChange={event => {setSort(event.target.value as Sort);setLimit(80);}}>
@@ -261,7 +260,6 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
       </ListCard>;
     })}</ul>
     {ordered.length > shown.length && <Button variant="outline" onClick={() => setLimit(count => count + 80)}>{t('wishlistUi.more')}</Button>}
-    {shown.length > 0 && <p className="wishlist-prices-note">{t('wishlistUi.priceNote',{condition})}</p>}
     {drag && <div aria-hidden className="wishlist-drag-preview" style={{left:drag.x,top:drag.y}}><LuGripVertical />{catalog.get(drag.id)?.name}</div>}
     {editing && <dialog ref={dialogRef} aria-modal="true" aria-labelledby="wishlist-dialog-title" className="wishlist-position-dialog" onCancel={event => {event.preventDefault();if(!modalBusy)setEditing(null);}}>
       <form onSubmit={event => {void applyPosition(event);}} className="wishlist-dialog-content">

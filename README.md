@@ -217,3 +217,12 @@ the first staged Rules release and Pages deployment both succeeded on 2026-11-23
 
 See [Staging Rules CI/CD](docs/FIRESTORE_RULES_CICD.md) for exact fixed project
 identifiers, the no-key setup, acceptance tests and rollback.
+
+## Wishlist and Binder navigation (2026-11-23)
+
+Binder's empty-pocket picker now accepts unplaced cards from the account Wishlist
+as **wish** pockets (not owned copies), alongside eligible physical copies.
+An overlapping card offers a choice. Wishlist membership and priority order are
+never mutated by binder placement. Collection/Wishlist/Transactions use shared
+sticky section navigation; Card Details uses a compact Wishlist removal action.
+See [Wishlist behavior and verification](docs/WISHLIST.md).

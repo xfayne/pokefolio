@@ -1,5 +1,7 @@
 import { CatalogSearch } from '@/features/catalog/catalog-search';
-import { BinderPicker, eligibleBinderCopies } from './binder-picker';
+import { BinderPicker, eligibleBinderCopies, eligibleBinderWishes } from './binder-picker';
+import { useWishlist } from '@/features/wishlist/use-wishlist';
+import { sampleWishlistIds } from '@/features/wishlist/sample';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
@@ -46,6 +48,7 @@ function sampleBinder(): Binder {
 function savedPage(key:string) {try { const n=Number(sessionStorage.getItem(key));return Number.isSafeInteger(n)&&n>=0?n:0; }catch{return 0;} }
 export function BinderPage() {
   const account=usePortfolio(),client=useQueryClient();
+  const wish=useWishlist();
   const [params,setParams]=useSearchParams();
   const preview=params.get('inventory')==='sample';
   const owner=preview?sampleOwner:account.owner;
@@ -54,7 +57,8 @@ export function BinderPage() {
   const query=useQuery({queryKey:key,enabled:!!owner,queryFn:()=>preview?Promise.resolve(sampleBinder()):readBinder(getFirebaseServices()!.db,owner!),retry:1,staleTime:60_000});
   const binder=query.data ?? emptyBinder(owner ?? 'disconnected');
   // Keying the view by owner prevents drafts or navigation leaking across accounts.
-  return <BinderView key={`${preview?'sample':'account'}:${owner ?? ''}`} binder={binder} copies={copies} preview={preview} disconnected={!owner}
+  const wishlistIds=preview?sampleWishlistIds:wish.owner===owner && !wish.loading && !wish.error?wish.wishlist.cardIds:[];
+  return <BinderView wishlistIds={wishlistIds} key={`${preview?'sample':'account'}:${owner ?? ''}`} binder={binder} copies={copies} preview={preview} disconnected={!owner}
     loading={!preview && account.loading || !!owner && query.isPending} error={!preview && account.error || query.error}
     reload={()=>{void query.refetch();}} onDemo={()=>{const next=new URLSearchParams(params);next.set('inventory','sample');setParams(next);}}
     onSave={async next=>{
@@ -64,8 +68,8 @@ export function BinderPage() {
       client.setQueryData(key,saved);
     }} />;
 }
-function BinderView({binder,copies,preview,disconnected,loading,error,reload,onDemo,onSave}: {
-  binder:Binder;copies:readonly CardCopy[];preview:boolean;disconnected:boolean;loading:boolean;error:unknown;
+function BinderView({binder,copies,wishlistIds,preview,disconnected,loading,error,reload,onDemo,onSave}: {
+  binder:Binder;copies:readonly CardCopy[];wishlistIds:readonly string[];preview:boolean;disconnected:boolean;loading:boolean;error:unknown;
   reload:()=>void;onDemo:()=>void;onSave:(next:Binder)=>Promise<void>;
 }) {
   const {t}=useTranslation();
@@ -96,7 +100,10 @@ function BinderView({binder,copies,preview,disconnected,loading,error,reload,onD
     {failed && <p className="binder-error" role="alert">{t('binderUi.failed')} <button onClick={reload} className="underline">{t('binderUi.reload')}</button></p>}
     <p className="sr-only" role="status">{busy?t('binderUi.saving'):notice}</p>
     <BinderBook pockets={visuals} page={current} onPage={changePage} onOptions={!disconnected?()=>setPanel('options'):undefined} onEmpty={!disconnected?(index=>{setFailed(false);setEmptyTarget(index);}):undefined} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} onRemove={!disconnected?((from)=>{try{void save({...binder,pockets:unplacePocket(binder.pockets,from)});}catch{setFailed(true);}}):undefined} />
-    {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPick={async copy=>{
+    {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} wishCardIds={wishlistIds} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPickWish={async cardId=>{
+      if(!eligibleBinderWishes(binder,wishlistIds).includes(cardId) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
+      try {if(await save({...binder,pockets:placePocket(binder.pockets,{kind:'wish',cardId},emptyTarget)}))setEmptyTarget(null);}catch{setFailed(true);}
+    }} onPick={async copy=>{
       if(!eligibleBinderCopies(binder,copies).some(c=>c.id===copy.id) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
       try {if(await save({...binder,pockets:placePocket(binder.pockets,{kind:'copy',copyId:copy.id},emptyTarget)}))setEmptyTarget(null);}catch{setFailed(true);}
     }} />}
