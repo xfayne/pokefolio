@@ -42,7 +42,7 @@ export function DashboardPage(){
  const isReady=connected&&!data.loading&&!data.error&&result!==null;
  const profit=result?.unrealized.minor;
  const profitTone=profit==null?'':profit<0?'dashboard-negative':'dashboard-positive';
- const roi=isReady?result.roi:null;
+ const roi=isReady&&result?result.roi:null;
  const roiText=roi===null?'—':`${roi>=0?'+':''}${roi.toFixed(1)}%`;
  const leftMetric=mode==='value'
   ?{label:t.knownCost,value:format(visible(result?.knownCost)),icon:LuWallet,tone:'dashboard-wallet'}
@@ -50,7 +50,7 @@ export function DashboardPage(){
    ?{label:t.unrealized,value:format(visible(result?.unrealized),true),icon:LuTrendingUp,tone:profitTone}
    :{label:t.netSaleProceeds,value:format(visible(result?.realizedProceeds)),icon:LuWallet,tone:'dashboard-wallet'};
  const rightMetric=mode==='value'
-  ?{label:t.heldCopies,value:isReady?String(result.holdings.length):'—',icon:LuLayers,tone:'dashboard-wallet'}
+  ?{label:t.heldCopies,value:isReady&&result?String(result.holdings.length):'—',icon:LuLayers,tone:'dashboard-wallet'}
   :mode==='change'
    ?{label:t.unrealizedRoi,value:roiText,icon:LuChartNoAxesCombined,tone:roi===null?'':roi<0?'dashboard-negative':'dashboard-positive'}
    :{label:t.soldCostBasis,value:format(visible(result?.soldCostBasis)),icon:LuTag,tone:'dashboard-wallet'};
