@@ -31,6 +31,10 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   const money = (minor: number, currency: NonNullable<HistoryRow['currency']>, signed = false) => display ? formatDisplay({minor,currency}) : new Intl.NumberFormat(locale, {
     style: 'currency', currency, ...(signed ? { signDisplay: 'exceptZero' as const } : {}),
   }).format(minor / 100).replace('-', '−');
+  const nativeTotal = (row: HistoryRow) => row.nativeCardTotals?.length
+    ? row.nativeCardTotals.map(({minor,currency}) =>
+      new Intl.NumberFormat(locale,{style:'currency',currency}).format(minor/100)).join(' + ')
+    : null;
   const date = (value: string, monthOnly = false) => new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC', month: monthOnly ? 'long' : 'short', ...(monthOnly ? { year: 'numeric' as const } : { day: 'numeric' as const }),
   }).format(new Date(`${value}${monthOnly ? '-01' : ''}T00:00:00Z`));
@@ -84,8 +88,8 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
             <span className="history-copy-count">{row.copyCount ? t('transactionHistory.copies', { count: row.copyCount }) : t('transactionHistory.noCopies')}</span>
           </span>
           <span className={`history-amount ${row.kind === 'sale' ? 'history-sale' : ''}`}>
-            <span className="history-total-label">{t('transactionHistory.total')}</span>
-            <bdi className="history-total">{row.minor !== null && row.currency ? money(row.minor, row.currency) : t('transactionHistory.unavailable')}</bdi>
+            <span className="history-total-label">{row.minor === null && nativeTotal(row) ? t('transactionHistory.knownAmounts') : t('transactionHistory.total')}</span>
+            <bdi className="history-total">{row.minor !== null && row.currency ? money(row.minor, row.currency) : nativeTotal(row) ?? t('transactionHistory.unavailable')}</bdi>
             <TransactionStatus status={row.status} />
           </span>
           <LuChevronRight aria-hidden className="history-chevron rtl:rotate-180" />
