@@ -25,8 +25,9 @@ export function importedPurchaseEditDraft(records: readonly PortfolioRecord[], i
   const sorted = [...copies].sort((a, b) => {
     const ordinal = (entry: PortfolioRecord) => {
       if (entry.collection !== 'copies' || entry.record.acquisition.kind !== 'purchase') return 0;
-      const line = lines.find(l => l.collection === 'lines' && l.record.id === entry.record.acquisition.lineId);
-      return line?.collection === 'lines' ? line.record.ordinal : 0;
+      const lineId = entry.record.acquisition.lineId;
+      const line = lines.find(l => l.collection === 'lines' && 'ordinal' in l.record && l.record.id === lineId);
+      return line?.collection === 'lines' && 'ordinal' in line.record ? line.record.ordinal : 0;
     };
     return ordinal(a) - ordinal(b);
   });
@@ -83,7 +84,8 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
   for (const update of command.updates) {
     if (update.before.collection !== 'copies' || update.after.collection !== 'copies') continue;
     const cost = update.after.record.cardCost;
-    const linked = command.updates.find(u => u.before.collection === 'lines' && u.before.record.id === update.before.record.acquisition.lineId);
+    const lineId = update.before.record.acquisition.kind === 'purchase' ? update.before.record.acquisition.lineId : null;
+    const linked = command.updates.find(u => u.before.collection === 'lines' && u.before.record.id === lineId);
     if (!linked || linked.after.collection !== 'lines' || !('origin' in linked.after.record)) throw Error('Imported cost line missing');
     const evidence = linked.after.record.pricing.unitPrice;
     if (cost.status === 'exact' ? evidence.status !== 'known' || evidence.value.minor !== cost.value.minor || evidence.value.currency !== cost.value.currency : evidence.status !== 'unknown') throw Error('Imported cost and line disagree');
@@ -126,7 +128,8 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     newCosts.set(entry.record.id, cost);
     if (unchanged) continue;
     priceEdited = true;
-    const originalLine = lines.find(l => l.collection === 'lines' && l.record.id === entry.record.acquisition.lineId);
+    const sourceLineId = entry.record.acquisition.lineId;
+    const originalLine = lines.find(l => l.collection === 'lines' && l.record.id === sourceLineId);
     if (!originalLine || originalLine.collection !== 'lines' || !('origin' in originalLine.record)) throw Error('Imported purchase line unavailable');
     const nextCopy = {
       ...entry, record: {
