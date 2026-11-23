@@ -15,6 +15,7 @@ import time
 from firebase_rules_rest import (
     RELEASE, PROJECT, http_json, normalized, release_ruleset,
     source_from_ruleset, without_binder_and_wishlist, without_wishlist,
+    release_patch_payload,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -96,8 +97,8 @@ def run(deploy=False, token=None):
     if not isinstance(new_name, str) or not new_name.startswith(f"projects/{PROJECT}/rulesets/"):
         raise RuntimeError("Invalid new staging Ruleset name; no release updated.")
     http_json(
-        "PATCH", f"https://firebaserules.googleapis.com/v1/{RELEASE}?updateMask=rulesetName",
-        token=token, payload={"name": RELEASE, "rulesetName": new_name},
+        "PATCH", f"https://firebaserules.googleapis.com/v1/{RELEASE}",
+        token=token, payload=release_patch_payload(RELEASE, new_name),
     )
     for attempt in range(8):
         published = release_ruleset(token)
