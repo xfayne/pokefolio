@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { selectPurchaseDetails } from '@/domain/purchase-details';
 import { PurchaseDetails } from './purchase-details';
 import { sampleHistory, samplePurchaseShipments } from './sample';
+import { importedPurchaseSchema } from '@/domain/schema';
 
 afterEach(async () => { vi.unstubAllGlobals(); await i18n.changeLanguage('en'); });
 it('renders the approved purchase breakdown and opens the exact physical copy', async () => {
@@ -48,4 +49,25 @@ it('shows tracking failure as plain text inside its shipment without changing th
   expect(within(shipment).getByText('Tracking error')).toBeInTheDocument();
   expect(within(shipment).queryByText('In transit')).not.toBeInTheDocument();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('displays mixed legacy prices in native currencies without a fictional total or extra shipping', () => {
+  const unknown={status:'unknown',reason:'Mixed or unrecorded'} as const;
+  const purchase=importedPurchaseSchema.parse({
+    schemaVersion:1,ownerUid:sampleHistory.ownerUid,id:'legacy-native',revision:1,
+    createdAt:'2026-11-23T10:00:00Z',updatedAt:'2026-11-23T10:00:00Z',
+    kind:'purchase',origin:'legacy-import',sourceParcelId:'parcel',notes:'',
+    transactionOn:{status:'known',value:'2026-11-16',source:'legacy'},currency:unknown,
+    subtotal:unknown,payable:unknown,shipping:unknown,taxes:unknown,fees:unknown,
+    totalBasis:'recorded-card-prices',settlement:'unknown',shippingIncludedInCardPrices:true,
+    nativeCardTotals:[{currency:'GBP',minor:10000},{currency:'USD',minor:1400}],unpricedCopyCount:3,
+  });
+  const data={...sampleHistory,transactions:[purchase],copies:[],saleLines:[],inTransit:[]};
+  const view=selectPurchaseDetails(data,purchase.id,[])!;
+  render(<PurchaseDetails view={view} onInspect={vi.fn()} />);
+  const breakdown=screen.getByRole('region',{name:'Cost breakdown'});
+  expect(within(breakdown).getAllByText('£100.00 + $14.00')).toHaveLength(2);
+  expect(within(breakdown).getByText('Known card costs')).toBeInTheDocument();
+  expect(within(breakdown).getByText('0')).toBeInTheDocument();
+  expect(within(breakdown).getByText('3 cards have no recorded prices')).toBeInTheDocument();
 });
