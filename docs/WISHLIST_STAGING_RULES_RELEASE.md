@@ -72,7 +72,7 @@ curl -fsSL https://raw.githubusercontent.com/xfayne/pokefolio/main/scripts/fireb
 The pinned source is the audited full private Firestore rules at commit
 \`ac2dcae853f11738ecefbc326c514ff3d76ba42d\`. Before deploying, the
 script reads the currently active live staging release and refuses to replace
-it unless adding the new Wishlist rule is the **only** change. It saves a
+it unless adding the reviewed Binder and/or Wishlist rules are the **only** changes. It saves a
 local backup and prints the previous ruleset ID for rollback. It then creates
 a ruleset, updates only \`cloud.firestore\` on \`pokefolio-staging\`, and
 checks the published release and complete contents. It does not mutate user
