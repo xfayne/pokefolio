@@ -3,7 +3,6 @@
 .app-shell[data-binder] > header { position:relative; flex:none; }
 .app-shell[data-binder] > .app-content { display:flex; flex:1; min-height:0; padding-bottom:.25rem; overflow:hidden; }
 .app-shell[data-binder] > .app-content > .binder-section { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; gap:.5rem; }
-.app-shell[data-binder] .section-tabs { flex:none; }
 .app-shell[data-binder] > .bottom-bar { position:relative; inset:auto; flex:none; width:100%; }
 .binder-page { display:flex; flex:1; min-height:0; flex-direction:column; gap:.375rem; }
 .binder-toolbar { display:flex; align-items:center; justify-content:flex-end; gap:.5rem; flex:none; }
