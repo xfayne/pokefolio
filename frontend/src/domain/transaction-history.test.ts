@@ -49,3 +49,16 @@ it('orders purchases with the same purchase date by newest creation first',()=>{
  const newer={...purchase,id:'zzz-newer',createdAt:'2026-11-20T02:00:00Z',updatedAt:'2026-11-20T02:00:00Z'};
  expect(selectHistory({...sampleHistory,transactions:[older,newer],copies:[],saleLines:[],inTransit:[]}).map(r=>r.id)).toEqual(['zzz-newer','aaa-older']);
 });
+
+it('sums evidenced native prices for incomplete imported purchases without double counting', () => {
+  const base = selectHistory(sampleHistory)[0]!;
+  const rows: HistoryRow[] = [
+    { ...base, id: 'complete', currency: 'USD', minor: 1000, nativeCardTotals: [{ currency: 'USD', minor: 1000 }] },
+    { ...base, id: 'mixed', currency: null, minor: null, nativeCardTotals: [{ currency: 'EUR', minor: 450 }, { currency: 'GBP', minor: 700 }] },
+    { ...base, id: 'missing', currency: null, minor: null },
+  ];
+  expect(groupHistory(rows, all)[0]).toMatchObject({
+    totals: [{ currency: 'EUR', minor: -450 }, { currency: 'GBP', minor: -700 }, { currency: 'USD', minor: -1000 }],
+    missingCount: 2,
+  });
+});
