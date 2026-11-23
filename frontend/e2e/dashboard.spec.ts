@@ -8,6 +8,9 @@ test('dashboard follows the approved sections and links each physical copy safel
  await page.goto('./#/dashboard?dashboard=sample');
  await expect(page.getByRole('heading',{name:'Pokefolio',exact:true})).toBeVisible();
  await expect(page.locator('.dashboard-big')).toHaveText('$255');
+ await expect(page.locator('.dashboard-value .dashboard-note')).toHaveCount(0);
+ await expect(page.locator('.dashboard-chart-line').first()).toHaveAttribute('pathLength','1');
+ await expect(page.locator('.dashboard-chart-line').first()).toHaveCSS('animation-name','dashboard-chart-draw');
  await expect(page.locator('.dashboard-acquisitions > button')).toHaveCount(3);
  await expect(page.locator('.dashboard-holdings li')).toHaveCount(3);
  await expect(page.locator('.dashboard-holdings')).not.toContainText('Gengar');
@@ -47,6 +50,8 @@ test('dashboard stays within narrow viewports and supports Hebrew and reduced mo
  await page.clock.setFixedTime(new Date('2026-11-21T12:00:00Z'));
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('./#/dashboard?dashboard=sample');
+ await expect(page.locator('.dashboard-chart-line').first()).toHaveCSS('animation-name','none');
+ await expect(page.locator('.dashboard-chart-fill').first()).toHaveCSS('opacity','1');
  for(const width of [320,390,768,1280]){
   await page.setViewportSize({width,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
