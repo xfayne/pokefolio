@@ -1,5 +1,8 @@
 /* A fixed book between the existing shell bars. Only utility sheets can scroll. */
-.app-shell[data-binder] { display:flex; flex-direction:column; height:100dvh; min-height:0; overflow:hidden; }
+/* The shared rounded bottom navigation needs the light content surface behind
+   its transparent top corners. The navy shell background made them invisible
+   in the fixed-viewport Binder, even though its border-radius was still 20px. */
+.app-shell[data-binder] { display:flex; flex-direction:column; height:100dvh; min-height:0; overflow:hidden; background:var(--content-background); }
 .app-shell[data-binder] > header { position:relative; flex:none; }
 .app-shell[data-binder] > .app-content { display:flex; flex:1; min-height:0; padding-bottom:.25rem; overflow:hidden; }
 .app-shell[data-binder] > .app-content > .binder-section { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; gap:.5rem; }

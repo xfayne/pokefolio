@@ -238,3 +238,35 @@ test('Binder reuses exactly the same Collection tabs sizing as Cards',async({pag
     expect(dimensions[1]!.padding).toBe(dimensions[0]!.padding);
   }
 });
+
+test('shared rounded bottom navigation is visibly rounded on Binder and Cards',async({page})=>{
+  // A CSS radius alone is insufficient when its transparent corners show the
+  // same navy shell background. Check actual rendered pixels as well.
+  for(const width of [320,390,768]){
+    await page.setViewportSize({width,height:844});
+    for(const route of ['collection/cards?inventory=sample','collection/binder?inventory=sample']){
+      await page.goto(`./#/${route}`);
+      const nav=page.locator('.bottom-bar');
+      await expect(nav).toHaveCSS('border-top-left-radius','20px');
+      await expect(nav).toHaveCSS('border-top-right-radius','20px');
+      const bounds=await nav.boundingBox();
+      expect(bounds).not.toBeNull();
+      const png=(await page.screenshot({scale:'css'})).toString('base64');
+      const colors=await page.evaluate(async ({png,x,y,w})=>{
+        const picture=new Image();
+        picture.src='data:image/png;base64,'+png;
+        await picture.decode();
+        const canvas=document.createElement('canvas');
+        canvas.width=picture.naturalWidth;canvas.height=picture.naturalHeight;
+        const context=canvas.getContext('2d')!;
+        context.drawImage(picture,0,0);
+        return [[x+2,y+2],[x+w-3,y+2],[x+28,y+2],[x+w-29,y+2]].map(([px,py])=>
+          [...context.getImageData(Math.round(px),Math.round(py),1,1).data].slice(0,3));
+      },{png,x:bounds!.x,y:bounds!.y,w:bounds!.width});
+      // Light page surface is visible outside both curved corners, while
+      // the interior of the same bar remains the original dark navy.
+      for(const corner of colors.slice(0,2))expect(Math.min(...corner)).toBeGreaterThan(175);
+      for(const navy of colors.slice(2))expect(Math.max(...navy)).toBeLessThan(85);
+    }
+  }
+});
