@@ -189,3 +189,18 @@ publishes a catalog-only snapshot through the existing revocable link policy.
 See [Binder behavior and persistence](docs/BINDER.md). The
 [sample binder](https://xfayne.github.io/pokefolio/#/collection/binder?inventory=sample)
 is synthetic and session-only; no legacy data is imported.
+
+## Wishlist Cards (#14, #115)
+
+Wishlist → Cards uses the approved compact mobile list with owner-specific
+manual priority order, search, name/price sorting, per-condition market quotes
+and a numeric position modal on long press. The drag grip supports touch and
+keyboard reordering only in Custom order. Catalog and Collection Card Details
+now offer Add/Remove Wishlist actions rather than a disabled stub.
+
+The data is stored independently under `users/{uid}/wishlists/main` with
+revision-checked Firestore transactions. It never removes acquired wishes or
+changes Binder pockets. [Sample Wishlist](https://xfayne.github.io/pokefolio/#/wishlist/cards?wishlist=sample)
+is synthetic and session-only. Owner persistence requires deployment of the
+new private rules to **Pokefolio staging only**; merging a frontend PR alone
+does not publish Firestore rules. See [Wishlist contracts](docs/WISHLIST.md).
