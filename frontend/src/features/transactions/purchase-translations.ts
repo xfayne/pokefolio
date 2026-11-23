@@ -10,7 +10,7 @@ export const purchaseTranslations = {
     unknownCost: 'Unknown', estimated: 'Estimated', unallocated: 'Unallocated', costMismatch: 'Recorded copy prices do not reconcile with the card subtotal.',
     notFound: 'Purchase unavailable', notFoundDetail: 'This purchase is not available in the current collection.', back: 'Back to History',
     more: 'Transaction actions', moreDetail: 'Additional transaction actions', settlementUnknown: 'Payment status unknown', unpaid: 'Unpaid', partialPayment: 'Partially paid',
-    recordedTotal: 'Recorded total', legacyImport: 'Imported purchase', keepCopyDates: 'Editing the purchase date will not change any card’s original acquisition date.', copyCostNumber: 'Card cost {{count}}', copyCurrencyNumber: 'Card currency {{count}}',
+    recordedTotal: 'Recorded total', legacyImport: 'Imported purchase', copyCostNumber: 'Card cost {{count}}',
   },
   he: {
     trackingError: 'שגיאה במעקב', receive: 'התקבל', received: 'התקבל', receiveFailed: 'לא ניתן לסמן כהתקבל. טען מחדש ונסה שוב.',
@@ -23,6 +23,6 @@ export const purchaseTranslations = {
     unknownCost: 'לא ידוע', estimated: 'משוער', unallocated: 'טרם חולק', costMismatch: 'מחירי העותקים המתועדים אינם תואמים לסכום הקלפים בעסקה.',
     notFound: 'הרכישה אינה זמינה', notFoundDetail: 'הרכישה אינה זמינה באוסף הנוכחי.', back: 'חזרה להיסטוריה',
     more: 'פעולות עסקה', moreDetail: 'פעולות נוספות בעסקה', settlementUnknown: 'סטטוס התשלום אינו ידוע', unpaid: 'טרם שולם', partialPayment: 'שולם חלקית',
-    recordedTotal: 'סכום מתועד', legacyImport: 'רכישה שיובאה', keepCopyDates: 'שינוי תאריך העסקה לא ישנה את תאריך הרכישה המקורי של הקלפים.', copyCostNumber: 'מחיר קלף {{count}}', copyCurrencyNumber: 'מטבע קלף {{count}}',
+    recordedTotal: 'סכום מתועד', legacyImport: 'רכישה שיובאה', copyCostNumber: 'מחיר קלף {{count}}',
   },
 };
