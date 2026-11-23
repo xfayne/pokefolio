@@ -106,6 +106,36 @@ test('realized profit and its sale count obey the selected time period',async({p
  await expect(page.locator('.dashboard-big')).toHaveText('$0');
 });
 
+test('completed sample sale draws a real animated profit chart with all purchase and sale costs',async({page})=>{
+ await page.clock.setFixedTime(new Date('2027-01-15T12:00:00Z'));
+ await page.goto('./#/transactions/new?transactions=sample');
+ await page.getByRole('button',{name:'Sale',exact:true}).click();
+ await page.getByLabel('Buyer',{exact:true}).fill('Demo buyer');
+ await page.getByRole('button',{name:'Select owned copies',exact:true}).click();
+ await page.getByRole('dialog').getByRole('checkbox',{name:/Jolteon/}).check();
+ await page.getByRole('dialog').getByRole('button',{name:/Use selected copies/}).click();
+ await page.getByLabel('Sale price 1',{exact:true}).fill('50');
+ await page.getByLabel('Selling fees',{exact:true}).fill('2');
+ await page.getByLabel('Shipping paid by you',{exact:true}).fill('3');
+ await page.getByRole('button',{name:'Save sale',exact:true}).click();
+ await expect(page).toHaveURL(/transactions\/sales\/sale-/);
+ await page.goto('./#/dashboard?dashboard=sample');
+ await page.getByLabel('Chart metric').selectOption('realized');
+ await page.getByRole('button',{name:'1M',exact:true}).click();
+ await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sale');
+ await expect(page.locator('.dashboard-big')).toHaveText('+$3');
+ await expect(page.locator('.dashboard-metric-kpis bdi')).toHaveText(['$45','$42']);
+ await expect(page.locator('.dashboard-chart-line')).toHaveCount(1);
+ await expect(page.locator('.dashboard-chart-line').first()).toHaveAttribute('pathLength','1');
+ await expect(page.locator('.dashboard-chart-line').first()).toHaveCSS('animation-name','dashboard-chart-draw');
+ await expect(page.locator('.dashboard-chart-empty')).toHaveCount(0);
+ await page.screenshot({path:test.info().outputPath('dashboard-realized-chart.png')});
+ await page.getByRole('button',{name:'All',exact:true}).click();
+ await expect(page.locator('.dashboard-coverage')).toHaveText('2 completed sales');
+ await expect(page.locator('.dashboard-big')).toHaveText('—');
+ await expect(page.locator('.dashboard-chart-empty')).toHaveText('Some sales have missing cost or expense data.');
+});
+
 test('signed-out dashboard never invents money or calls authenticated price APIs',async({page})=>{
  const calls:string[]=[];
  page.on('request',r=>{if(/\/api\/market\/prices/.test(r.url()))calls.push(r.url());});
