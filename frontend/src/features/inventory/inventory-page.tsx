@@ -19,12 +19,14 @@ import { createSampleCopies, sampleCatalog, sampleOwner, sampleQuotes } from './
 export function InventoryPage() {
   const account = usePortfolio();
   const wish = useWishlist();
-  const wishlistProps = { wishlistIds: wish.wishlist.cardIds, wishlistBusy: wish.busy, onToggleWishlist: wish.owner && !wish.loading && !wish.error ? async (id: string) => { await wish.update(ids => ids.includes(id) ? removeWish(ids,id) : addWish(ids,id)); } : undefined };
+
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const preview = params.get('inventory') === 'sample';
   const transactionPreview = params.get('transactions') === 'sample';
+  // Explicit sample collection/transactions must not commit real Wishlist changes.
+  const wishlistProps = { wishlistIds: wish.wishlist.cardIds, wishlistBusy: wish.busy, onToggleWishlist: wish.owner && !preview && !transactionPreview && !wish.loading && !wish.error ? async (id: string) => { await wish.update(ids => ids.includes(id) ? removeWish(ids,id) : addWish(ids,id)); } : undefined };
   const demo = useDemoTransactionData();
   const prices=useInventoryPrices(account.history.copies,!preview && !transactionPreview && !!account.owner);
   const [state, setState] = useState(() => ({ copies: createSampleCopies(), audits: [] as Revision[] }));
