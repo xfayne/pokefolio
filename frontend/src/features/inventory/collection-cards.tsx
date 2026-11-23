@@ -82,7 +82,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
         </div>)}
       </div></DisclosureContent>
     </ListCard>)}</ul>
-    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} wishlistIds={wishlistIds} onToggleWishlist={onToggleWishlist} wishlistBusy={wishlistBusy} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
+    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} wishlistIds={wishlistIds} onToggleWishlist={onToggleWishlist} wishlistBusy={!!wishlistBusy} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
   </section>;
 }
 
