@@ -24,3 +24,16 @@ node scripts/firebase-staging.mjs --deploy-bootstrap
 After authenticating the Firebase CLI for staging, the wrapper publishes only `firestore.rules` to `pokefolio-staging`. It rejects project overrides, extra arguments, additional services and access-granting rules. It does not read, replace or delete documents. Remote CLI execution remains unverified in this restricted terminal; the console also retains the previous deny-all version.
 
 The wrapper deliberately cannot deploy the private policy. That rollout was performed through the console from verified merged source, followed by live synthetic checks. No public Firebase Hosting, production credentials or real-data migration is enabled by this setup.
+
+## Staging private-policy promotion
+
+The current Wishlist Cards release requires publishing the latest
+`firestore.private.rules` explicitly to **pokefolio-staging**. The website
+deployment does **not** deploy Firebase Rules.
+
+To preflight without credentials: `node scripts/firebase-private-staging.mjs --check`.
+For an approved staging-only publish, see the verified wrapper and live
+acceptance checklist in [Wishlist staging rules release](../docs/WISHLIST_STAGING_RULES_RELEASE.md).
+The new wrapper never modifies application documents or accepts production
+targets; publishing requires authenticated staging CLI access. This does not
+replace the existing deny-all rollback command above.

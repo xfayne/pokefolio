@@ -22,5 +22,9 @@ jobs:
       - name: Install isolated test dependencies
         working-directory: firebase/testing
         run: npm install --no-audit --no-fund
+      - name: Verify bounded private staging deploy target without cloud access
+        run: |
+          node --test tests/firebase-private-staging.test.mjs
+          node scripts/firebase-private-staging.mjs --check
       - name: Verify bootstrap and prototype rules in a demo-only emulator
         run: npx -y firebase-tools@latest emulators:exec --only firestore --project demo-pokefolio-isolation --config firebase/emulator.json "npm --prefix firebase/testing test"
