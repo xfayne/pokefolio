@@ -298,8 +298,11 @@ test('Binder pointer picks do not retain a focus ring, but keyboard navigation d
   expect(await slot.evaluate(el=>el===document.activeElement || el.matches(':focus-visible'))).toBe(false);
   await expect(slot).not.toHaveAttribute('data-drop','true');
 
-  // Keyboard users keep the normal accessible focus indication.
-  const other=page.locator('[data-pocket-index="7"]');
+  // Restart the synthetic preview: the former final empty pocket now holds
+  // the wish, and keyboard activation needs a fresh empty slot.
+  await page.reload();
+  const other=page.locator('[data-pocket-index="8"]');
+  await expect(other).toHaveAttribute('data-kind','empty');
   await other.press('Enter');
   await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');
