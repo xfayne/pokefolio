@@ -124,7 +124,7 @@ export function selectPerformance(input:PerformanceInput) {
    return copy&&line.basisCosts?acquisitionBasis(line.basisCosts,acquired(copy),currency,convert):unavailable('Frozen sale basis unavailable');
   }):[];
   const basisTotal=validMembership&&costs.every(c=>c.status!=='unavailable')?sum(costs,currency):null;
-  const basis:Metric=basisTotal?.minor!==null&&basisTotal!==null
+  const basis:Metric=basisTotal!==null&&basisTotal.minor!==null
    ?{status:basisTotal.estimated?'estimated':'exact',currency,minor:basisTotal.minor}
    :unavailable('Incomplete sale basis');
   const net=netSaleProceeds(sale);
