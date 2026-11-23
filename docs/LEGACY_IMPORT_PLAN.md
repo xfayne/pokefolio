@@ -37,7 +37,7 @@ Unknown fields and invalid values remain intact in the archived source.
 | binderOrder | Exact token-by-index preservation, including empty tokens and pending references |
 | wish/wishOrder/removedWish | Preserve all values, sequence and tombstones independently |
 | binderIncludeWish/binderExcluded | Preserve exactly; no inferred fulfillment or pruning |
-| analyticsSnapshots | Archive original observations and coverage, separate from cash/accounting |
+| analyticsSnapshots | Keep in the immutable source backup only; exclude from active Pokefolio import data |
 | Other root/settings/analysis/public data | Include in backup inventory; preserve separately without coercing into financial records |
 
 A known card price does not prove shipping, taxes or fees were zero.
@@ -131,9 +131,16 @@ their semantics and expose any destination-link changes for later cutover approv
 Tests: no source mutation; duplicates with evidence; owned/pending conflicts;
 multi-parcel ambiguity; missing prices/dates; explicit zero; rounding rejection;
 DMG mapping; unknown catalog entries; exact holes/page boundaries/pending binder
-slots; Wishlist tombstones/order; shipment read metadata; analytics preservation;
+slots; Wishlist tombstones/order; shipment read metadata; analytics archive preservation and target exclusion;
 tampered/incomplete backup; retry no-op; changed source/target refusal; interrupted
 inactive import; concurrent activation; rollback conflict.
 
 No cosmetic mock, new screen, provider mutation, production migration or database
 rules change is included in this proposal.
+
+## Owner scope update — 2026-11-23
+
+The owner explicitly removed `analyticsSnapshots` from the active migration scope.
+Snapshots remain in the immutable source backup, but are not imported into the
+Pokefolio portfolio. Shared Binder publication and legacy AI analysis records
+are also excluded. This does not authorize a live-data write or cutover.
