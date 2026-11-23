@@ -1,6 +1,6 @@
 import { parseMoney } from './money';
 import { prepareCommit, type PortfolioCommit, type PortfolioRecord } from './persistence';
-import { currencySchema, dateSchema, idSchema, importedPurchaseSchema, importedPurchaseLineSchema, revisionSchema, type Currency, type Cost, type ImportedPurchase } from './schema';
+import { currencySchema, dateSchema, idSchema, importedPurchaseSchema, revisionSchema, type Currency, type Cost, type ImportedPurchase } from './schema';
 
 export type ImportedPurchaseEditDraft = Readonly<{
   id: string;
