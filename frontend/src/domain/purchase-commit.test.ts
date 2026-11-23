@@ -41,14 +41,24 @@ it('round trips original costs, edition and references, and audits every changed
     { shippingCost: { value: { minor: 33 } } },
     { shippingCost: { value: { minor: 33 } } },
   ]);
-  expect(() =>
-    purchaseCommit(
-      'owner',
-      { ...restored, cards: restored.cards.slice(1) },
-      at,
-      initial.creates,
-    ),
-  ).toThrow();
+  const removed = purchaseCommit(
+    'owner',
+    { ...restored, cards: restored.cards.slice(1) },
+    '2026-11-21T09:00:00Z',
+    initial.creates,
+  );
+  expect(prepareCommit('owner',removed,450)).toEqual(removed);
+  const removedCopy = removed.updates.find(update =>
+    update.before.collection==='copies' && update.before.record.id===restored.cards[0]!.id);
+  expect(removedCopy?.after).toMatchObject({collection:'copies',record:{removedFromPurchase:true}});
+  if (removedCopy?.before.collection!=='copies' || removedCopy.after.collection!=='copies') throw Error('Missing removed copy');
+  expect(removedCopy.after.record.acquiredOn).toEqual(removedCopy.before.record.acquiredOn);
+  expect(removed.creates.some(entry=>entry.collection==='revisions' && entry.record.recordId===removedCopy.before.record.id)).toBe(true);
+  const result = [...initial.creates.map(entry=>
+    removed.updates.find(update=>update.before.collection===entry.collection && update.before.record.id===entry.record.id)?.after??entry),
+    ...removed.creates.filter(entry=>entry.collection!=='revisions')];
+  expect(draftFromPurchase(result,draft.id).cards.map(card=>card.id))
+    .toEqual(restored.cards.slice(1).map(card=>card.id));
 });
 it('rejects foreign owners and preserves per-copy possession during edits', () => {
   const draft = createPurchaseDraft(true);
