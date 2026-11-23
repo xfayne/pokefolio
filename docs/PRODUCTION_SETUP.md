@@ -48,3 +48,12 @@ Infrastructure is available for the React/TypeScript migration without repeating
 Use `ebay-worker/wrangler.production.toml` for explicit production changes; the default Wrangler config remains staging. A Worker version rollback does not restore provider state or Firestore data. Roll back only Pokefolio resources; the deployed version above is the known baseline for this new service. The deny-all `firebase/firestore.rules` remains available as a deliberate emergency rollback policy; deploying it would deny application reads/writes.
 
 17TRACK credentials intentionally share the existing provider account and quota. Registration is owner-authorized, but testing must not modify/delete existing tracking records. Production Firestore remains empty until approved onboarding/migration. Infrastructure approval does not authorize data cutover.
+
+## Advance production rules IAM preparation (not a release)
+
+The approved staging Rules CI/CD architecture has a separate production-identity
+bootstrap proposal. See [Production Rules OIDC runbook](PRODUCTION_RULES_OIDC.md).
+This prepares only project-scoped IAM in `pokefolio-production`, with no
+production rules deployment or frontend release, and requires an authorized
+Google Cloud owner to run `--apply`. A future production release remains
+manual, separately approved and gated.
