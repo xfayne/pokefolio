@@ -33,7 +33,7 @@ With the Google account authorized for the **production** Google Cloud
 project, in Cloud Shell run these separately:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xfayne/pokefolio/main/scripts/setup_firebase_rules_oidc_production.sh -o /tmp/pokefolio-prod-oidc.sh
+curl -fsSL https://raw.githubusercontent.com/xfayne/pokefolio/7b6a2cb20cf6f9b10abfd495e52697b89455bfb4/scripts/setup_firebase_rules_oidc_production.sh -o /tmp/pokefolio-prod-oidc.sh
 bash /tmp/pokefolio-prod-oidc.sh --check
 ```
 
