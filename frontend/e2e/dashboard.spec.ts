@@ -33,6 +33,8 @@ test('dashboard follows the approved sections and links each physical copy safel
  await expect(page.locator('.dashboard-big')).toHaveText('—');
  await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sale');
  await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','1');
+ await expect(page.locator('.dashboard-chart-empty')).toHaveText('Some sales have missing cost or expense data.');
+ await expect(page.locator('.dashboard-chart-line')).toHaveCount(0);
  await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Net Sale Proceeds','Sold Cost Basis']);
  expect(Math.abs((await page.locator('.dashboard-big').boundingBox())!.y-baseline!.y)).toBeLessThan(1);
  expect(Math.abs((await page.locator('.dashboard-metric-kpis').boundingBox())!.y-originalKpis!.y)).toBeLessThan(1);
@@ -86,6 +88,22 @@ test('dashboard stays within narrow viewports and supports Hebrew and reduced mo
  await page.evaluate(()=>document.fonts.ready);
  await page.screenshot({path:test.info().outputPath('dashboard-top-he.png')});
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+});
+
+test('realized profit and its sale count obey the selected time period',async({page})=>{
+ await page.clock.setFixedTime(new Date('2026-12-30T12:00:00Z'));
+ await page.goto('./#/dashboard?dashboard=sample');
+ await page.getByLabel('Chart metric').selectOption('realized');
+ await expect(page.locator('.dashboard-coverage')).toHaveText('0 completed sales');
+ await expect(page.locator('.dashboard-big')).toHaveText('$0');
+ await expect(page.locator('.dashboard-chart-empty')).toHaveText('No completed sales in this period.');
+ await page.getByRole('button',{name:'All',exact:true}).click();
+ await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sale');
+ await expect(page.locator('.dashboard-big')).toHaveText('—');
+ await expect(page.locator('.dashboard-chart-empty')).toHaveText('Some sales have missing cost or expense data.');
+ await page.getByRole('button',{name:'1M',exact:true}).click();
+ await expect(page.locator('.dashboard-coverage')).toHaveText('0 completed sales');
+ await expect(page.locator('.dashboard-big')).toHaveText('$0');
 });
 
 test('signed-out dashboard never invents money or calls authenticated price APIs',async({page})=>{
