@@ -25,7 +25,7 @@ when it appears in the required scope.
 ## Preview and schema validation
 
 1. previewLegacy(backup, { rootPath, catalogIds, requiredPaths }) returns mapping
-   version 2, counts, native amounts, indexed binder references and exceptions.
+   version 3, counts, native amounts, indexed binder references and exceptions.
    Version 1 purchase drafts are not silently upgraded.
 2. PASS means the supplied scope maps without exceptions; it is not real-source
    completeness or authorization proof. Review unresolved membership, currencies,
@@ -35,8 +35,10 @@ when it appears in the required scope.
    must use its own authoritative server timestamp protocol.
 4. A parcel with prices 20 and 30 in the same currency produces a purchase total 50,
    with both original prices and specific copy/line/parcel links. Missing individual
-   prices give an unknown transaction total; mixed currencies block conversion.
-   Unrecorded shipping adds no amount but stays explicitly uncovered. No purchase
+   prices leave the aggregate total unknown. Mixed-currency parcels retain
+   one imported purchase with original-currency subtotals and NO fake conversion.
+   The owner confirmed that legacy item prices include shipping, so additional
+   shipping is exactly zero; no second shipping charge is added. No purchase
    payment cash movement/date is fabricated. Cards without parcels remain opening
    inventory. Raw Binder/Wishlist/provider state remains value-equivalent, including duplicate
    tokens, holes and pending positions. Legacy `analyticsSnapshots` stay in the
