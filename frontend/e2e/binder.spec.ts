@@ -273,3 +273,37 @@ test('shared rounded bottom navigation is visibly rounded on Binder and Cards',a
     }
   }
 });
+
+test('Binder pointer picks do not retain a focus ring, but keyboard navigation does',async({page})=>{
+  await page.goto('./#/collection/binder?inventory=sample');
+  const slot=page.locator('[data-pocket-index="8"]');
+  await expect(slot).toHaveAttribute('data-kind','empty');
+
+  // A pointer click should not be refocused on dialog cleanup.
+  await slot.click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:'Close'}).click();
+  await expect(dialog).toHaveCount(0);
+  expect(await slot.evaluate(el=>el===document.activeElement || el.matches(':focus-visible'))).toBe(false);
+  await expect(slot).not.toHaveAttribute('data-drop','true');
+
+  // Picking a card also must not leave the original slot outlined.
+  await slot.click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('searchbox').fill("Blaine's Moltres");
+  await dialog.getByRole('button',{name:/Blaine's Moltres/}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(slot).toHaveAttribute('data-kind','wish');
+  expect(await slot.evaluate(el=>el===document.activeElement || el.matches(':focus-visible'))).toBe(false);
+  await expect(slot).not.toHaveAttribute('data-drop','true');
+
+  // Keyboard users keep the normal accessible focus indication.
+  const other=page.locator('[data-pocket-index="7"]');
+  await other.press('Enter');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(other).toBeFocused();
+  expect(await other.evaluate(el=>el.matches(':focus-visible'))).toBe(true);
+});
