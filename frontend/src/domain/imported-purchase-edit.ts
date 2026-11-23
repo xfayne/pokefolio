@@ -12,6 +12,10 @@ export type ImportedPurchaseEditCard = Readonly<{
 }>;
 export type ImportedPurchaseEditDraft = Readonly<{
   id: string; date: string; notes: string; cards: readonly ImportedPurchaseEditCard[];
+  // Set only by the shared transaction form after an explicit, single-currency edit.
+  transactionCurrency?: Currency;
+  source?: NonNullable<ImportedPurchase['source']>;
+  shipping?: string;
 }>;
 
 function purchaseEntries(records: readonly PortfolioRecord[], id: string) {
@@ -58,7 +62,7 @@ function unchangedExcept(before: object, after: object, allowed: readonly string
     .filter(([key]) => !allowed.includes(key) && key !== 'revision' && key !== 'updatedAt')));
   return stable(before) === stable(after);
 }
-const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping'];
+const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping', 'source'];
 const stableCopy = ['cardCost', 'shippingCost', 'condition', 'removedFromImport'];
 
 export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean {
@@ -139,6 +143,14 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
   const before = importedPurchaseSchema.parse(purchase.record);
   if (input.notes.length > 2000 || new Set(input.cards.map(c=>c.id)).size !== input.cards.length)
     throw Error('Invalid imported edit');
+  if (input.transactionCurrency && (input.cards.some(card=>card.currency!==input.transactionCurrency || !card.amount.trim())))
+    throw Error('All imported card prices must match the selected transaction currency');
+  if (input.shipping?.trim()) {
+    const entered = parseMoney(input.shipping.trim(), input.transactionCurrency ?? (before.currency.status==='known' ? before.currency.value : 'USD'));
+    const original = before.shipping.status==='known' ? before.shipping.value : null;
+    if (entered.minor !== 0 && (!original || entered.minor!==original.minor || entered.currency!==original.currency))
+      throw Error('Imported historical shipping cannot be reassigned without an approved cost correction');
+  }
   const date = input.date.trim();
   if (date && !dateSchema.safeParse(date).success) throw Error('Invalid purchase date');
   const updateAt = new Date(at).toISOString();
@@ -172,8 +184,10 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     if (JSON.stringify(catalogRefSchema.parse(field.catalog)) !== JSON.stringify(entry.record.catalog))
       throw Error('Use card selection to add a different card');
     const originalCurrency = entry.record.cardCost.status === 'exact' ? entry.record.cardCost.value.currency : field.currency;
-    if (currencySchema.parse(field.currency) !== originalCurrency) throw Error('Original card currency cannot be changed');
-    const parsed = field.amount.trim() ? parseMoney(field.amount.trim(), originalCurrency) : null;
+    if (!input.transactionCurrency && currencySchema.parse(field.currency) !== originalCurrency)
+      throw Error('Original card currency cannot be changed');
+    const editedCurrency = input.transactionCurrency ?? originalCurrency;
+    const parsed = field.amount.trim() ? parseMoney(field.amount.trim(), editedCurrency) : null;
     const old = entry.record.cardCost;
     const sameCost = parsed ? old.status === 'exact' && old.value.minor === parsed.minor &&
       old.value.currency === parsed.currency : old.status === 'unknown';
@@ -189,7 +203,7 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     const nextCopy = cardCopySchema.parse({
       ...entry.record,cardCost:cost,condition:nextCondition,
       shippingCost:entry.record.shippingCost.status === 'exact' && entry.record.shippingCost.value.minor === 0 && parsed
-        ? {...entry.record.shippingCost,value:{currency:originalCurrency,minor:0}}
+        ? {...entry.record.shippingCost,value:{currency:editedCurrency,minor:0}}
         : entry.record.shippingCost,
       revision:entry.record.revision+1,updatedAt:updateAt,
     });
@@ -248,11 +262,16 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
       {status:'unknown',reason:'No recorded card price'});
     membershipChanged = true;
   }
+  if (input.transactionCurrency && (before.currency.status!=='known' || before.currency.value!==input.transactionCurrency))
+    membershipChanged = true;
+  const source = input.source && (before.source || input.source.kind!=='other' || input.source.seller || input.source.listingUrl || input.source.itemReference)
+    ? input.source : before.source;
+  const sourceChanged = JSON.stringify(source) !== JSON.stringify(before.source);
   const oldDate = before.transactionOn.status === 'known' ? before.transactionOn.value : '';
   const nextDate = date === oldDate ? before.transactionOn : date
     ? {status:'known' as const,value:date,source:'user' as const} :
       {status:'unknown' as const,reason:'Purchase date cleared by owner'};
-  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes) return null;
+  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes && !sourceChanged) return null;
   const totals = new Map<Currency,bigint>();
   let unpriced = 0;
   for (const cost of nextCosts) {
@@ -270,6 +289,7 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     {status:'unknown' as const,reason:'No single purchase currency'};
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
     ...before,transactionOn:nextDate,notes:input.notes,
+    ...(sourceChanged ? {source} : {}),
     ...(membershipChanged ? {
       currency:nextCurrency,subtotal:nextTotal,payable:nextTotal,
       nativeCardTotals,unpricedCopyCount:unpriced,
