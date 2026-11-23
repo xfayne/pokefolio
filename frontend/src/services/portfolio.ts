@@ -14,6 +14,7 @@ import {
   type PortfolioRecord,
 } from '@/domain/persistence';
 import { validateSaleCommit } from '@/domain/sale';
+import { validateImportedPurchaseEdit } from '@/domain/imported-purchase-edit';
 import { planPurchase } from '@/domain/purchase';
 import { idSchema } from '@/domain/schema';
 
@@ -48,6 +49,7 @@ export async function commitPortfolio(
     throw Error('This edit exceeds the atomic audit limit');
   const receiptCommand = validateReceiptCommit(command);
   const saleCommand = receiptCommand ? false : validateSaleCommit(owner, command);
+  const importedEdit = validateImportedPurchaseEdit(command);
   // New financial records must describe complete purchases, not orphan copies.
   const writes = [...command.creates, ...command.updates.map(u => u.after)];
   const purchases = writes.filter(
@@ -58,8 +60,10 @@ export async function commitPortfolio(
       entry.collection !== 'transactions' ||
       entry.record.kind !== 'purchase' ||
       'origin' in entry.record
-    )
+    ) {
+      if (importedEdit && entry.collection === 'transactions' && 'origin' in entry.record) continue;
       throw Error('Only ordinary purchases can be created here');
+    }
     const purchase = entry.record;
     const lines = writes.flatMap((e) =>
       e.collection === 'lines' && e.record.transactionId === purchase.id
