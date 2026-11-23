@@ -112,8 +112,9 @@ function Shell() {
   const selectedPurchase = account.records.find(e => e.collection === 'transactions' && e.record.id === purchaseMatch?.params.transactionId);
   const [receiptBusy,setReceiptBusy] = useState(false);
   const purchaseCopies = account.history.copies.filter(c => c.acquisition.kind === 'purchase' && c.acquisition.transactionId === purchaseMatch?.params.transactionId);
-  const editDisabled = receiptBusy || !purchaseCopies.length || purchaseCopies.some(c => c.possession !== 'pending' || c.disposition !== 'held');
-  const canEditPurchase = isPurchase && contextParams.get('transactions') !== 'sample' && selectedPurchase?.collection === 'transactions' && selectedPurchase.record.kind === 'purchase' && !('origin' in selectedPurchase.record) && selectedPurchase.record.settlement === 'unknown';
+  const importedPurchase = selectedPurchase?.collection === 'transactions' && selectedPurchase.record.kind === 'purchase' && 'origin' in selectedPurchase.record;
+  const editDisabled = receiptBusy || !purchaseCopies.length || purchaseCopies.some(c => c.disposition !== 'held' || (!importedPurchase && c.possession !== 'pending'));
+  const canEditPurchase = isPurchase && contextParams.get('transactions') !== 'sample' && selectedPurchase?.collection === 'transactions' && selectedPurchase.record.kind === 'purchase' && selectedPurchase.record.settlement === 'unknown';
   const focusedTransaction = isSale || isPurchase || isNewPurchase || isEditing;
   const backToHistory = () => {
     if ((location.state as { purchaseFrom?: string } | null)?.purchaseFrom === 'history') void navigate(-1);
