@@ -5,18 +5,20 @@ import { resolve } from 'node:path';
 
 const stamp = '2026-11-20T00:00:00Z';
 const unknown = { status: 'unknown', reason: 'Missing source evidence' };
-const input = () => ({ mappingVersion: 2, status: 'PASS', source: { ownerUid: 'test' }, copies: [{ id: 'legacy-copy', cardId: 'base-1', possession: 'pending', condition: unknown, edition: 'unknown', acquiredOn: unknown, cardCost: { status: 'exact', value: { currency: 'GBP', minor: 2000 }, sourcePath: 'purchasePrices.base-1' } }], transactions: [{ id: 'legacy-purchase', sourceParcelIndex: 0 }], memberships: [{ parcelIndex: 0, ordinal: 0, cardId: 'base-1', copyId: 'legacy-copy' }], preservedProgress: { notes: { 'base-1': 'Private note' }, shipments: [{ id: 'original-parcel', cardIds: ['base-1'], number: 'ABC123', initialized: true }], binderOrder: ['base-1', '__binder_empty__:1'], wishOrder: ['other'] } });
+const input = () => ({ mappingVersion: 2, status: 'PASS', source: { ownerUid: 'test' }, copies: [{ id: 'legacy-copy', cardId: 'base-1', possession: 'pending', condition: unknown, edition: 'unknown', acquiredOn: unknown, cardCost: { status: 'exact', value: { currency: 'GBP', minor: 2000 }, sourcePath: 'purchasePrices.base-1' } }], transactions: [{ id: 'legacy-purchase', sourceParcelIndex: 0 }], memberships: [{ parcelIndex: 0, ordinal: 0, cardId: 'base-1', copyId: 'legacy-copy' }], preservedProgress: { notes: { 'base-1': 'Private note' }, shipments: [{ id: 'original-parcel', cardIds: ['base-1'], number: 'ABC123', initialized: true }], binderOrder: ['base-1', '__binder_empty__:1'], wishOrder: ['other'], analyticsSnapshots: [{ date: '2026-11-19', index: 100.24 }] } });
 
 describe('legacy domain draft', () => {
   it('runs backup  preview  domain  isolated apply/replay  rollback without source changes', () => {
     const code = `import { createBackup } from './scripts/legacy-backup.mjs';
       import { previewLegacy } from './scripts/legacy-preview.mjs';
-      const backup = createBackup({ source: { projectId: 'fixture', ownerUid: 'test', revision: '1', capturedAt: '${stamp}' }, documents: { root: { progress: { owned: { a: true }, conditions: { a: 'DMG' }, shipments: [{ id: 'parcel', cardIds: ['a'], purchaseDate: '2026-11-12' }] } } }, inventory: [{ path: 'root', status: 'present' }] });
+      const backup = createBackup({ source: { projectId: 'fixture', ownerUid: 'test', revision: '1', capturedAt: '${stamp}' }, documents: { root: { progress: { owned: { a: true }, conditions: { a: 'DMG' }, analyticsSnapshots: [{ date: '2026-11-19', totalValue: 100 }], shipments: [{ id: 'parcel', cardIds: ['a'], purchaseDate: '2026-11-12' }] } } }, inventory: [{ path: 'root', status: 'present' }] });
       console.log(JSON.stringify(previewLegacy(backup, { rootPath: 'root', catalogIds: ['a'], requiredPaths: ['root'] })));`;
     const report: unknown = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code], { cwd: resolve(process.cwd(), '..'), encoding: 'utf8' }));
     const result = materializeLegacyImport(report, 'test', stamp);
     expect(result.copies[0]!.condition).toEqual({ status: 'known', value: 'DAMAGED', source: 'legacy' });
     expect(result.transactions).toHaveLength(1);
+    expect(result.preservedProgress).not.toHaveProperty('analyticsSnapshots');
+    expect((report as {preservedProgress:{analyticsSnapshots:unknown[]}}).preservedProgress.analyticsSnapshots).toHaveLength(1);
     expect(result.transactions[0]!.transactionOn).toEqual({ status: 'known', value: '2026-11-12', source: 'legacy' });
     expect(result.acquisitions).toHaveLength(0);
     const storeCode = `import { createBackup, saveAndVerifyBackup } from './scripts/legacy-backup.mjs';
@@ -46,7 +48,10 @@ describe('legacy domain draft', () => {
     expect(result.copies[0]!.notes).toBe('Private note');
     expect(result.copies[0]!.possession).toBe('pending');
     expect(result.memberships[0]!.copyId).toBe(result.copies[0]!.id);
-    expect(result.preservedProgress).toEqual(source.preservedProgress);
+    const { analyticsSnapshots: archivedOnly, ...expectedProgress } = source.preservedProgress;
+    expect(archivedOnly).toHaveLength(1);
+    expect(result.preservedProgress).toEqual(expectedProgress);
+    expect(result.preservedProgress).not.toHaveProperty('analyticsSnapshots');
     expect(result.cashMovements).toEqual([]);
     expect(result.transactions[0]!.payable).toEqual({ status: 'known', value: { currency: 'GBP', minor: 2000 }, source: 'legacy' });
     expect(source).toEqual(before);
