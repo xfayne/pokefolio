@@ -605,3 +605,16 @@ Sold Cost Basis. Sale values exclude reversals and use audited frozen per-copy
 costs and dated conversion; missing cost remains unavailable. Only the two
 secondary labels/values fade between modes; no navigation or portfolio mutation
 is involved. See Dashboard E2E/regression tests and PR #121 for delivery status.
+
+## Realized P/L chart refinement — 2026-11-23
+
+Owner approved replacing the Realized P/L status placeholder with an animated
+sale-profit chart, without the word "Cumulative" in the title. Sales are
+filtered by 1M/3M/1Y/All, and the headline, completed-sales count, net proceeds,
+sold cost basis and chart all use the same period. The daily series starts at
+zero, stays flat between sales, steps up on gains and down on losses; reversed
+sales are excluded. It uses the existing audited frozen acquisition costs
+and dated FX, never imputes missing amounts, and shows incomplete-data status
+in the existing chart slot. This is read-only, no staging/legacy writes and no
+changes to card-market provider data. Validation includes domain tests and
+Dashboard mobile E2E checks; source of truth is PR/CI/deployment verification.
