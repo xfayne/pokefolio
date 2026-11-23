@@ -94,6 +94,7 @@ test('realized profit and its sale count obey the selected time period',async({p
  await page.clock.setFixedTime(new Date('2026-12-30T12:00:00Z'));
  await page.goto('./#/dashboard?dashboard=sample');
  await page.getByLabel('Chart metric').selectOption('realized');
+ await page.getByRole('button',{name:'1M',exact:true}).click();
  await expect(page.locator('.dashboard-coverage')).toHaveText('0 completed sales');
  await expect(page.locator('.dashboard-big')).toHaveText('$0');
  await expect(page.locator('.dashboard-chart-empty')).toHaveText('No completed sales in this period.');
