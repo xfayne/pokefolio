@@ -12,8 +12,8 @@ export function PurchaseDetails({ view, onInspect, onRefresh, refreshing, tracki
   const { t, i18n } = useTranslation();
   const id = useId();
   const { transaction, row, copies, shipments } = view;
-  const importedRecord = 'origin' in transaction ? transaction : null;
-  const imported = importedRecord !== null;
+  const imported = 'origin' in transaction;
+  const importedRecord = imported ? transaction : null;
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
   const money = useDisplayMoney();
   const nativeMoney = (value: {currency: string;minor: number}) => new Intl.NumberFormat(locale,{style:'currency',currency:value.currency}).format(value.minor/100);
