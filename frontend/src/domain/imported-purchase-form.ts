@@ -23,7 +23,7 @@ export function importedPurchaseFormSeed(records: readonly PortfolioRecord[], id
   const currency = singleCurrency ?? 'USD';
   const currencyChosen = singleCurrency!==null;
   const source = p.source ?? {kind:'other' as const,seller:null,listingUrl:null,itemReference:null};
-  const membership = records.filter(e=>e.collection==='memberships' && e.record.transactionId===id);
+  const membership = records.flatMap(e=>e.collection==='memberships' && e.record.transactionId===id ? [e.record] : []);
   const shipmentIds = [...new Set(membership.map(m=>m.record.shipmentId))];
   const shipment = shipmentIds.length===1 ? records.find(e=>e.collection==='shipments' && e.record.id===shipmentIds[0]) : undefined;
   return {
