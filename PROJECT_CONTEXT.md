@@ -597,8 +597,9 @@ After the chart footer removal and native SVG entrance animation (#120), the own
 approved two mode-sensitive secondary metrics with an intentionally stable top
 card layout. Collection Value retains the dynamic priced-coverage chip and shows
 Known Cost / Held Copies. Market Change shows Unrealized P/L / matched-holdings
-Unrealized ROI; its chip remains in the DOM but is visually transparent
-(`opacity: 0`) and accessibility-hidden so the heading height never moves.
+Unrealized ROI. The owner later requested a visible "Price History" badge
+rather than the transparent placeholder; the badge retains the same slot and
+spacing as other modes (PR #122).
 Realized P/L shows completed-sales count and reconciled Net Sale Proceeds /
 Sold Cost Basis. Sale values exclude reversals and use audited frozen per-copy
 costs and dated conversion; missing cost remains unavailable. Only the two
