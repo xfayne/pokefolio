@@ -590,3 +590,17 @@ pages only on confirmed save. All original copy/wish pointers keep their order,
 with capacity and revision checks unchanged. Unit and mobile E2E coverage added.
 PR #117 remains the review/delivery unit; its new CI result and merge/deployment
 must be verified before claiming staging availability.
+
+## Dashboard contextual metric display — 2026-11-23
+
+After the chart footer removal and native SVG entrance animation (#120), the owner
+approved two mode-sensitive secondary metrics with an intentionally stable top
+card layout. Collection Value retains the dynamic priced-coverage chip and shows
+Known Cost / Held Copies. Market Change shows Unrealized P/L / matched-holdings
+Unrealized ROI; its chip remains in the DOM but is visually transparent
+(`opacity: 0`) and accessibility-hidden so the heading height never moves.
+Realized P/L shows completed-sales count and reconciled Net Sale Proceeds /
+Sold Cost Basis. Sale values exclude reversals and use audited frozen per-copy
+costs and dated conversion; missing cost remains unavailable. Only the two
+secondary labels/values fade between modes; no navigation or portfolio mutation
+is involved. See Dashboard E2E/regression tests and PR #121 for delivery status.

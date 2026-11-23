@@ -41,13 +41,19 @@ it('reconciles partial sales with frozen acquisition basis and skips reversals',
  const sale=saleCommit('owner',draft,[current],'2026-11-21T08:00:00Z');
  const sold=sale.updates[0]!.after.record as CardCopy;
  const result=selectPerformance(input([sold,{...current,id:'sibling'}],sale.creates));
- expect(result.realized).toMatchObject({minor:1700,covered:1,total:1});expect(result.value.minor).toBe(2000);
+ expect(result.realized).toMatchObject({minor:1700,covered:1,total:1});
+ expect(result.realizedProceeds).toMatchObject({minor:2800,covered:1,total:1});
+ expect(result.soldCostBasis).toMatchObject({minor:1100,covered:1,total:1});
+ expect(result.value.minor).toBe(2000);
  expect(result.points[0]?.held).toBe(2);expect(result.points[1]?.held).toBe(1);
  const records=[{collection:'copies' as const,record:sold},...sale.creates];
  const reversal=reverseSaleCommit('owner','sale',records,'2026-11-21T10:00:00Z');
  const merged=new Map(records.map(e=>[`${e.collection}/${e.record.id}`,e]));
  for(const e of [...reversal.creates,...reversal.updates.map(u=>u.after)])merged.set(`${e.collection}/${e.record.id}`,e);
- expect(selectPerformance({...input(),records:[...merged.values()]}).realized.minor).toBe(0);
+ const reversed=selectPerformance({...input(),records:[...merged.values()]});
+ expect(reversed.realized.minor).toBe(0);
+ expect(reversed.realizedProceeds).toMatchObject({minor:0,total:0});
+ expect(reversed.soldCostBasis).toMatchObject({minor:0,total:0});
 });
 it('uses dated FX for costs and dates both price observations without inventing quotes across gaps',()=>{
  const fx=[{date:'2026-11-20',quote:'GBP' as const,rate:0.5},{date:'2026-11-21',quote:'GBP' as const,rate:0.4}];
@@ -78,4 +84,17 @@ it('uses the actual historical condition from the audit instead of todays condit
  const result=selectPerformance({...input([after],[audit]),prices:[price,mp]});
  expect(result.points[0]?.value.minor).toBe(900);expect(result.points[1]?.value.minor).toBe(2000);
  expect(result.points[1]?.matchedChange).toBeNull();
+});
+
+it('keeps sale proceeds available while the frozen cost basis and realized profit are missing',()=>{
+ const draft={...newSaleDraft(),id:'sale-unknown',date:'2026-11-21',currency:'USD' as const,cards:[{copyId:current.id,amount:'30'}],sellingFees:'2'};
+ const sale=saleCommit('owner',draft,[current],'2026-11-21T08:00:00Z');
+ const sold=sale.updates[0]!.after.record as CardCopy;
+ const rows=sale.creates.map(entry=>entry.collection==='lines'&&'basisCosts' in entry.record
+  ?{...entry,record:{...entry.record,basisCosts:undefined}}
+  :entry) as PortfolioRecord[];
+ const result=selectPerformance(input([sold],rows));
+ expect(result.realizedProceeds).toMatchObject({minor:2800,covered:1,total:1});
+ expect(result.soldCostBasis).toMatchObject({minor:null,covered:0,total:1});
+ expect(result.realized).toMatchObject({minor:null,covered:0,total:1});
 });

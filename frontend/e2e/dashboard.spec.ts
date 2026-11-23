@@ -17,10 +17,26 @@ test('dashboard follows the approved sections and links each physical copy safel
  await expect(page.locator('.dashboard-periods button[aria-pressed=true]')).toHaveText('3M');
  await page.getByRole('button',{name:'1M',exact:true}).click();
  await expect(page.getByRole('button',{name:'1M',exact:true})).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('.dashboard-value .dashboard-coverage')).toContainText('Priced');
+ await expect(page.locator('.dashboard-value .dashboard-coverage')).toHaveCSS('opacity','1');
+ await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Known Cost','Held Copies']);
+ const baseline=await page.locator('.dashboard-big').boundingBox();
+ const originalKpis=await page.locator('.dashboard-metric-kpis').boundingBox();
+ await page.getByLabel('Chart metric').selectOption('change');
+ await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','0');
+ await expect(page.locator('.dashboard-coverage')).toHaveAttribute('aria-hidden','true');
+ await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Unrealized P/L','Unrealized ROI']);
+ expect(Math.abs((await page.locator('.dashboard-big').boundingBox())!.y-baseline!.y)).toBeLessThan(1);
+ expect(Math.abs((await page.locator('.dashboard-metric-kpis').boundingBox())!.y-originalKpis!.y)).toBeLessThan(1);
  await page.getByLabel('Chart metric').selectOption('realized');
  await expect(page.locator('.dashboard-big')).toHaveText('—');
- await expect(page.locator('.dashboard-coverage')).toHaveText('0/1 completed sales');
+ await expect(page.locator('.dashboard-coverage')).toHaveText('1 completed sale');
+ await expect(page.locator('.dashboard-coverage')).toHaveCSS('opacity','1');
+ await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Net Sale Proceeds','Sold Cost Basis']);
+ expect(Math.abs((await page.locator('.dashboard-big').boundingBox())!.y-baseline!.y)).toBeLessThan(1);
+ expect(Math.abs((await page.locator('.dashboard-metric-kpis').boundingBox())!.y-originalKpis!.y)).toBeLessThan(1);
  await page.getByLabel('Chart metric').selectOption('value');
+ await expect(page.locator('.dashboard-metric-kpis .dashboard-stat-label')).toHaveText(['Known Cost','Held Copies']);
  await page.getByLabel('Reporting month').fill('2026-10');
  await expect(page.locator('.dashboard-month h2')).toHaveText('October 2026');
  await expect(page.locator('.dashboard-month .dashboard-kpis bdi').first()).toHaveText('$0');
@@ -52,6 +68,7 @@ test('dashboard stays within narrow viewports and supports Hebrew and reduced mo
  await page.goto('./#/dashboard?dashboard=sample');
  await expect(page.locator('.dashboard-chart-line').first()).toHaveCSS('animation-name','none');
  await expect(page.locator('.dashboard-chart-fill').first()).toHaveCSS('opacity','1');
+ await expect(page.locator('.dashboard-metric-kpis')).toHaveCSS('animation-name','none');
  for(const width of [320,390,768,1280]){
   await page.setViewportSize({width,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
