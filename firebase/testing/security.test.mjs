@@ -384,3 +384,34 @@ test('private React binder layout is owner-only, revision checked and isolated f
   assert.deepEqual((await getDoc(doc(db,`users/${alice}`))).data().progress,fixture.progress);
  }finally{await env.cleanup();}
 });
+
+test('Wishlist writes remain owner-only, revision-checked and isolated from binder/legacy data', async () => {
+ const env=await environment('firestore.private.rules');
+ try {
+  await seed(env);
+  const db=env.authenticatedContext(alice).firestore();
+  const other=env.authenticatedContext(bob).firestore();
+  const anonymous=env.unauthenticatedContext().firestore();
+  const target=doc(db,'users',alice,'wishlists','main');
+  const payload=(revision, ids)=>({schemaVersion:1,ownerUid:alice,revision,ids,updatedAt:serverTimestamp()});
+  await assertFails(getDoc(doc(other,'users',alice,'wishlists','main')));
+  await assertFails(getDoc(doc(anonymous,'users',alice,'wishlists','main')));
+  await assertFails(getDocs(collection(db,'users',alice,'wishlists')));
+  await assertFails(setDoc(doc(other,'users',alice,'wishlists','main'),payload(1,'base3-5')));
+  await assertFails(setDoc(doc(db,'users',alice,'wishlists','another'),payload(1,'base3-5')));
+  await assertSucceeds(setDoc(target,payload(1,'base3-5;neo2-13')));
+  await assertFails(setDoc(target,payload(1,'basep-9')));
+  await assertFails(setDoc(target,payload(3,'basep-9')));
+  await assertFails(setDoc(target,payload(2,'basep-9;invalid')));
+  await assertFails(setDoc(target,{...payload(2,'basep-9'),ownerUid:bob}));
+  await assertFails(setDoc(target,{...payload(2,'basep-9'),unexpected:true}));
+  await assertFails(deleteDoc(target));
+  await assertSucceeds(setDoc(target,payload(2,'neo2-13;base3-5')));
+  assert.equal((await getDoc(target)).data().ids,'neo2-13;base3-5');
+  await env.withSecurityRulesDisabled(async context => {
+    const root=(await getDoc(doc(context.firestore(),'users',alice))).data();
+    assert.deepEqual(root.progress,fixture.progress);
+    assert.equal((await getDoc(doc(context.firestore(),'users',alice,'binders','main'))).exists(),false);
+  });
+ } finally { await env.cleanup(); }
+});
