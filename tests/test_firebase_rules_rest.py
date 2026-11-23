@@ -19,6 +19,20 @@ class WishlistRulesPreflightTests(unittest.TestCase):
         self.assertEqual(mod.ensure_only_wishlist_added(parent, self.target), "update")
         self.assertEqual(mod.ensure_only_wishlist_added(self.target, self.target), "already")
 
+    def test_pre_binder_release_is_safe_and_any_other_diff_fails(self):
+        # The latest staging console publication predates the Binder rules,
+        # so the reviewed delta can contain exactly Binder plus Wishlist.
+        pre_binder = mod.without_binder_and_wishlist(self.target)
+        self.assertNotIn("match /binders/{id}", pre_binder)
+        self.assertNotIn("match /wishlists/{id}", pre_binder)
+        self.assertIn("match /preferences/{id}", pre_binder)
+        self.assertEqual(mod.ensure_only_wishlist_added(pre_binder, self.target), "update")
+        with self.assertRaisesRegex(RuntimeError, "Refusing"):
+            mod.ensure_only_wishlist_added(
+                pre_binder.replace("allow read, write: if false;", "allow read, write: if true;"),
+                self.target,
+            )
+
     def test_rejects_other_policy_edits(self):
         parent = mod.without_wishlist(self.target)
         with self.assertRaisesRegex(RuntimeError, "Refusing"):
