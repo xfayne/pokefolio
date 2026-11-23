@@ -88,17 +88,11 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
       }
     }
     const traveled=Math.hypot(event.clientX-g.x,event.clientY-g.y);
-    const tappedEmpty=!g.active && traveled<=8 && g.from!==null &&
-      (!pockets[g.from] || pockets[g.from]!.kind==='empty') && !busy && !!onEmpty;
-    // Some touch browsers suppress the synthetic click immediately after a
-    // captured drag. Handle the tap on pointer-up and suppress only its duplicate.
-    suppressClick.current=g.active || traveled>8 || tappedEmpty;
-    // Let the browser finish dispatching its synthetic click before mounting
-    // the sheet; otherwise that click can land on the new dialog backdrop.
-    if(tappedEmpty) {
-      const index=g.from!;
-      window.setTimeout(()=>onEmpty?.(index),0);
-    }
+    // Empty pockets are never pointer-captured. Let their native click open
+    // the picker *after* the browser has completed the tap click sequence.
+    // Opening on pointer-up can race the synthetic click, which can then hit
+    // the new dialog backdrop and immediately dismiss it.
+    suppressClick.current=g.active || traveled>8;
     cancel();
   };
   const dragPocket=drag ? pockets[drag.from] : null;
