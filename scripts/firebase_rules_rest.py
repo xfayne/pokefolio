@@ -110,6 +110,18 @@ def get_access_token():
     return result.stdout.strip()
 
 
+def release_patch_payload(release_name, ruleset_name):
+    """Firebase Rules REST projects.releases.patch requires a Release wrapper."""
+    if not release_name.startswith(f"projects/{PROJECT}/releases/"):
+        raise RuntimeError("Unexpected staging release")
+    if not ruleset_name.startswith(f"projects/{PROJECT}/rulesets/"):
+        raise RuntimeError("Unexpected staging ruleset")
+    return {
+        "release": {"name": release_name, "rulesetName": ruleset_name},
+        "updateMask": "rulesetName",
+    }
+
+
 def source_from_ruleset(resource, token):
     data = http_json("GET", API + resource, token=token)
     files = data.get("source", {}).get("files", [])
@@ -178,10 +190,7 @@ def run(*, deploy=False):
 
     http_json(
         "PATCH", API + RELEASE, token=token,
-        payload={
-            "release": {"name": RELEASE, "rulesetName": new_name},
-            "updateMask": "rulesetName",
-        },
+        payload=release_patch_payload(RELEASE, new_name),
     )
     confirmed = release_ruleset(token)
     if confirmed != new_name or normalized(source_from_ruleset(confirmed, token)) != normalized(target):
