@@ -222,7 +222,8 @@ identifiers, the no-key setup, acceptance tests and rollback.
 
 Binder's empty-pocket picker now accepts unplaced cards from the account Wishlist
 as **wish** pockets (not owned copies), alongside eligible physical copies.
-An overlapping card offers a choice. Wishlist membership and priority order are
+A sole eligible physical copy keeps its one-tap selection; multiple copies
+and Wishlist reservations offer a choice. Wishlist membership and priority order are
 never mutated by binder placement. Collection/Wishlist/Transactions use shared
 sticky section navigation; Card Details uses a compact Wishlist removal action.
 See [Wishlist behavior and verification](docs/WISHLIST.md).

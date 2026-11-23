@@ -156,7 +156,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .section-tabs-sticky {
   position: sticky; top: calc(4rem + env(safe-area-inset-top)); z-index: 18;
   display: flex; align-items: center; gap: 0.375rem;
-  height: 2.75rem; padding: 0.25rem 0.375rem;
+  height: 2.5rem; padding: 0 0.375rem;
   border-radius: 0.875rem; background: #e9f3ff;
 }
 /* Prevent scrolled cards from showing through rounded tabs, side gutters or

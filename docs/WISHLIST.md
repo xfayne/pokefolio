@@ -43,7 +43,9 @@ for visual verification. No account writes occur from reordering the sample.
 
 - The empty-pocket picker searches eligible physical copies **and** cards currently
   on the owner's Wishlist. Selecting a Wishlist-only entry reserves a `wish`
-  pocket, not a physical copy; an entry present in both asks which to place.
+  pocket, not a physical copy. When there is one eligible owned copy it is
+  selected immediately, as before; cards with multiple physical copies and a
+  Wishlist reservation offer an explicit choice.
 - Existing Wishlist placements are excluded to maintain unique pocket identities.
   No Wishlist membership, order, physical copy, or transaction is changed when
   reserving a wish pocket. Sample binder uses only synthetic sample wishes.

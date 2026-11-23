@@ -39,7 +39,8 @@ export function BinderPicker({binder,copies,wishCardIds=[],busy,failed,onClose,o
       {wishes.has(selected) && <Button variant="outline" className="w-full justify-start text-start" onClick={()=>{void onPickWish?.(selected);}}><LuHeart aria-hidden />{t('binderUi.wishes')}</Button>}
     </div>:<CatalogSearch query={query} onQuery={setQuery} allowedCardIds={allowed} owned={counts} wishlist={[...wishes]} onSelect={card=>{
       const matches=eligible.filter(c=>c.catalog.kind==='identified'&&c.catalog.cardId===card.id);
-      if(matches.length===1 && !wishes.has(card.id))void onPick(matches[0]!);
+      // Preserve the one-copy fast path even if this catalog card is also wished.
+      if(matches.length===1)void onPick(matches[0]!);
       else if(!matches.length && wishes.has(card.id))void onPickWish?.(card.id);
       else setSelected(card.id);
     }} />}

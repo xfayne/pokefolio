@@ -46,3 +46,12 @@ it('asks whether to place a copy or a Wishlist reservation when both are availab
  await userEvent.click(screen.getByRole('button',{name:'Wishlist pocket'}));
  expect(pickWish).toHaveBeenCalledWith('base1-4');expect(pick).not.toHaveBeenCalled();
 });
+
+it('keeps the one-copy fast path when that catalog card is on the Wishlist',async()=>{
+ const pick=vi.fn();const pickWish=vi.fn();
+ render(<BinderPicker binder={emptyBinder(sampleOwner)} copies={createSampleCopies()} wishCardIds={['base2-11']} busy={false} failed={false} onClose={()=>{}} onPick={pick} onPickWish={pickWish} />);
+ await userEvent.type(screen.getByRole('searchbox'),'Snorlax');
+ await userEvent.click(screen.getByRole('button',{name:/Snorlax/}));
+ expect(pick).toHaveBeenCalledWith(expect.objectContaining({id:'snorlax-a'}));
+ expect(pickWish).not.toHaveBeenCalled();
+});
