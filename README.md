@@ -172,7 +172,7 @@ refresh and events. The Transactions badge counts unread events; viewing the
 purchase marks them read. Initial provider history is a read baseline.
 The header Received action manually receives the same physical copies, with or
 without tracking. It stays visible and disabled after receipt. Provider delivery
-never confirms receipt automatically. Costs, Binder and Wishlist are untouched.
+never confirms receipt automatically. Costs, Binder and Wishlist are untouched by receipt.
 See [receipt and tracking contracts](docs/PURCHASE_TRACKING.md).
 
 ## Card condition analyzer (#16)
@@ -205,8 +205,8 @@ keyboard reordering only in Custom order. Catalog and Collection Card Details
 now offer Add/Remove Wishlist actions rather than a disabled stub.
 
 The data is stored independently under `users/{uid}/wishlists/main` with
-revision-checked Firestore transactions. It never removes acquired wishes or
-changes Binder pockets. [Sample Wishlist](https://xfayne.github.io/pokefolio/#/wishlist/cards?wishlist=sample)
+revision-checked Firestore transactions. Optional default-off Auto-fulfill Wishlist in Settings removes newly purchased wishes
+and fills their reserved Binder pockets in the same atomic save; ordinary edits do not. [Sample Wishlist](https://xfayne.github.io/pokefolio/#/wishlist/cards?wishlist=sample)
 is synthetic and session-only. The private Wishlist rules were deployed and independently read back from
 **Pokefolio staging** on 2026-11-23. Authenticated live Add/Remove/reorder/reload acceptance remains unverified (owner waived this extra smoke test for #14 closure). Frontend merges now require successful
 staging Rules promotion before Pages deployment. See [Wishlist contracts](docs/WISHLIST.md).

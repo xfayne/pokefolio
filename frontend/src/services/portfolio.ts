@@ -192,6 +192,8 @@ export async function commitPortfolio(
           ? wishlistSchema.parse({...wishlist, cardIds: remaining, revision: wishlist.revision + 1}) : null;
         const nextBinder = binder && pockets && !same(binder.pockets,pockets)
           ? binderSchema.parse({...binder, pockets, revision:binder.revision + 1}) : null;
+        if (entries.length + 1 + Number(!!nextWishlist) + Number(!!nextBinder) > 450)
+          throw Error('Purchase exceeds verified atomic capacity');
         organizationWrites = () => {
           if (nextWishlist) tx.set(wishlistRef, {schemaVersion:1, ownerUid:owner, revision:nextWishlist.revision, ids:nextWishlist.cardIds.join(';'), updatedAt:serverTimestamp()});
           if (nextBinder) tx.set(binderRef, {...nextBinder, pockets:JSON.stringify(nextBinder.pockets), updatedAt:serverTimestamp()});

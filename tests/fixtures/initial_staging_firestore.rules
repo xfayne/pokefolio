@@ -1,0 +1,205 @@
+// Private staging policy for the retained legacy document format.
+// users/{uid}: progress (opaque legacy map, preserved without normalization),
+// revision (positive integer), updatedAt (server timestamp), clientTimestamp (integer).
+// Nested sharing/settings and conditionAnalyses retain their existing client schemas.
+// sharedBinders/{UUID}: schemaVersion=2, immutable ownerUid, pockets (bounded
+// serialized catalog IDs + kinds, "_" keeps an empty pocket), includeWish, updatedAt.
+// Public get requires the owner's private settings to enable this exact link.
+// Public listing, private metadata and every unknown path remain denied.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function validProgress(data) {
+      return data.keys().hasAll(['progress','revision','updatedAt','clientTimestamp'])
+        && data.keys().hasOnly(['progress','revision','updatedAt','clientTimestamp'])
+        && data.progress is map && data.progress.size() <= 32
+        && data.revision is int && data.revision >= 1 && data.revision <= 9007199254740991
+        && data.updatedAt is timestamp && data.updatedAt == request.time
+        && data.clientTimestamp is int && data.clientTimestamp >= 0
+        && data.clientTimestamp <= 9007199254740991;
+    }
+    function validSharing(data) {
+      return data.keys().hasAll(['shareId','enabled','includeWish'])
+        && data.keys().hasOnly(['shareId','enabled','includeWish'])
+        && data.shareId is string && data.shareId.size() == 36
+        && data.shareId.matches('^[a-fA-F0-9-]{36}$')
+        && data.enabled is bool && data.includeWish is bool;
+    }
+    function validAnalysis(data) {
+      return data.keys().hasAll(['schemaVersion','source','analysis','photoIndices','imageCount','analyzedAt','clientAnalyzedAt'])
+        && data.keys().hasOnly(['schemaVersion','source','analysis','photoIndices','imageCount','analyzedAt','clientAnalyzedAt'])
+        && data.schemaVersion == 1
+        && data.source is map && data.source.keys().hasOnly(['type','marketplace','itemId'])
+        && data.source.type == 'ebay-listing'
+        && data.source.marketplace in ['EBAY_US','EBAY_GB','EBAY_DE']
+        && data.source.itemId is string && data.source.itemId.size() <= 64
+        && data.analysis is map && data.analysis.size() <= 64
+        && data.analysis.grade in ['NM','LP','MP','HP','DMG']
+        && data.photoIndices is list && data.photoIndices.size() <= 8
+        && data.photoIndices.hasOnly([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25])
+        && data.imageCount is int && data.imageCount >= 0 && data.imageCount <= 25
+        && data.analyzedAt is timestamp && data.analyzedAt == request.time
+        && data.clientAnalyzedAt is int && data.clientAnalyzedAt >= 0
+        && data.clientAnalyzedAt <= 9007199254740991;
+    }
+    function validPublicBinder(data) {
+      return data.keys().hasAll(['schemaVersion','ownerUid','pockets','includeWish','updatedAt'])
+        && data.keys().hasOnly(['schemaVersion','ownerUid','pockets','includeWish','updatedAt'])
+        && data.schemaVersion == 2
+        && data.ownerUid is string && data.ownerUid.size() > 0 && data.ownerUid.size() <= 128
+        && data.pockets is string && data.pockets.size() <= 40000
+        && data.pockets.split(';').size() <= 1252
+        && (data.pockets == '' || data.pockets.matches('^(_|[opw]:(?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))(;(_|[opw]:(?:(?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)))*$'))
+        && data.includeWish is bool
+        && (data.includeWish || !data.pockets.matches('.*w:.*'))
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+    function enabledShare(ownerUid, shareId, includeWish) {
+      let settings = get(/databases/$(database)/documents/users/$(ownerUid)/sharing/settings).data;
+      return settings.enabled == true && settings.shareId == shareId && settings.includeWish == includeWish;
+    }
+    function enabledShareAfter(ownerUid, shareId, includeWish) {
+      let settings = getAfter(/databases/$(database)/documents/users/$(ownerUid)/sharing/settings).data;
+      return settings.enabled == true && settings.shareId == shareId && settings.includeWish == includeWish;
+    }
+    match /sharedBinders/{shareId} {
+      allow get: if resource.data.schemaVersion == 2
+        && enabledShare(resource.data.ownerUid, shareId, resource.data.includeWish);
+      allow list: if false;
+      allow create: if shareId.matches('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$')
+        && isOwner(request.resource.data.ownerUid)
+        && validPublicBinder(request.resource.data)
+        && enabledShareAfter(request.resource.data.ownerUid, shareId, request.resource.data.includeWish);
+      allow update: if isOwner(resource.data.ownerUid)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validPublicBinder(request.resource.data)
+        && enabledShareAfter(resource.data.ownerUid, shareId, request.resource.data.includeWish);
+      allow delete: if false;
+    }
+    // Private portfolio records are independent of the retained progress root.
+    // Updates require a matching immutable audit in the same atomic commit.
+    function validPortfolio(uid, id) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['record', 'auditId', 'committedAt'])
+        && d.keys().hasAll(['record', 'auditId', 'committedAt'])
+        && d.committedAt == request.time && d.record is map
+        && d.record.ownerUid == uid && d.record.id == id
+        && d.record.schemaVersion == 1 && d.record.revision is int
+        && d.record.createdAt is string && d.record.updatedAt is string;
+    }
+    function portfolioCreate(uid, id) {
+      return isOwner(uid) && validPortfolio(uid,id)
+        && request.resource.data.record.revision == 1
+        && request.resource.data.auditId == null;
+    }
+    function portfolioUpdate(uid, id) {
+      let next = request.resource.data.record;
+      let previous = resource.data.record;
+      let audit = getAfter(/databases/$(database)/documents/users/$(uid)/revisions/$(request.resource.data.auditId)).data.record;
+      return isOwner(uid) && validPortfolio(uid,id)
+        && next.ownerUid == previous.ownerUid && next.id == previous.id
+        && next.createdAt == previous.createdAt
+        && next.revision == previous.revision + 1
+        && audit.ownerUid == uid && audit.actorUid == uid
+        && ((audit.recordId == id && audit.before == previous && audit.after == next)
+          || ('additional' in audit && id in audit.additional
+            && audit.additional[id].before == previous && audit.additional[id].after == next));
+    }
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create, update: if isOwner(uid) && validProgress(request.resource.data);
+      allow delete: if false;
+      match /{bucket}/{id} {
+        allow read: if isOwner(uid) && bucket in ['transactions','copies','lots','shipments','revisions'];
+        allow create: if bucket in ['transactions','copies','lots','shipments'] && portfolioCreate(uid,id);
+        allow update: if bucket in ['transactions','copies','lots','shipments'] && portfolioUpdate(uid,id);
+      }
+      match /transactions/{parent}/lines/{id} {
+        allow read: if isOwner(uid);
+        allow create: if portfolioCreate(uid,id) && request.resource.data.record.transactionId == parent;
+        allow update: if portfolioUpdate(uid,id) && request.resource.data.record.transactionId == parent;
+      }
+      match /shipments/{parent}/memberships/{id} {
+        allow read: if isOwner(uid);
+        allow create: if portfolioCreate(uid,id) && request.resource.data.record.shipmentId == parent;
+        allow update: if portfolioUpdate(uid,id) && request.resource.data.record.shipmentId == parent;
+      }
+      match /revisions/{id} {
+        allow create: if portfolioCreate(uid,id)
+          && request.resource.data.record.actorUid == uid
+          && request.resource.data.record.before.ownerUid == uid
+          && request.resource.data.record.after.ownerUid == uid
+          && request.resource.data.record.before.id == request.resource.data.record.recordId
+          && request.resource.data.record.after.id == request.resource.data.record.recordId
+          && request.resource.data.record.after.revision == request.resource.data.record.before.revision + 1
+          // A shared audit document is an immutable bundle. Every referenced
+          // after-image is still checked against the actual Firestore write.
+          && (!('additional' in request.resource.data.record)
+            || (request.resource.data.record.additional is map
+              && request.resource.data.record.additional.keys().size() <= 80));
+      }
+      match /receipts/{id} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && request.resource.data.keys().hasOnly(['fingerprint','committedAt'])
+          && request.resource.data.fingerprint is string && request.resource.data.fingerprint.size() <= 700000
+          && request.resource.data.committedAt == request.time;
+      }
+      // Layout only: no copy, transaction, legacy progress or Wishlist writes.
+      match /binders/{id} {
+        allow get: if isOwner(uid) && id == 'main';
+        allow create, update: if isOwner(uid) && id == 'main'
+          && request.resource.data.keys().hasOnly(['schemaVersion','ownerUid','revision','pockets','includeWish','updatedAt'])
+          && request.resource.data.keys().hasAll(['schemaVersion','ownerUid','revision','pockets','includeWish','updatedAt'])
+          && request.resource.data.schemaVersion == 1 && request.resource.data.ownerUid == uid
+          && request.resource.data.revision is int
+          && request.resource.data.revision >= 1 && request.resource.data.revision <= 9007199254740991
+          && ((!exists(/databases/$(database)/documents/users/$(uid)/binders/$(id)) && request.resource.data.revision == 1)
+            || (exists(/databases/$(database)/documents/users/$(uid)/binders/$(id)) && request.resource.data.revision == resource.data.revision + 1))
+          && request.resource.data.pockets is string && request.resource.data.pockets.size() <= 350000
+          && request.resource.data.includeWish is bool && request.resource.data.updatedAt == request.time;
+        allow list, delete: if false;
+      }
+      // Independent owner-only Wishlist priorities; never mutate binder/legacy progress.
+      match /wishlists/{id} {
+        allow get: if isOwner(uid) && id == 'main';
+        allow create, update: if isOwner(uid) && id == 'main'
+          && request.resource.data.keys().hasOnly(['schemaVersion','ownerUid','revision','ids','updatedAt'])
+          && request.resource.data.keys().hasAll(['schemaVersion','ownerUid','revision','ids','updatedAt'])
+          && request.resource.data.schemaVersion == 1 && request.resource.data.ownerUid == uid
+          && request.resource.data.revision is int
+          && request.resource.data.revision >= 1 && request.resource.data.revision <= 9007199254740991
+          && ((!exists(/databases/$(database)/documents/users/$(uid)/wishlists/$(id)) && request.resource.data.revision == 1)
+            || (exists(/databases/$(database)/documents/users/$(uid)/wishlists/$(id)) && request.resource.data.revision == resource.data.revision + 1))
+          && request.resource.data.ids is string && request.resource.data.ids.size() <= 40000
+          && (request.resource.data.ids == '' || request.resource.data.ids.matches('^((?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)(;((?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew))*$'))
+          && request.resource.data.updatedAt == request.time;
+        allow list, delete: if false;
+      }
+      match /preferences/{id} {
+        allow read: if isOwner(uid) && id == 'display';
+        allow create, update: if isOwner(uid) && id == 'display'
+          && request.resource.data.keys().hasOnly(['currency','updatedAt'])
+          && request.resource.data.currency in ['USD','ILS','EUR','GBP']
+          && request.resource.data.updatedAt == request.time;
+      }
+      match /sharing/{documentId} {
+        allow read: if isOwner(uid) && documentId == 'settings';
+        allow create, update: if isOwner(uid) && documentId == 'settings'
+          && validSharing(request.resource.data);
+        allow delete: if false;
+      }
+      match /conditionAnalyses/{analysisKey} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validAnalysis(request.resource.data);
+        allow delete: if false;
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -20,6 +20,10 @@ by each validated Firestore update, allowing atomic 20-copy corrections without
 bypassing the owner rules, retry receipt or stale-revision checks. No migration
 or automatic writes to the legacy or production environment are performed.
 
+## Optional purchase Wishlist fulfillment (2026-11-24)
+
+New ordinary purchases alone can fulfill matching wishes and replace their reserved Binder pockets atomically, gated by an owner-specific default-off Settings preference. Existing edits, receipt and sales retain their behavior. See `docs/WISHLIST.md` for the contract; no migration or live data repair.
+
 ## Current state
 
 The safe legacy baseline was imported in PRs #22–#23. The owner approved a fresh React foundation in #3. The new application is in `frontend/`; retained Vanilla JS source is reference only, with no compatibility bridge and no old screens loaded in the new app.
