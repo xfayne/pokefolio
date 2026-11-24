@@ -243,3 +243,7 @@ Add/Remove/reorder/reload round-trip and a measured several-hundred-card
 performance benchmark **were not independently run** and must not be presented
 as verified. If a practical issue appears, track it in a focused regression.
 The Binder bottom-bar round-corner regression was fixed separately by #132.
+
+Catalog and Wishlist Card Details reuse the signed-in inventory selector and the
+existing Your copies panel, including pending acquisitions, exact purchase links
+and audited copy edits. Explicit sample views do not expose account copies.

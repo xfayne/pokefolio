@@ -698,3 +698,12 @@ PR #132 corrected the Binder navbar's visually missing 20px rounded top corners
 by changing the fixed Binder shell's backdrop to the shared light content
 background, without modifying the common navbar component or Binder geometry.
 A mobile pixel-based visual regression compares Binder and Cards at three widths.
+
+## Catalog Card Details inventory consistency — 2026-11-24
+
+Catalog search and Wishlist Card Details now read matching held physical copies
+from the existing account portfolio, including pending receipt. The shared copy
+panel, market quotes, purchase links and audited metadata edits are reused.
+Sample views remain isolated from account copies. Removed the obsolete
+coming-soon caption; unavailable actions remain unchanged. No migration or
+schema changes are involved.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
+import { usePortfolio } from '@/hooks/use-portfolio';
 import { useTranslation } from 'react-i18next';
 import { LuChevronRight, LuGripVertical } from 'react-icons/lu';
 import { SearchInput } from '@/components/ui/search-input';
@@ -29,6 +30,8 @@ export function WishlistPage() {
   const [params, setParams] = useSearchParams();
   const preview = params.get('wishlist') === 'sample';
   const account = useWishlist();
+  const portfolio = usePortfolio();
+  const navigate = useNavigate();
   const [sample, setSample] = useState(() => ({ ...emptyWishlist('sample-wishlist'), cardIds: [...sampleWishlistIds] }));
   const wishlist = preview ? sample : account.wishlist;
   const reorder = async (id: string, position: number) => {
@@ -43,13 +46,15 @@ export function WishlistPage() {
     {preview && <p className="wishlist-preview-note">{t('wishlistUi.sample')}</p>}
     {!preview && !account.owner && <div className="wishlist-feedback"><p>{t('wishlistUi.signIn')}</p><Button variant="outline" onClick={demo}>{t('wishlistUi.tryDemo')}</Button></div>}
     {!preview && !!account.owner && !wishlist.cardIds.length && <p className="wishlist-preview-note">{t('wishlistUi.addHint')}</p>}
-    <WishlistCardsView cardIds={wishlist.cardIds} busy={account.busy && !preview} onOrder={preview || !!account.owner ? reorder : undefined} priceEnabled={!!account.owner || preview} sample={preview} />
+    <WishlistCardsView cardIds={wishlist.cardIds} busy={account.busy && !preview} onOrder={preview || !!account.owner ? reorder : undefined} priceEnabled={!!account.owner || preview} sample={preview} portfolio={preview ? undefined : portfolio} onViewPurchase={id => { void navigate(`/transactions/purchases/${id}`); }} />
   </section>;
 }
 
-export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true, sample = false }: {
+export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true, sample = false, portfolio, onViewPurchase }: {
   cardIds: readonly string[]; onOrder?: ((cardId: string, position: number) => Promise<void>) | undefined;
   busy?: boolean; priceEnabled?: boolean; sample?: boolean;
+  portfolio?: ReturnType<typeof usePortfolio> | undefined;
+  onViewPurchase?: ((id: string) => void) | undefined;
 }) {
   const { t, i18n } = useTranslation();
   const money = useDisplayMoney();
@@ -276,6 +281,6 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
         </div>
       </form>
     </dialog>}
-    {selected && catalog.has(selected) && <CatalogDetails card={catalog.get(selected)!} allowWishlist={!sample} onClose={() => setSelected(null)} />}
+    {selected && catalog.has(selected) && <CatalogDetails card={catalog.get(selected)!} allowWishlist={!sample} portfolio={sample ? undefined : portfolio} onViewPurchase={onViewPurchase} onClose={() => setSelected(null)} />}
   </div>;
 }
