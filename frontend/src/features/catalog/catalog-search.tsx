@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { searchCatalog, catalogCards } from './catalog';
 import type { InventoryCatalogCard } from '@/domain/inventory';
 export function CatalogSearch({ query, onQuery, onSelect, owned = {}, state, onState, wishlist = [], scrollPositionRef, allowedCardIds }: { query: string; onQuery: (value: string) => void; onSelect: (card: InventoryCatalogCard) => void; owned?: Readonly<Record<string, number>>; wishlist?: readonly string[]; state?: CatalogSearchState; onState?: (state: CatalogSearchState) => void; scrollPositionRef?: RefObject<number>; allowedCardIds?: ReadonlySet<string> }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const filtersId = useId();
   const scrollRegionRef = useRef<HTMLDivElement>(null);
   const restoringScroll = useRef(true);
