@@ -160,8 +160,8 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     throw Error('Invalid imported edit');
   if (input.transactionCurrency && (input.cards.some(card=>card.currency!==input.transactionCurrency || !card.amount.trim())))
     throw Error('All imported card prices must match the selected transaction currency');
-  const enteredShipping = input.shipping !== undefined
-    ? parseMoney(input.shipping.trim() || '0', input.transactionCurrency ??
+  const enteredShipping = input.shipping?.trim()
+    ? parseMoney(input.shipping.trim(), input.transactionCurrency ??
       (before.currency.status==='known' ? before.currency.value : 'USD'))
     : null;
   // A user-confirmed purchase explicitly separates card prices and shipping.
