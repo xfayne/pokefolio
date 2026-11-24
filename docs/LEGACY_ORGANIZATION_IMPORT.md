@@ -18,3 +18,7 @@ This returns owner-scoped Binder and Wishlist records at revision 1 for a
 **future create-only staging adapter**. It does not write to Firestore,
 touch legacy data, or replace existing staging documents. The actual live
 destination must check for existing documents before any activation.
+
+## One-time staging data repair (2026-11-24)
+
+The approved 40-page imported Binder can be repaired with `scripts/pokefolio-binder-repair.py`. It is pinned to the staging project and requires an authenticated owner-authorized Cloud Shell, explicit UID and `--apply` (default is read-only). It verifies the screenshot's exact first-page orientation, revision 1, all identities/page count and the existing shared snapshot, writes and reopens a private backup before the atomic precondition-checked private/public pocket update, and reads back both documents. Replays do not mirror an already-corrected Binder; unexpected revision/order halts. `--rollback BACKUP` restores only the unchanged repaired state and advances the revision. Never execute against production or reuse this one-off repair during a staging-to-production transfer. `--self-test` exercises synthetic pocket layouts without cloud access.
