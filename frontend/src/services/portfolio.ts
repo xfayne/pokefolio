@@ -45,7 +45,17 @@ export async function commitPortfolio(
   raw: PortfolioCommit,
 ) {
   const command = prepareCommit(owner, raw, 450);
-  if (command.updates.length > 20)
+  // Firestore rules permit at most 20 distinct audit getAfter lookups per
+  // transaction. One grouped revision can safely audit many writes atomically.
+  const auditFor = (update: PortfolioCommit['updates'][number]) => command.creates.find(entry => {
+    if (entry.collection !== 'revisions') return false;
+    const detail = entry.record.recordId === update.before.record.id
+      ? {before:entry.record.before,after:entry.record.after}
+      : entry.record.additional?.[update.before.record.id];
+    return !!detail && same(detail.before,update.before.record) && same(detail.after,update.after.record);
+  });
+  const auditIds = new Set(command.updates.map(update=>auditFor(update)?.record.id));
+  if (auditIds.has(undefined) || auditIds.size > 20)
     throw Error('This edit exceeds the atomic audit limit');
   const receiptCommand = validateReceiptCommit(command);
   const saleCommand = receiptCommand ? false : validateSaleCommit(owner, command);
@@ -163,14 +173,7 @@ export async function commitPortfolio(
           : snapshot.exists()
       )
         throw Error('Record changed. Reload before saving.');
-      const audit = update
-        ? command.creates.find(
-            (e) =>
-              e.collection === 'revisions' &&
-              same(e.record.before, update.before.record) &&
-              same(e.record.after, update.after.record),
-          )
-        : null;
+      const audit = update ? auditFor(update) : null;
       tx.set(snapshot.ref, {
         record: entry.record,
         auditId: audit?.record.id ?? null,
