@@ -1,4 +1,4 @@
-import { parseMoney } from './money';
+import { parseMoney, safeInteger, splitMoney } from './money';
 import { prepareCommit, type PortfolioCommit, type PortfolioRecord } from './persistence';
 import {
   cardCopySchema, catalogRefSchema, conditionSchema, currencySchema, dateSchema, idSchema,
@@ -155,12 +155,15 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     throw Error('Invalid imported edit');
   if (input.transactionCurrency && (input.cards.some(card=>card.currency!==input.transactionCurrency || !card.amount.trim())))
     throw Error('All imported card prices must match the selected transaction currency');
-  if (input.shipping?.trim()) {
-    const entered = parseMoney(input.shipping.trim(), input.transactionCurrency ?? (before.currency.status==='known' ? before.currency.value : 'USD'));
-    const original = before.shipping.status==='known' ? before.shipping.value : null;
-    if (entered.minor !== 0 && (!original || entered.minor!==original.minor || entered.currency!==original.currency))
-      throw Error('Imported historical shipping cannot be reassigned without an approved cost correction');
-  }
+  const enteredShipping = input.shipping !== undefined
+    ? parseMoney(input.shipping.trim() || '0', input.transactionCurrency ??
+      (before.currency.status==='known' ? before.currency.value : 'USD'))
+    : null;
+  // A user-confirmed purchase explicitly separates card prices and shipping.
+  // The original import's included-shipping evidence remains in the audit.
+  const shippingAllocation = enteredShipping && input.cards.length
+    ? splitMoney(enteredShipping, input.cards.map(card=>card.id))
+    : null;
   const date = input.date.trim();
   if (date && !dateSchema.safeParse(date).success) throw Error('Invalid purchase date');
   const updateAt = new Date(at).toISOString();
@@ -208,15 +211,20 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
         {status:'known' as const,value:conditionSchema.parse(field.condition),source:'user' as const}
       : field.condition === 'unknown' ? entry.record.condition.status === 'unknown' ? entry.record.condition :
         {status:'unknown' as const,reason:'Condition cleared by owner'} : (()=>{throw Error('Invalid condition')})();
-    nextCosts.push(cost);
-    if (sameCost && JSON.stringify(nextCondition) === JSON.stringify(entry.record.condition)) continue;
-    const nextCopy = cardCopySchema.parse({
-      ...entry.record,cardCost:cost,condition:nextCondition,
-      shippingCost:entry.record.shippingCost.status === 'exact' && entry.record.shippingCost.value.minor === 0 && parsed
+    const allocated = shippingAllocation?.get(entry.record.id);
+    const shippingCost: Cost = allocated
+      ? {status:'exact',value:allocated,evidenceRef:before.id}
+      : entry.record.shippingCost.status === 'exact' && entry.record.shippingCost.value.minor === 0 && parsed
         ? {...entry.record.shippingCost,value:{currency:editedCurrency,minor:0}}
-        : entry.record.shippingCost,
+        : entry.record.shippingCost;
+    const shippingChanged = JSON.stringify(shippingCost) !== JSON.stringify(entry.record.shippingCost);
+    nextCosts.push(cost);
+    if (sameCost && !shippingChanged && JSON.stringify(nextCondition) === JSON.stringify(entry.record.condition)) continue;
+    const nextCopy = cardCopySchema.parse({
+      ...entry.record,cardCost:cost,condition:nextCondition,shippingCost,
       revision:entry.record.revision+1,updatedAt:updateAt,
     });
+    if (shippingChanged) membershipChanged = true;
     audited(entry,{collection:'copies',record:nextCopy});
     if (!sameCost) {
       membershipChanged = true;
@@ -260,8 +268,10 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
       acquiredOn:date ? {status:'known',value:date,source:'user'} : {status:'unknown',reason:'Purchase date not recorded'},
       possession,disposition:'held',dispositionRecordId:null,notes:'',
       cardCost:price ? {status:'exact',value:price,evidenceRef:before.id} : {status:'unknown',reason:'No recorded card price'},
-      shippingCost:price ? {status:'exact',value:{currency,minor:0},evidenceRef:before.id} :
-        {status:'unknown',reason:'No recorded additional shipping'},
+      shippingCost:shippingAllocation?.get(field.id)
+        ? {status:'exact',value:shippingAllocation.get(field.id)!,evidenceRef:before.id}
+        : price ? {status:'exact',value:{currency,minor:0},evidenceRef:before.id}
+        : {status:'unknown',reason:'No recorded additional shipping'},
       taxCost:{status:'unknown',reason:'Not separately recorded'},feeCost:{status:'unknown',reason:'Not separately recorded'},
     })});
     if (shipmentId) creates.push({collection:'memberships',record:shipmentMembershipSchema.parse({
@@ -273,6 +283,10 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     membershipChanged = true;
   }
   if (input.transactionCurrency && (before.currency.status!=='known' || before.currency.value!==input.transactionCurrency))
+    membershipChanged = true;
+  if (enteredShipping && (before.shipping.status!=='known' ||
+      before.shipping.value.minor!==enteredShipping.minor ||
+      before.shipping.value.currency!==enteredShipping.currency))
     membershipChanged = true;
   if (input.trackingNumber!==undefined || input.carrier!==undefined) {
     const trackingNumber=input.trackingNumber?.trim()??'';
@@ -311,7 +325,8 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
   const nextDate = date === oldDate ? before.transactionOn : date
     ? {status:'known' as const,value:date,source:'user' as const} :
       {status:'unknown' as const,reason:'Purchase date cleared by owner'};
-  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes && !sourceChanged) return null;
+  if (!updates.length && !creates.length && nextDate === before.transactionOn && input.notes === before.notes &&
+      !sourceChanged && !membershipChanged) return null;
   const totals = new Map<Currency,bigint>();
   let unpriced = 0;
   for (const cost of nextCosts) {
@@ -323,7 +338,7 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     return {currency,minor:Number(minor)};
   });
   const single = nativeCardTotals.length===1 ? nativeCardTotals[0] : null;
-  const nextTotal = single && unpriced===0 ? {status:'known' as const,value:single,source:'user' as const} :
+  const nextSubtotal = single && unpriced===0 ? {status:'known' as const,value:single,source:'user' as const} :
     {status:'unknown' as const,reason:'Mixed currencies or incomplete card prices'};
   const nextCurrency = single ? {status:'known' as const,value:single.currency,source:'user' as const} :
     {status:'unknown' as const,reason:'No single purchase currency'};
@@ -333,22 +348,53 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
     return {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const};
   };
   const previousShipping = adjustedEvidence(before.shipping);
-  const shipping = input.shipping?.trim() && parseMoney(input.shipping.trim(), single?.currency??'USD').minor===0 && single
-    ? {status:'known' as const,value:{currency:single.currency,minor:0},source:'user' as const}
+  const shipping = enteredShipping && single
+    ? {status:'known' as const,value:enteredShipping,source:'user' as const}
     : previousShipping;
+  const confirmedShipping = before.totalBasis==='owner-confirmed-total' ||
+    (enteredShipping!==null && enteredShipping.minor>0);
+  if (confirmedShipping && (nextSubtotal.status!=='known' || shipping.status!=='known'))
+    throw Error('Confirmed purchase total requires all card prices and shipping');
+  const extras = [adjustedEvidence(before.taxes),adjustedEvidence(before.fees)]
+    .reduce((sum,value)=>sum+(value.status==='known'?BigInt(value.value.minor):0n),0n);
+  const nextPayable = confirmedShipping && nextSubtotal.status==='known' && shipping.status==='known'
+    ? {status:'known' as const,value:{
+        currency:nextSubtotal.value.currency,
+        minor:safeInteger(BigInt(nextSubtotal.value.minor)+BigInt(shipping.value.minor)+extras),
+      },source:'user' as const}
+    : nextSubtotal;
+  const {shippingIncludedInCardPrices:originalShippingIncluded,...originalFields}=before;
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
-    ...before,transactionOn:nextDate,notes:input.notes,
+    ...(confirmedShipping ? originalFields : before),
+    transactionOn:nextDate,notes:input.notes,
     ...(sourceChanged ? {source} : {}),
     ...(membershipChanged ? {
-      currency:nextCurrency,subtotal:nextTotal,payable:nextTotal,
+      totalBasis:confirmedShipping ? 'owner-confirmed-total' : 'recorded-card-prices',
+      currency:nextCurrency,subtotal:nextSubtotal,payable:nextPayable,
       nativeCardTotals,unpricedCopyCount:unpriced,
       shipping, taxes:adjustedEvidence(before.taxes),fees:adjustedEvidence(before.fees),
     } : {}),
     revision:before.revision+1,updatedAt:updateAt,
   });
   audited(purchase,{collection:'transactions',record:transaction});
+  // Firestore security rules cap distinct audit lookups, not record writes.
+  // A single immutable grouped revision keeps 20+ price/shipping corrections atomic.
+  if (updates.length>20) {
+    const revisions=creates.filter(entry=>entry.collection==='revisions');
+    const first=revisions[0];
+    if (!first || first.collection!=='revisions' || revisions.length!==updates.length)
+      throw Error('Audited corrections must match all changed records');
+    const additional: Record<string,{before: typeof first.record.before;after:typeof first.record.after}> = {};
+    for (const entry of revisions.slice(1)) {
+      if (entry.collection!=='revisions' || entry.record.recordId in additional ||
+          entry.record.recordId===first.record.recordId) throw Error('Ambiguous grouped audit identity');
+      additional[entry.record.recordId]={before:entry.record.before,after:entry.record.after};
+    }
+    creates.splice(0,creates.length,
+      ...creates.filter(entry=>entry.collection!=='revisions'),
+      {collection:'revisions',record:revisionSchema.parse({...first.record,additional})});
+  }
   const command:PortfolioCommit = {ownerUid:owner,idempotencyKey:'edit-'+crypto.randomUUID(),creates,updates};
-  if (updates.length > 20) throw Error('Edit exceeds the verified atomic audit capacity');
   prepareCommit(owner,command,450);
   validateImportedPurchaseEdit(command);
   return command;
