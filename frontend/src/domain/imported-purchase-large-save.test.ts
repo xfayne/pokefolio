@@ -37,7 +37,7 @@ export function twentyCardImportedFixture(): PortfolioRecord[] {
   });
   return [{collection:'transactions',record:imported},
     ...original.filter(entry=>entry.collection!=='transactions').map(entry=>{
-      if(entry.collection==='lines') {
+      if(entry.collection==='lines' && 'pricing' in entry.record) {
         const price = entry.record.pricing;
         if(price.mode!=='per-copy')throw Error('Invalid line');
         return portfolioRecordSchema.parse({collection:'lines',record:{
