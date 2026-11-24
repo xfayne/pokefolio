@@ -96,3 +96,26 @@ it('atomically audits a 20-copy €48.99 purchase with €12.40 equally allocate
   expect(restored.draft.cards).toHaveLength(20);
   expect(importedPurchaseFormCommit('owner',restored.draft,'2026-11-24T08:01:00Z',after)).toBeNull();
 });
+
+it('groups 41 audited records when all twenty card prices and shipping change together',()=>{
+  const records=twentyCardImportedFixture();
+  const seed=importedPurchaseFormSeed(records,'purchase-twenty');
+  const input={...seed.draft,shipping:'12.40',
+    cards:seed.draft.cards.map(card=>({...card,amount:(Number(card.amount)+0.01).toFixed(2)}))};
+  const command=importedPurchaseFormCommit('owner',input,'2026-11-24T08:30:00Z',records)!;
+  expect(command.updates).toHaveLength(41);
+  expect(command.creates.filter(entry=>entry.collection==='revisions')).toHaveLength(1);
+  const audit=command.creates.find(entry=>entry.collection==='revisions');
+  if(audit?.collection!=='revisions')throw Error('Missing shared audit');
+  expect(Object.keys(audit.record.additional??{})).toHaveLength(40);
+  expect(prepareCommit('owner',command,450)).toEqual(command);
+  expect(validateImportedPurchaseEdit(command)).toBe(true);
+  expect(command.updates.find(entry=>entry.before.collection==='transactions')?.after).toMatchObject({
+    collection:'transactions',record:{subtotal:{status:'known',value:{currency:'EUR',minor:4919}},
+      shipping:{status:'known',value:{currency:'EUR',minor:1240}},
+      payable:{status:'known',value:{currency:'EUR',minor:6159}},
+    },
+  });
+  for(const change of command.updates) if(change.before.collection==='copies' && change.after.collection==='copies')
+    expect(change.after.record.acquiredOn).toEqual(change.before.record.acquiredOn);
+});
