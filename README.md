@@ -247,3 +247,7 @@ The Binder bottom-bar round-corner regression was fixed separately by #132.
 Catalog and Wishlist Card Details reuse the signed-in inventory selector and the
 existing Your copies panel, including pending acquisitions, exact purchase links
 and audited copy edits. Explicit sample views do not expose account copies.
+
+## Compact purchase card rows
+
+New and Edit Purchase share the owner-approved compact rows: equal-width and equal-height 16px inputs, full-card artwork, and an accessible `1st` checkbox alongside Condition. No transaction behavior changes.
