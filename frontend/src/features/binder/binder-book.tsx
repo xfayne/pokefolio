@@ -4,6 +4,7 @@ import { LuChevronLeft, LuChevronRight, LuHeart, LuPackage, LuCircleHelp } from 
 import type { InventoryCatalogCard } from '@/domain/inventory';
 import { PokemonArt } from '@/components/ui/pokemon-art';
 import { pageCount } from './model';
+import { readerSpread } from './reader-spread';
 
 export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown'};
 type Gesture = {id:number;x:number;y:number;from:number|null;active:boolean;timer:ReturnType<typeof setTimeout>|null;over:number|null;turn:ReturnType<typeof setTimeout>|null;turnPage:number|null};
@@ -21,9 +22,7 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
     const update=()=>setLandscape(reader && media.matches); update(); media.addEventListener('change',update);
     return ()=>media.removeEventListener('change',update);
   },[reader]);
-  const spread=landscape ? 2 : 1;
-  const current=Math.min(Math.max(0,page),total-1);
-  const first=spread===2 ? Math.floor(current/2)*2 : current;
+  const {first,count:spread,previous,next}=readerSpread(page,total,landscape);
   const suppressClick=useRef(false);
   const gesture=useRef<Gesture|null>(null);
   const [drag,setDrag]=useState<{from:number;over:number|null;x:number;y:number;outside:boolean}|null>(null);
@@ -83,8 +82,8 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
     } else if(!g.active) {
       const dx=event.clientX-g.x,dy=event.clientY-g.y;
       if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4) {
-        const next=first+((dx<0)!==(i18n.dir()==='rtl')?spread:-spread);
-        if(next>=0 && next<total) onPage(next);
+        const target=(dx<0)!==(i18n.dir()==='rtl') ? next : previous;
+        if(target!==null) onPage(target);
       }
     }
     const traveled=Math.hypot(event.clientX-g.x,event.clientY-g.y);
@@ -122,9 +121,9 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
           </div>;
         })}
       <div className="binder-pager">
-      <button type="button" data-page-target={first-spread} disabled={first===0 || busy} aria-label={t('binderUi.previous')} onClick={()=>onPage(Math.max(0,first-spread))}><LuChevronLeft className="rtl:rotate-180" aria-hidden /></button>
+      <button type="button" data-page-target={previous ?? undefined} disabled={previous===null || busy} aria-label={t('binderUi.previous')} onClick={()=>{if(previous!==null)onPage(previous);}}><LuChevronLeft className="rtl:rotate-180" aria-hidden /></button>
 
-      <button type="button" data-page-target={first+spread} disabled={first+spread>=total || busy} aria-label={t('binderUi.next')} onClick={()=>onPage(first+spread)}><LuChevronRight className="rtl:rotate-180" aria-hidden /></button>
+      <button type="button" data-page-target={next ?? undefined} disabled={next===null || busy} aria-label={t('binderUi.next')} onClick={()=>{if(next!==null)onPage(next);}}><LuChevronRight className="rtl:rotate-180" aria-hidden /></button>
       </div>
       {onOptions && <button type="button" className="binder-options-overlay" aria-label={t('binderUi.options')} disabled={busy} onClick={onOptions}>•••</button>}
       </div>

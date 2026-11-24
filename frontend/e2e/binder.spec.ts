@@ -107,7 +107,7 @@ test('binder options add exact copies, wishlist pockets and empty slots; landsca
   await expect(page.getByRole('dialog')).toHaveAttribute('data-entered','true');
   await page.getByRole('dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished)));
   await page.setViewportSize({width:844,height:390});
-  await expect(page.getByRole('dialog').locator('.binder-leaf')).toHaveCount(2);
+  await expect(page.getByRole('dialog').locator('.binder-leaf')).toHaveCount(1);
   await expect(page.getByRole('dialog').locator('.binder-leaf').first()).toBeVisible();
   await expect(page.getByRole('dialog').locator('.binder-leaf').last()).toBeVisible();
   const header=await page.getByRole('dialog').locator('.sheet-header').boundingBox();
@@ -309,4 +309,34 @@ test('Binder pointer picks do not retain a focus ring, but keyboard navigation d
   await expect(dialog).toHaveCount(0);
   await expect(other).toBeFocused();
   expect(await other.evaluate(el=>el.matches(':focus-visible'))).toBe(true);
+});
+
+test('landscape reader displays single covers, paired interior and retains page on rotation',async({page})=>{
+  await page.goto('./#/collection/binder?inventory=sample');
+  await page.getByRole('button',{name:'Binder options'}).click();
+  await page.getByRole('button',{name:'Add empty page'}).click();
+  await expect(page.locator('.binder-page-stamp')).toHaveText('2/4');
+  await page.getByRole('button',{name:'Previous page'}).click();
+  await page.getByRole('button',{name:'Binder options'}).click();
+  await page.getByRole('button',{name:'View binder',exact:true}).click();
+  const dialog=page.getByRole('dialog');
+  await page.setViewportSize({width:844,height:390});
+  const leaves=dialog.locator('.binder-page-stamp');
+  await expect(leaves).toHaveText(['1/4']);
+  await expect(dialog.getByRole('button',{name:'Previous page'})).toBeDisabled();
+  await dialog.getByRole('button',{name:'Next page'}).click();
+  await expect(leaves).toHaveText(['2/4','3/4']);
+  await page.setViewportSize({width:390,height:844});
+  await expect(leaves).toHaveText(['2/4']);
+  await dialog.getByRole('button',{name:'Next page'}).click();
+  await expect(leaves).toHaveText(['3/4']);
+  await page.setViewportSize({width:844,height:390});
+  await expect(leaves).toHaveText(['2/4','3/4']);
+  await dialog.getByRole('button',{name:'Next page'}).click();
+  await expect(leaves).toHaveText(['4/4']);
+  await expect(dialog.getByRole('button',{name:'Next page'})).toBeDisabled();
+  await dialog.getByRole('button',{name:'Previous page'}).click();
+  await expect(leaves).toHaveText(['2/4','3/4']);
+  await dialog.getByRole('button',{name:'Previous page'}).click();
+  await expect(leaves).toHaveText(['1/4']);
 });
