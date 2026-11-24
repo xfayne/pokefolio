@@ -189,7 +189,7 @@ save-only retry does not call AI again. See [analyzer contracts](docs/ANALYZER.m
 
 Collection → Binder implements the approved fixed 3×3 book with touch drag,
 page arrows/swipe, exact-copy placement, reserved gaps, page movement and a
-read-only landscape viewer. Card taps do not open details. The account layout
+read-only landscape viewer. Private Binder card taps open the existing Card Details; holding a page arrow opens direct page navigation. The account layout
 has isolated owner-only, revision-checked persistence. Sharing explicitly
 publishes a catalog-only snapshot through the existing revocable link policy.
 See [Binder behavior and persistence](docs/BINDER.md). The
@@ -254,3 +254,5 @@ New and Edit Purchase share the owner-approved compact rows: equal-width and equ
 
 Binder displays removed Wishlist reservations as unavailable and allows unavailable
 copy or wish placements to be dragged out without shifting any other pockets.
+
+Compact card rows omit per-card copy-count badges and round displayed monetary values to whole currency units outside purchase/sale screens. Counts, sorting, stored money and detailed transaction amounts are unchanged.

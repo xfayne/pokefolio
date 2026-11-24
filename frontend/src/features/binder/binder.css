@@ -85,7 +85,7 @@
 .binder-pager button { pointer-events:auto; position:absolute; top:50%; transform:translateY(-50%); width:2rem; height:2.5rem; background:#f2f7fd99; border:1px solid #b3ccec80; border-radius:.625rem; box-shadow:0 1px 4px #03233e22; backdrop-filter:blur(3px); }
 .binder-pager button:first-child { inset-inline-start:-1rem; }
 .binder-pager button:last-child { inset-inline-end:-1rem; }
-.binder-pager button:disabled { opacity:.25; }
+.binder-pager button:disabled,.binder-pager button[aria-disabled="true"] { opacity:.25; }
 .binder-pager svg { width:1.125rem; height:1.125rem; }
 .binder-options-overlay { position:absolute; top:-.25rem; inset-inline-end:.75rem; height:1.5rem; width:2.25rem; display:flex; justify-content:center; align-items:center; font-weight:700; letter-spacing:.1rem; font-size:.875rem; background:#f2f7fd99; border-radius:.375rem; color:#334572; backdrop-filter:blur(3px); }
 .binder-slot[data-kind="empty"][role="button"] { cursor:pointer; }
@@ -101,3 +101,6 @@
 .binder-spread { transform:translateY(.125rem); }
 .binder-options-overlay { background:transparent; backdrop-filter:none; border-radius:0; }
 .binder-drag-remove { position:absolute; top:calc(100% + .4rem); inset-inline:50%; transform:translateX(50%); width:max-content; max-width:9rem; padding:.25rem .5rem; border-radius:.375rem; background:#7f1d1d; color:#fff; font-size:.625rem; line-height:1.25; font-weight:700; text-align:center; }
+
+.binder-jump-dialog { position:fixed; inset:0; margin:auto; width:min(calc(100% - 2rem),20rem); height:fit-content; border:1px solid #b3ccec; border-radius:1rem; background:var(--surface-panel); color:var(--foreground,#10243b); padding:1rem; box-shadow:0 12px 32px #03233e33; touch-action:auto; }
+.binder-jump-dialog::backdrop { background:#071e38aa; }

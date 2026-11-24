@@ -117,7 +117,7 @@ test('catalog filters animate, fill a two-column mobile grid and combine card ty
  await page.goto('./#/collection/cards?inventory=sample');
  await page.getByRole('button',{name:'Search',exact:true}).click();
  await page.getByRole('searchbox',{name:'Search cards',exact:true}).fill('gengar');
- await expect(page.getByText('Owned · 1 copy',{exact:true})).toBeVisible();
+ await expect(page.getByText('Owned',{exact:true})).toBeVisible();
  const filter=page.getByRole('button',{name:'Filters',exact:true});await filter.click();
  const panel=page.locator('.catalog-search .ui-disclosure');await expect(panel).toHaveAttribute('data-open','true');
  expect(await page.locator('.catalog-set-grid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2);

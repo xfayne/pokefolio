@@ -723,3 +723,7 @@ Unavailable copy and removed-Wishlist reservations retain their exact slots and
 can be dragged out using the existing revision-checked unplace operation. No
 automatic cleanup or migration; a pending/failed Wishlist read does not mark
 reservations removed. New Arrange reservations use current Wishlist membership.
+
+## Compact card rows and Binder navigation (2026-11-24)
+
+Owner requested removing visible per-card copy-count badges and rounding compact list/card amounts outside purchase and sale screens. Aggregate counts, accessible disclosures, calculations and stored cents remain unchanged. Private Binder taps reuse Catalog Details; movement still takes precedence over taps. Hold either page arrow for at least 500 ms and release to choose a page directly, including in the reader. No pocket mutations or migrations are involved.

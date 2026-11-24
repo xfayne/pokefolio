@@ -57,7 +57,7 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
   onViewPurchase?: ((id: string) => void) | undefined;
 }) {
   const { t, i18n } = useTranslation();
-  const money = useDisplayMoney();
+  const money = useDisplayMoney(0);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<Sort>('custom');
   const [condition, setCondition] = useState<Grade>('LP');

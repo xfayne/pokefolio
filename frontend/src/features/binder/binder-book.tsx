@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronLeft, LuChevronRight, LuHeart, LuPackage, LuCircleHelp } from 'react-icons/lu';
 import type { InventoryCatalogCard } from '@/domain/inventory';
 import { PokemonArt } from '@/components/ui/pokemon-art';
+import { Button } from '@/components/ui/button';
 import { pageCount } from './model';
 import { readerSpread } from './reader-spread';
 
 export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown';wishUnavailable?:boolean};
 type Gesture = {id:number;x:number;y:number;from:number|null;active:boolean;timer:ReturnType<typeof setTimeout>|null;over:number|null;turn:ReturnType<typeof setTimeout>|null;turnPage:number|null};
-export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true,reader=false,busy=false,onEmpty,onOptions}: {
+export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true,reader=false,busy=false,onEmpty,onOptions,onSelect}: {
   pockets:readonly VisualPocket[];page:number;onPage:(page:number)=>void;onMove?:((from:number,to:number)=>void)|undefined;
   onRemove?: ((from:number)=>void)|undefined; onEmpty?: ((index:number)=>void)|undefined; onOptions?: (()=>void)|undefined;
-  includeWish?:boolean;reader?:boolean;busy?:boolean;
+  includeWish?:boolean;reader?:boolean;busy?:boolean;onSelect?: ((card:InventoryCatalogCard)=>void) | undefined;
 }) {
   const {t,i18n}=useTranslation();
   const total=pageCount(pockets);
@@ -24,6 +25,29 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
   },[reader]);
   const {first,count:spread,previous,next}=readerSpread(page,total,landscape);
   const suppressClick=useRef(false);
+  const tapIndex=useRef<number|null>(null);
+  const [jump,setJump]=useState(false);
+  const arrowPress=useRef<{id:number;x:number;y:number;at:number}|null>(null);
+  const suppressArrowClick=useRef(false);
+  const arrowDown=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+    if(busy || total<2 || (event.pointerType==='mouse' && event.button!==0))return;
+    suppressArrowClick.current=false;
+    arrowPress.current={id:event.pointerId,x:event.clientX,y:event.clientY,at:Date.now()};
+  };
+  const arrowMove=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+    const press=arrowPress.current;
+    if(press && press.id===event.pointerId && Math.hypot(event.clientX-press.x,event.clientY-press.y)>8){arrowPress.current=null;suppressArrowClick.current=true;}
+  };
+  const arrowCancel=()=>{if(arrowPress.current)suppressArrowClick.current=true;arrowPress.current=null;};
+  const arrowUp=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+    const press=arrowPress.current;arrowPress.current=null;
+    if(!busy && press && press.id===event.pointerId && Math.hypot(event.clientX-press.x,event.clientY-press.y)<=8 && Date.now()-press.at>=500){suppressArrowClick.current=true;setJump(true);}
+  };
+  const arrowClick=(target:number|null)=>{
+    if(suppressArrowClick.current){suppressArrowClick.current=false;return;}
+    if(!busy && target!==null)onPage(target);
+  };
+  const arrowHandlers={onPointerDown:arrowDown,onPointerMove:arrowMove,onPointerUp:arrowUp,onPointerCancel:arrowCancel,onPointerLeave:arrowCancel,onContextMenu:(e:React.MouseEvent<HTMLButtonElement>)=>e.preventDefault(),onKeyDown:(e:React.KeyboardEvent<HTMLButtonElement>)=>{if(e.key==='F2'&&!busy&&total>1){e.preventDefault();setJump(true);}}};
   const gesture=useRef<Gesture|null>(null);
   const [drag,setDrag]=useState<{from:number;over:number|null;x:number;y:number;outside:boolean}|null>(null);
   const root=useRef<HTMLDivElement>(null);
@@ -43,7 +67,7 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
     const slot=(event.target as HTMLElement).closest<HTMLElement>('[data-pocket-index]');
     const from=slot ? Number(slot.dataset.pocketIndex) : null;
     const g:Gesture={id:event.pointerId,x:event.clientX,y:event.clientY,from,active:false,timer:null,over:null,turn:null,turnPage:null};
-    gesture.current=g; suppressClick.current=false;
+    gesture.current=g; suppressClick.current=false; tapIndex.current=null;
     if(from!==null && pockets[from] && pockets[from]!.kind!=='empty')event.currentTarget.setPointerCapture(event.pointerId);
 
   };
@@ -92,10 +116,21 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
     // Opening on pointer-up can race the synthetic click, which can then hit
     // the new dialog backdrop and immediately dismiss it.
     suppressClick.current=g.active || traveled>8;
+    tapIndex.current=!suppressClick.current ? g.from : null;
     cancel();
   };
   const dragPocket=drag ? pockets[drag.from] : null;
-  return <div ref={root} className="binder-book" data-reader={reader || undefined} onDragStart={e=>e.preventDefault()} onPointerDown={start} onPointerMove={move} onPointerUp={finish} onPointerCancel={cancel} onLostPointerCapture={cancel} onKeyDown={e=>{if(e.key==='Escape')cancel();}}>
+  return <><div ref={root} className="binder-book" data-reader={reader || undefined} onDragStart={e=>e.preventDefault()} onPointerDown={start} onPointerMove={move} onPointerUp={finish} onPointerCancel={cancel} onLostPointerCapture={cancel} onClick={event=>{
+    // A captured tap can dispatch its native click on the book instead of the slot.
+    // A completed drag or swipe must never open details.
+    if((event.target as HTMLElement).closest('button'))return;
+    const slot=(event.target as HTMLElement).closest<HTMLElement>('[data-pocket-index]');
+    const index=tapIndex.current ?? (slot ? Number(slot.dataset.pocketIndex) : null);
+    tapIndex.current=null;
+    if(busy || suppressClick.current || index===null)return;
+    const pocket=pockets[index];
+    if(pocket?.card && pocket.kind!=='unavailable' && onSelect){slot?.blur();onSelect(pocket.card);}
+  }} onKeyDown={e=>{if(e.key==='Escape')cancel();}}>
     <div className="binder-stage">
       <div className="binder-spread" data-double={spread===2 || undefined}>
         {Array.from({length:spread},(_,offset)=>{
@@ -106,13 +141,15 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
               const index=number*9+slot,p=pockets[index];
               const kind=p?.kind ?? 'empty';
               const unavailableLabel=t(p?.wishUnavailable?'binderUi.wishUnavailable':'binderUi.unavailable');
+              const canSelect=!!onSelect && !!p?.card && kind!=='unavailable';
+              const interactive=kind==='empty' ? !!onEmpty : canSelect;
               return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" onClick={event=>{if(kind==='empty'&&!busy&&!suppressClick.current){
                 // Pointer-driven selection must not leave a persistent focus ring
                 // when the sheet restores focus on close. Keyboard activation
                 // continues to preserve its visible focus for accessibility.
                 if(event.detail>0)event.currentTarget.blur();
                 onEmpty?.(index);
-              }}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? (kind==='unavailable'?unavailableLabel:t('binderUi.empty'))}`}>
+              }}} role={interactive?'button':'group'} tabIndex={interactive?0:undefined} onKeyDown={e=>{if(!busy&&interactive&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(kind==='empty')onEmpty?.(index);else if(p?.card&&canSelect)onSelect?.(p.card);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? (kind==='unavailable'?unavailableLabel:t('binderUi.empty'))}`}>
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{kind==='empty'?t('binderUi.empty'):unavailableLabel}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
@@ -122,13 +159,27 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
           </div>;
         })}
       <div className="binder-pager">
-      <button type="button" data-page-target={previous ?? undefined} disabled={previous===null || busy} aria-label={t('binderUi.previous')} onClick={()=>{if(previous!==null)onPage(previous);}}><LuChevronLeft className="rtl:rotate-180" aria-hidden /></button>
+      <button type="button" data-page-target={previous ?? undefined} disabled={busy || total<2} aria-disabled={previous===null || busy} aria-label={t('binderUi.previous')} {...arrowHandlers} onClick={()=>arrowClick(previous)}><LuChevronLeft className="rtl:rotate-180" aria-hidden /></button>
 
-      <button type="button" data-page-target={next ?? undefined} disabled={next===null || busy} aria-label={t('binderUi.next')} onClick={()=>{if(next!==null)onPage(next);}}><LuChevronRight className="rtl:rotate-180" aria-hidden /></button>
+      <button type="button" data-page-target={next ?? undefined} disabled={busy || total<2} aria-disabled={next===null || busy} aria-label={t('binderUi.next')} {...arrowHandlers} onClick={()=>arrowClick(next)}><LuChevronRight className="rtl:rotate-180" aria-hidden /></button>
       </div>
       {onOptions && <button type="button" className="binder-options-overlay" aria-label={t('binderUi.options')} disabled={busy} onClick={onOptions}>•••</button>}
       </div>
     </div>
     {drag && dragPocket && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}>{dragPocket.card?<img src={dragPocket.card.imageUrl} alt="" draggable={false} />:<span className="binder-pocket-label">{t(dragPocket.wishUnavailable?'binderUi.wishUnavailable':'binderUi.unavailable')}</span>}{drag.outside && onRemove && <span className="binder-drag-remove">{t('binderUi.releaseRemove')}</span>}</div>}
-  </div>;
+  </div>{jump && <PageJump count={total} current={page} onClose={()=>setJump(false)} onApply={target=>{onPage(target);setJump(false);}} />}</>;
+}
+
+function PageJump({count,current,onClose,onApply}:{count:number;current:number;onClose:()=>void;onApply:(target:number)=>void}){
+  const {t}=useTranslation();
+  const id=useId(),dialog=useRef<HTMLDialogElement>(null);
+  const [value,setValue]=useState(String(Math.min(current+1,count)));
+  const n=Number(value),valid=Number.isInteger(n)&&n>=1&&n<=count;
+  useEffect(()=>{const node=dialog.current!;node.showModal();return ()=>{node.close();};},[]);
+  return <dialog ref={dialog} className="binder-jump-dialog" aria-labelledby={id} onCancel={e=>{e.preventDefault();onClose();}}><form className="space-y-3" onSubmit={e=>{e.preventDefault();if(valid)onApply(n-1);}}>
+    <h2 id={id} className="text-lg font-bold">{t('binderUi.jumpPage')}</h2>
+    <label className="flex flex-col gap-1 text-sm font-bold">{t('binderUi.targetPage')}<input type="number" inputMode="numeric" min={1} max={count} step={1} required value={value} onChange={e=>setValue(e.target.value)} className="min-h-11 w-full rounded-xl border border-blue-300 bg-white px-3 text-base" /></label>
+    <p className="text-xs text-slate-600">{t('binderUi.pageRange',{count})}</p>
+    <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>{t('binderUi.cancel')}</Button><Button type="submit" disabled={!valid}>{t('binderUi.go')}</Button></div>
+  </form></dialog>;
 }

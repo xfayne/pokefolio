@@ -33,6 +33,9 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const [notice, setNotice] = useState('');
   const id = useId();
   const money = useDisplayMoney();
+  const rowMoney = useDisplayMoney(0);
+  const rowCost = (v: CopyView['paid']) => v.status === 'exact' ? rowMoney(v.value) : v.status === 'estimated' ? `${rowMoney(v.value)} · ${t('inventory.estimated')}` : t(`inventory.${v.status === 'unallocated' ? 'unallocated' : 'unavailable'}`);
+  const rowMetric = (v: CopyView['market']) => v.status === 'unavailable' ? t(pricesLoading ? 'loading' : 'inventory.unpriced') : rowMoney(v);
   const cost = (v: CopyView['paid']) => v.status === 'exact' ? money(v.value) : v.status === 'estimated' ? `${money(v.value)} · ${t('inventory.estimated')}` : t(`inventory.${v.status === 'unallocated' ? 'unallocated' : 'unavailable'}`);
   const metric = (v: CopyView['market']) => v.status === 'unavailable' ? t(pricesLoading ? 'loading' : 'inventory.unpriced') : money(v);
   const title = (g: InventoryGroup) => g.card?.name ?? (g.copies[0]?.copy.catalog.kind === 'unidentified' ? g.copies[0].copy.catalog.description : g.key);
@@ -62,8 +65,8 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
       <div className="flex items-stretch">
         <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 ps-2 text-start">
           <span className="sr-only">{t('inventory.details')}: </span><PokemonArt src={g.card?.imageUrl} alt={g.card?.name ?? title(g)} />
-          <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span><span className="mt-0.5 inline-block rounded-full bg-blue-100 px-2 text-xs leading-[0.875rem] font-semibold text-slate-600">{t('inventory.copies', { count: g.copies.length })}</span></span>
-          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{visibleMarket(g).pricedCount ? money(visibleMarket(g)) : t(pricesLoading ? 'loading' : 'inventory.unpriced')}</span>{visibleMarket(g).pricedCount > 0 && visibleMarket(g).missingCount > 0 && <span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}</span>
+          <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span></span>
+          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{visibleMarket(g).pricedCount ? rowMoney(visibleMarket(g)) : t(pricesLoading ? 'loading' : 'inventory.unpriced')}</span>{visibleMarket(g).pricedCount > 0 && visibleMarket(g).missingCount > 0 && <span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}</span>
         </button>
         <DisclosureButton aria-label={`${t('inventory.copies', { count: g.copies.length })}: ${title(g)}`} open={isExpanded(g)} contentId={`${id}-${g.key}`} onClick={() => toggle(g)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950">
           <DisclosureChevron open={isExpanded(g)} />
@@ -75,9 +78,9 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
           <button type="button" className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 rounded-lg text-start text-xs" onClick={() => { setInitialInspection(v.copy.id); setInitialCopy(null); setSelected(g.key); }}>
             <span className="sr-only">{t('inventory.copyDetails')} {v.copy.id}: </span><span className="font-semibold">{t('inventory.copy', { number: n + 1 })}</span>
             <span className={`condition-badge rounded-full px-2 py-0.5 font-medium ${v.copy.condition.status === 'known' && v.copy.condition.value === 'NM' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}`}>{v.copy.condition.status === 'known' ? v.copy.condition.value : t('inventory.unknown')}</span>
-            <span className="border-s border-blue-200 ps-2 text-slate-600">{t('inventory.cost')}: {cost(v.paid)}</span>
+            <span className="border-s border-blue-200 ps-2 text-slate-600">{t('inventory.cost')}: {rowCost(v.paid)}</span>
           </button>
-          <span className={`text-sm font-bold tabular-nums ${v.market.status === 'unavailable' ? 'text-amber-800' : ''}`}>{metric(v.market)}</span>
+          <span className={`text-sm font-bold tabular-nums ${v.market.status === 'unavailable' ? 'text-amber-800' : ''}`}>{rowMetric(v.market)}</span>
           <button type="button" aria-label={`${t('inventory.edit')} ${v.copy.id}`} disabled={!onSave} onClick={() => { setInitialInspection(null); setInitialCopy(v.copy.id); setSelected(g.key); }} className="flex size-8 items-center justify-center rounded-lg text-blue-700"><LuPencil aria-hidden /></button>
         </div>)}
       </div></DisclosureContent>
