@@ -368,7 +368,8 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
         minor:safeInteger(BigInt(nextSubtotal.value.minor)+BigInt(shipping.value.minor)+extras),
       },source:'user' as const}
     : nextSubtotal;
-  const {shippingIncludedInCardPrices:_originalShippingIncluded,...originalFields}=before;
+  const originalFields={...before};
+  delete originalFields.shippingIncludedInCardPrices;
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
     ...(confirmedShipping ? originalFields : before),
     transactionOn:nextDate,notes:input.notes,
