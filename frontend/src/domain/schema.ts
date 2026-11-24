@@ -109,23 +109,36 @@ export const importedPurchaseSchema = z.strictObject({
   // Optional editing metadata; historical imported records remain valid without it.
   source: sourceSchema.optional(),
   subtotal: amountEvidenceSchema, payable: amountEvidenceSchema,
-  totalBasis: z.literal('recorded-card-prices'),
+  totalBasis: z.enum(['recorded-card-prices', 'owner-confirmed-total']),
   nativeCardTotals: z.array(z.strictObject({ currency: currencySchema, minor: minorSchema })).max(4).optional(),
   unpricedCopyCount: minorSchema.optional(),
   shippingIncludedInCardPrices: z.literal(true).optional(),
   shipping: amountEvidenceSchema, taxes: amountEvidenceSchema, fees: amountEvidenceSchema,
   settlement: z.literal('unknown'),
 }).superRefine((record, ctx) => {
-  if (record.subtotal.status !== record.payable.status ||
-      (record.subtotal.status === 'known' && record.payable.status === 'known' &&
-       (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
-    ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+  if (record.totalBasis === 'recorded-card-prices') {
+    if (record.subtotal.status !== record.payable.status ||
+        (record.subtotal.status === 'known' && record.payable.status === 'known' &&
+         (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
+      ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+    }
+  } else {
+    const known = record.subtotal.status === 'known' && record.shipping.status === 'known' && record.payable.status === 'known';
+    if (!known || record.currency.status !== 'known' || record.shippingIncludedInCardPrices) {
+      ctx.addIssue({ code: 'custom', message: 'Owner-confirmed total requires separately recorded card and shipping amounts' });
+    } else if (record.subtotal.status === 'known' && record.shipping.status === 'known' && record.payable.status === 'known') {
+      const expenses = [record.taxes, record.fees].reduce((total, value) => total + (value.status === 'known' ? BigInt(value.value.minor) : 0n), 0n);
+      const expected = BigInt(record.subtotal.value.minor) + BigInt(record.shipping.value.minor) + expenses;
+      if (record.payable.value.minor !== Number(expected)) {
+        ctx.addIssue({ code: 'custom', message: 'Owner-confirmed total must reconcile card prices and shipping' });
+      }
+    }
   }
   const native = record.nativeCardTotals ?? [];
   if (new Set(native.map(value => value.currency)).size !== native.length ||
       (native.length > 1 && (record.currency.status !== 'unknown' || record.subtotal.status !== 'unknown' || record.payable.status !== 'unknown')) ||
-      (native.length === 1 && record.unpricedCopyCount === 0 && record.payable.status === 'known' &&
-        (record.payable.value.currency !== native[0]!.currency || record.payable.value.minor !== native[0]!.minor))) {
+      (native.length === 1 && record.unpricedCopyCount === 0 && record.subtotal.status === 'known' &&
+        (record.subtotal.value.currency !== native[0]!.currency || record.subtotal.value.minor !== native[0]!.minor))) {
     ctx.addIssue({ code: 'custom', message: 'Imported native-currency totals conflict with the aggregate' });
   }
   const amounts = [record.subtotal, record.payable, record.shipping, record.taxes, record.fees];
