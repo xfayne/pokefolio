@@ -103,8 +103,10 @@ service cloud.firestore {
         && next.ownerUid == previous.ownerUid && next.id == previous.id
         && next.createdAt == previous.createdAt
         && next.revision == previous.revision + 1
-        && audit.before == previous && audit.after == next
-        && audit.ownerUid == uid && audit.actorUid == uid && audit.recordId == id;
+        && audit.ownerUid == uid && audit.actorUid == uid
+        && ((audit.recordId == id && audit.before == previous && audit.after == next)
+          || ('additional' in audit && id in audit.additional
+            && audit.additional[id].before == previous && audit.additional[id].after == next));
     }
     match /users/{uid} {
       allow get: if isOwner(uid);
@@ -133,7 +135,12 @@ service cloud.firestore {
           && request.resource.data.record.after.ownerUid == uid
           && request.resource.data.record.before.id == request.resource.data.record.recordId
           && request.resource.data.record.after.id == request.resource.data.record.recordId
-          && request.resource.data.record.after.revision == request.resource.data.record.before.revision + 1;
+          && request.resource.data.record.after.revision == request.resource.data.record.before.revision + 1
+          // A shared audit document is an immutable bundle. Every referenced
+          // after-image is still checked against the actual Firestore write.
+          && (!('additional' in request.resource.data.record)
+            || (request.resource.data.record.additional is map
+              && request.resource.data.record.additional.keys().size() <= 80));
       }
       match /receipts/{id} {
         allow read: if isOwner(uid);

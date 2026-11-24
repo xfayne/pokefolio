@@ -47,8 +47,25 @@ export function prepareCommit(ownerUid: string, raw: unknown, maxWrites: number)
     const before = update.before.record, after = update.after.record;
     if (update.before.collection !== update.after.collection || recordKey(update.before) !== recordKey(update.after) || before.ownerUid !== ownerUid || after.revision !== before.revision + 1 || before.createdAt !== after.createdAt || Date.parse(after.updatedAt) < Date.parse(before.updatedAt) || update.after.collection === 'revisions') throw new Error('Invalid immutable identity or expected revision');
     if (('kind' in before ? before.kind : null) !== ('kind' in after ? after.kind : null)) throw new Error('Record kind is immutable');
-    const audit = commit.creates.find((entry) => entry.collection === 'revisions' && entry.record.recordId === before.id && JSON.stringify(entry.record.before) === JSON.stringify(before) && JSON.stringify(entry.record.after) === JSON.stringify(after));
+    const audit = commit.creates.find((entry) => {
+      if (entry.collection !== 'revisions') return false;
+      const snapshot = entry.record.recordId === before.id
+        ? {before:entry.record.before,after:entry.record.after}
+        : entry.record.additional?.[before.id];
+      return snapshot && JSON.stringify(snapshot.before) === JSON.stringify(before) &&
+        JSON.stringify(snapshot.after) === JSON.stringify(after);
+    });
     if (!audit) throw new Error('Every update requires a matching immutable audit record');
+  }
+  for (const entry of commit.creates) {
+    if (entry.collection !== 'revisions' || !entry.record.additional) continue;
+    const additional = entry.record.additional;
+    for (const [id, snapshot] of Object.entries(additional)) {
+      const matching = commit.updates.filter(change => change.before.record.id === id &&
+        JSON.stringify(change.before.record) === JSON.stringify(snapshot.before) &&
+        JSON.stringify(change.after.record) === JSON.stringify(snapshot.after));
+      if (matching.length !== 1) throw Error('Grouped audit contains an unpaired or ambiguous record change');
+    }
   }
   return commit;
 }

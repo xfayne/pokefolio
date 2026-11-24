@@ -137,6 +137,12 @@ checkboxes select copy editions and exact printing prices. Listing URL/order
 references are optional. No legacy import, destructive migration or production
 cutover is included. See [persistence and staging acceptance](docs/PURCHASE_PERSISTENCE.md)
 for the verified live journey, paths, safeguards and atomic edit limits.
+Imported purchase corrections use the same form and require known card prices.
+Explicitly entered shipping is split across physical copies, with card totals and
+owner-confirmed purchase totals reconciled without inventing historical FX or
+payment evidence. Grouped immutable audit snapshots allow 20+ corrections in one
+owner-scoped atomic Firestore transaction; original acquisition dates and import
+provenance are retained.
 
 Display currency is selected in Settings and saved per owner. Read-only market
 prices, copy costs, purchase details, recent purchases and History share the same

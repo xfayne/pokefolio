@@ -109,23 +109,36 @@ export const importedPurchaseSchema = z.strictObject({
   // Optional editing metadata; historical imported records remain valid without it.
   source: sourceSchema.optional(),
   subtotal: amountEvidenceSchema, payable: amountEvidenceSchema,
-  totalBasis: z.literal('recorded-card-prices'),
+  totalBasis: z.enum(['recorded-card-prices', 'owner-confirmed-total']),
   nativeCardTotals: z.array(z.strictObject({ currency: currencySchema, minor: minorSchema })).max(4).optional(),
   unpricedCopyCount: minorSchema.optional(),
   shippingIncludedInCardPrices: z.literal(true).optional(),
   shipping: amountEvidenceSchema, taxes: amountEvidenceSchema, fees: amountEvidenceSchema,
   settlement: z.literal('unknown'),
 }).superRefine((record, ctx) => {
-  if (record.subtotal.status !== record.payable.status ||
-      (record.subtotal.status === 'known' && record.payable.status === 'known' &&
-       (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
-    ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+  if (record.totalBasis === 'recorded-card-prices') {
+    if (record.subtotal.status !== record.payable.status ||
+        (record.subtotal.status === 'known' && record.payable.status === 'known' &&
+         (record.subtotal.value.currency !== record.payable.value.currency || record.subtotal.value.minor !== record.payable.value.minor))) {
+      ctx.addIssue({ code: 'custom', message: 'Imported total must equal recorded card subtotal' });
+    }
+  } else {
+    const known = record.subtotal.status === 'known' && record.shipping.status === 'known' && record.payable.status === 'known';
+    if (!known || record.currency.status !== 'known' || record.shippingIncludedInCardPrices) {
+      ctx.addIssue({ code: 'custom', message: 'Owner-confirmed total requires separately recorded card and shipping amounts' });
+    } else if (record.subtotal.status === 'known' && record.shipping.status === 'known' && record.payable.status === 'known') {
+      const expenses = [record.taxes, record.fees].reduce((total, value) => total + (value.status === 'known' ? BigInt(value.value.minor) : 0n), 0n);
+      const expected = BigInt(record.subtotal.value.minor) + BigInt(record.shipping.value.minor) + expenses;
+      if (record.payable.value.minor !== Number(expected)) {
+        ctx.addIssue({ code: 'custom', message: 'Owner-confirmed total must reconcile card prices and shipping' });
+      }
+    }
   }
   const native = record.nativeCardTotals ?? [];
   if (new Set(native.map(value => value.currency)).size !== native.length ||
       (native.length > 1 && (record.currency.status !== 'unknown' || record.subtotal.status !== 'unknown' || record.payable.status !== 'unknown')) ||
-      (native.length === 1 && record.unpricedCopyCount === 0 && record.payable.status === 'known' &&
-        (record.payable.value.currency !== native[0]!.currency || record.payable.value.minor !== native[0]!.minor))) {
+      (native.length === 1 && record.unpricedCopyCount === 0 && record.subtotal.status === 'known' &&
+        (record.subtotal.value.currency !== native[0]!.currency || record.subtotal.value.minor !== native[0]!.minor))) {
     ctx.addIssue({ code: 'custom', message: 'Imported native-currency totals conflict with the aggregate' });
   }
   const amounts = [record.subtotal, record.payable, record.shipping, record.taxes, record.fees];
@@ -225,8 +238,20 @@ export const revisionSchema = z.strictObject({
   ...metadata, recordId: idSchema, actorUid: idSchema,
   operation: z.enum(['edit', 'reverse', 'basis-correction', 'delivery']),
   reason: reasonSchema, before: revisionSnapshotSchema, after: revisionSnapshotSchema,
+  // Additional before/after snapshots share one immutable audit document.
+  // Firestore rules validate every referenced member against the actual updated document.
+  additional: z.record(idSchema, z.strictObject({
+    before: revisionSnapshotSchema, after: revisionSnapshotSchema,
+  })).optional(),
 }).refine((revision) => revision.ownerUid === revision.actorUid &&
   revision.before.ownerUid === revision.ownerUid && revision.after.ownerUid === revision.ownerUid &&
   revision.recordId === revision.before.id && revision.recordId === revision.after.id &&
-  revision.after.revision === revision.before.revision + 1, 'Invalid revision identity or version');
+  revision.after.revision === revision.before.revision + 1 &&
+  (!revision.additional || (Object.keys(revision.additional).length > 0 &&
+    Object.keys(revision.additional).length <= 80 &&
+    !Object.hasOwn(revision.additional, revision.recordId) &&
+    Object.entries(revision.additional).every(([id, change]) =>
+      change.before.ownerUid === revision.ownerUid && change.after.ownerUid === revision.ownerUid &&
+      change.before.id === id && change.after.id === id &&
+      change.after.revision === change.before.revision + 1))), 'Invalid revision identity or version');
 export type Revision = z.infer<typeof revisionSchema>;
