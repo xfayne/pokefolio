@@ -117,3 +117,7 @@ failed or pending Wishlist read does not imply removal. Re-adding a wish
 restores its existing reservation. New reservations through Arrange use the
 current Wishlist. No automatic cleanup, migration, or change to previously
 published sharing snapshots is performed.
+
+## Card details and direct page navigation (2026-11-24)
+
+The owner superseded the earlier no-tap requirement: private Binder cards now open the shared Card Details on a stationary tap; dragging, swiping, empty-pocket selection and unavailable-pocket removal remain unchanged. The public snapshot stays catalog-only. Long-press either arrow (500 ms, then release) to choose a one-based page number; this only changes the current page and never reorders pockets.

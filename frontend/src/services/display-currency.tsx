@@ -127,7 +127,7 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
 export function useDisplayCurrency() {
   return useContext(Context);
 }
-export function useDisplayMoney() {
+export function useDisplayMoney(fractionDigits?: number) {
   const display = useDisplayCurrency();
   const { i18n } = useTranslation();
   return (money: Money) => {
@@ -139,6 +139,7 @@ export function useDisplayMoney() {
       : new Intl.NumberFormat(i18n.language, {
           style: 'currency',
           currency: display?.currency ?? money.currency,
+          ...(fractionDigits === undefined ? {} : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }),
         }).format(minor / 100);
   };
 }

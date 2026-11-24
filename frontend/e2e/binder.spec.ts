@@ -12,7 +12,7 @@ async function fixedLayout(page:import('@playwright/test').Page) {
   expect(dimensions.bookBottom).toBeLessThanOrEqual(dimensions.navTop+1);
   expect(dimensions.scrollers).toBe(0);
 }
-test('binder stays fixed, clicking never opens details, drag preserves gaps and page moves preserve partial pages',async({page})=>{
+test('binder stays fixed, tapping opens details without moving the card, drag preserves gaps and page moves preserve partial pages',async({page})=>{
   const privateWrites:string[]=[];
   page.on('request',r=>{if(/firestore|workers\.dev/.test(r.url())&&r.method()!=='GET')privateWrites.push(r.url());});
   await page.goto('./#/collection/binder?inventory=sample');
@@ -27,10 +27,13 @@ test('binder stays fixed, clicking never opens details, drag preserves gaps and 
   await fixedLayout(page);
   await test.info().attach('binder-initial',{body:await page.screenshot({path:test.info().outputPath('binder-initial.png')}),contentType:'image/png'});
   await slots.first().tap();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('heading',{name:'Card details'})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const first=await slots.first().getAttribute('aria-label');
   const source=(await slots.nth(0).boundingBox())!,target=(await slots.nth(8).boundingBox())!;
-  // Touch hold activates drag; tap and ordinary horizontal movement remain navigation only.
+  // Direct touch drag continues to move a card instead of opening details.
   const touch=await page.context().newCDPSession(page);
   const start={x:source.x+source.width/2,y:source.y+source.height/2};
   const end={x:target.x+target.width/2,y:target.y+target.height/2};
@@ -339,4 +342,25 @@ test('landscape reader displays single covers, paired interior and retains page 
   await expect(leaves).toHaveText(['2/4','3/4']);
   await dialog.getByRole('button',{name:'Previous page'}).click();
   await expect(leaves).toHaveText(['1/4']);
+});
+
+
+test('long pressing a page arrow opens the jump modal without advancing a page',async({page})=>{
+  await page.goto('./#/collection/binder?inventory=sample');
+  await expect(page.locator('[data-binder-page="0"]')).toBeVisible();
+  const arrow=page.getByRole('button',{name:'Next page'});
+  const rect=(await arrow.boundingBox())!;
+  const touch=await page.context().newCDPSession(page);
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:rect.x+rect.width/2,y:rect.y+rect.height/2}]});
+  await page.waitForTimeout(600);
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const dialog=page.getByRole('dialog',{name:'Go to page'});
+  await expect(dialog).toBeVisible();
+  await expect(page.locator('[data-binder-page="0"]')).toBeVisible();
+  await dialog.getByRole('spinbutton',{name:'To page'}).fill('3');
+  await dialog.getByRole('button',{name:'Go',exact:true}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('[data-binder-page="2"]')).toBeVisible();
+  await page.getByRole('button',{name:'Previous page'}).click();
+  await expect(page.locator('[data-binder-page="1"]')).toBeVisible();
 });

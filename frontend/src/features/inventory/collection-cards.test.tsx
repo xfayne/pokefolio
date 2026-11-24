@@ -17,10 +17,12 @@ it('expands duplicates with separate grades/prices and edits the exact chosen co
   render(<CollectionCards data={original} onSave={onSave} />);
   expect(screen.queryByText('Priced holdings')).not.toBeInTheDocument();
   expect(screen.getByText('3 cards · 5 copies')).toBeInTheDocument();
+  expect(screen.queryByText('2 copies',{exact:true})).not.toBeInTheDocument();
+  expect(screen.queryByText('1 copy',{exact:true})).not.toBeInTheDocument();
   expect(screen.getByLabelText('Sort cards')).toHaveValue('value');
   await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
-  expect(screen.getByText('Cost: $180.00')).toBeInTheDocument();
-  expect(screen.getByText('Cost: $150.00')).toBeInTheDocument();
+  expect(screen.getByText('Cost: $180')).toBeInTheDocument();
+  expect(screen.getByText('Cost: $150')).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Edit copy charizard-b' }));
   const dialog = screen.getByRole('dialog');
   await openCopies(dialog);
