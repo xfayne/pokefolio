@@ -256,3 +256,5 @@ Binder displays removed Wishlist reservations as unavailable and allows unavaila
 copy or wish placements to be dragged out without shifting any other pockets.
 
 Compact card rows omit per-card copy-count badges and round displayed monetary values to whole currency units outside purchase/sale screens. Counts, sorting, stored money and detailed transaction amounts are unchanged.
+
+Positive compact card amounts that would round to zero display as one currency unit; actual zero and unavailable prices retain their distinct meaning.

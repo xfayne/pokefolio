@@ -127,6 +127,15 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
 export function useDisplayCurrency() {
   return useContext(Context);
 }
+/** Compact rows never display a positive monetary value as zero. */
+export function formatCompactCardMoney(minor: number, currency: Currency, locale: string) {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(minor > 0 ? Math.max(1, minor / 100) : minor / 100);
+}
 export function useDisplayMoney(fractionDigits?: number) {
   const display = useDisplayCurrency();
   const { i18n } = useTranslation();
@@ -134,9 +143,12 @@ export function useDisplayMoney(fractionDigits?: number) {
     const minor = display
       ? display.convert(money.minor, money.currency)
       : money.minor;
-    return minor === null
-      ? '—'
-      : new Intl.NumberFormat(i18n.language, {
+    if (minor === null) return '—';
+    if (fractionDigits === 0) {
+      // A positive source value can also round to zero minor units during FX conversion.
+      return formatCompactCardMoney(money.minor > 0 ? Math.max(1, minor) : minor, display?.currency ?? money.currency, i18n.language);
+    }
+    return new Intl.NumberFormat(i18n.language, {
           style: 'currency',
           currency: display?.currency ?? money.currency,
           ...(fractionDigits === undefined ? {} : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }),

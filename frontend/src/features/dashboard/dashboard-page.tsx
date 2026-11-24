@@ -8,6 +8,7 @@ import {Button} from '@/components/ui/button';
 import {catalogCards} from '@/features/catalog/catalog';
 import type {CardCopy} from '@/domain/schema';
 import type {Metric} from '@/domain/money';
+import { formatCompactCardMoney } from '@/services/display-currency';
 import type {PerformancePoint,Total} from '@/domain/performance';
 import reference from '@/assets/dashboard-reference.jpeg';
 import {useDashboard} from './use-dashboard';
@@ -26,7 +27,7 @@ export function DashboardPage(){
  const data=useDashboard(month),navigate=useNavigate(),id=useId();
  const result=data.result,connected=data.preview||!!data.owner;
  const format=(minor:number|null|undefined,signed=false,cents=false)=>minor==null?'—':new Intl.NumberFormat(he?'he-IL':'en-US',{style:'currency',currency:data.currency,minimumFractionDigits:cents?2:0,maximumFractionDigits:2,...(signed?{signDisplay:'always' as const}:{})}).format(minor/100);
- const cardMetric=(v:Metric|undefined)=>v&&v.status!=='unavailable'?new Intl.NumberFormat(he?'he-IL':'en-US',{style:'currency',currency:data.currency,minimumFractionDigits:0,maximumFractionDigits:0}).format(v.minor/100):'—';
+ const cardMetric=(v:Metric|undefined)=>v&&v.status!=='unavailable'?formatCompactCardMoney(v.minor,data.currency,he?'he-IL':'en-US'):'—';
  const visible=(v:Total|undefined)=>connected&&!data.loading&&!data.error&&v?v.minor:null;
  const visibleComplete=(v:Total|undefined)=>v&&v.covered===v.total?visible(v):null;
  const allSearch=data.preview?'?transactions=sample':'';
