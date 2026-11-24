@@ -415,3 +415,50 @@ test('Wishlist writes remain owner-only, revision-checked and isolated from bind
   });
  } finally { await env.cleanup(); }
 });
+
+
+test('21-record imported correction uses a single auditable atomic revision, with every member verified', async()=>{
+ const env=await environment('firestore.private.rules');
+ try {
+  await env.clearFirestore();
+  const db=env.authenticatedContext(alice).firestore();
+  const other=env.authenticatedContext(bob).firestore();
+  const stamp='2026-11-23T00:00:00Z', updated='2026-11-24T00:00:00Z';
+  const metadata={schemaVersion:1,ownerUid:alice,revision:1,createdAt:stamp,updatedAt:stamp};
+  const purchase={...metadata,id:'grouped-purchase',kind:'purchase',shipping:0};
+  const copies=Array.from({length:20},(_,i)=>({...metadata,id:`grouped-copy-${i}`,shippingCost:0,acquiredOn:'2026-10-20'}));
+  const path=record=>`users/${alice}/${record.kind==='purchase'?'transactions':'copies'}/${record.id}`;
+  const envelope=(record,auditId=null)=>({record,auditId,committedAt:serverTimestamp()});
+  const originals=[purchase,...copies];
+  const initial=writeBatch(db);
+  for(const record of originals)initial.set(doc(db,path(record)),envelope(record));
+  await assertSucceeds(initial.commit());
+  const changes=originals.map(record=>({
+   before:record,after:{...record,revision:2,updatedAt:updated,
+    ...(record.kind==='purchase'?{shipping:1240}:{shippingCost:62})},
+  }));
+  const batchId='grouped-audit';
+  const audit={...metadata,id:batchId,actorUid:alice,recordId:purchase.id,
+   before:changes[0].before,after:changes[0].after,
+   additional:Object.fromEntries(changes.slice(1).map(({before,after})=>[before.id,{before,after}])),
+   operation:'edit',reason:'Synthetic grouped shipping correction'};
+  const correction=writeBatch(db);
+  correction.set(doc(db,`users/${alice}/revisions/${batchId}`),envelope(audit));
+  for(const change of changes)correction.set(doc(db,path(change.before)),envelope(change.after,batchId));
+  correction.set(doc(db,`users/${alice}/receipts/grouped-receipt`),{fingerprint:'synthetic-grouped',committedAt:serverTimestamp()});
+  await assertSucceeds(correction.commit());
+  for(const {after} of changes)assert.deepEqual((await getDoc(doc(db,path(after)))).data().record,after);
+  // A malicious bundle cannot authorize an update whose before/after differs.
+  const wrong=writeBatch(db),original=copies[0];
+  const counterfeit={...original,revision:3,updatedAt:'2026-11-25T00:00:00Z',shippingCost:999};
+  const audit2={...metadata,id:'grouped-audit-wrong',actorUid:alice,recordId:purchase.id,
+   before:changes[0].after,after:{...changes[0].after,revision:3,updatedAt:'2026-11-25T00:00:00Z'},
+   additional:{[original.id]:{before:changes[1].after,after:{...counterfeit,shippingCost:998}}},
+   operation:'edit',reason:'Synthetic rejected altered snapshot'};
+  wrong.set(doc(db,`users/${alice}/revisions/grouped-audit-wrong`),envelope(audit2));
+  wrong.set(doc(db,path(original)),envelope(counterfeit,'grouped-audit-wrong'));
+  await assertFails(wrong.commit());
+  assert.equal((await getDoc(doc(db,path(original)))).data().record.shippingCost,62);
+  await assertFails(getDoc(doc(other,path(original))));
+ }finally{await env.cleanup();}
+});
