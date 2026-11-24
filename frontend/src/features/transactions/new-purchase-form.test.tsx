@@ -50,3 +50,13 @@ it('prevents invalid and concurrent submissions, and retains the draft on failur
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Your draft is still here'));
   expect(screen.getByLabelText('Card cost 1')).toHaveValue('52.00');
 });
+
+it('keeps the compact edition control editable beside the condition', async () => {
+  render(<Harness save={vi.fn()} />, {wrapper:TransactionFormTestFrame});
+  const edition = screen.getAllByRole('checkbox', {name:'First Edition'})[0]!;
+  expect(edition).not.toBeChecked();
+  await userEvent.click(edition);
+  expect(edition).toBeChecked();
+  expect(screen.getByLabelText('Condition 1')).toBeInTheDocument();
+  expect(screen.getByLabelText('Card cost 1')).toHaveValue('52.00');
+});

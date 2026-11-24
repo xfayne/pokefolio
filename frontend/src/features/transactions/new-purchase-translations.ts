@@ -1,7 +1,7 @@
 export const newPurchaseTranslations = {
   en: {
     editTitle: 'Edit purchase', saveChanges: 'Save changes', listingUrl: 'Listing URL (optional)', itemReference: 'Order / reference (optional)', urlError: 'Enter an http or https URL.', title: 'New transaction', purchase: 'Purchase', sale: 'Sale', date: 'Date', source: 'Source', seller: 'Seller', currency: 'Currency',
-    cards: 'Cards', perCopy: 'Per-card costs', lot: 'Total / lot', lotTotal: 'Card / lot total', add: 'Add card', remove: 'Remove copy', condition: 'Condition', cost: 'Card cost', shipping: 'Shipping cost',
+    cards: 'Cards', perCopy: 'Per-card costs', lot: 'Total / lot', lotTotal: 'Card / lot total', add: 'Add card', remove: 'Remove copy', condition: 'Condition', firstEdition: 'First Edition', cost: 'Card cost', shipping: 'Shipping cost',
     split: 'Split equally: {{amount}} per copy', splitRounded: 'Split equally: {{min}}–{{max}} per copy (rounded)', splitEmpty: 'Add cards to calculate shipping', total: 'Total',
     shipment: 'Shipment details', optional: '(optional)', carrier: 'Carrier', tracking: 'Tracking number', save: 'Save purchase', saving: 'Saving…',
     unknown: 'Unknown', unallocated: 'Unallocated', lotNote: 'Individual card costs remain unallocated.',
@@ -13,7 +13,7 @@ export const newPurchaseTranslations = {
   },
   he: {
     editTitle: 'עריכת רכישה', saveChanges: 'שמירת שינויים', listingUrl: 'קישור למודעה (לא חובה)', itemReference: 'מספר הזמנה / אסמכתה (לא חובה)', urlError: 'יש להזין קישור http או https.', title: 'עסקה חדשה', purchase: 'רכישה', sale: 'מכירה', date: 'תאריך', source: 'מקור', seller: 'מוכר', currency: 'מטבע',
-    cards: 'קלפים', perCopy: 'מחיר לכל קלף', lot: 'סכום כולל / לוט', lotTotal: 'סכום הקלפים / הלוט', add: 'הוספת קלף', remove: 'הסרת עותק', condition: 'מצב', cost: 'מחיר הקלף', shipping: 'עלות משלוח',
+    cards: 'קלפים', perCopy: 'מחיר לכל קלף', lot: 'סכום כולל / לוט', lotTotal: 'סכום הקלפים / הלוט', add: 'הוספת קלף', remove: 'הסרת עותק', condition: 'מצב', firstEdition: 'מהדורה ראשונה', cost: 'מחיר הקלף', shipping: 'עלות משלוח',
     split: 'חלוקה שווה: {{amount}} לעותק', splitRounded: 'חלוקה שווה: {{min}}–{{max}} לעותק (לאחר עיגול)', splitEmpty: 'יש להוסיף קלפים לחישוב המשלוח', total: 'סך הכול',
     shipment: 'פרטי משלוח', optional: '(לא חובה)', carrier: 'חברת שילוח', tracking: 'מספר מעקב', save: 'שמירת רכישה', saving: 'שומרת…',
     unknown: 'לא ידוע', unallocated: 'טרם חולק', lotNote: 'המחירים האישיים של הקלפים נשארים ללא חלוקה.',
