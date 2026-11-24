@@ -17,22 +17,13 @@ import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import type { BinderPocket } from '@/domain/inventory';
 import type { CardCopy } from '@/domain/schema';
-import { BinderBook, type VisualPocket } from './binder-book';
+import { BinderBook } from './binder-book';
+import { visualPockets } from './visual-pockets';
 import { emptyBinder, pageCount, placePocket, pocketKey, reservePocket, removePocket, unplacePocket, movePage, insertEmptyPage, capacity, type Binder } from './model';
 import { readBinder, saveBinder, readSharing, publishBinder, disableSharing } from './storage';
 import './binder.css';
 
 const cards=new Map(catalogCards.map(c=>[c.id,c]));
-function visualPockets(binder:Binder,copies:readonly CardCopy[]): VisualPocket[] {
-  const byId=new Map(copies.filter(c=>c.ownerUid===binder.ownerUid).map(c=>[c.id,c]));
-  return binder.pockets.map(p=>{
-    if(p.kind==='empty') return {key:pocketKey(p),kind:'empty',card:null};
-    if(p.kind==='wish') return {key:pocketKey(p),kind:'wish',card:cards.get(p.cardId) ?? null};
-    const copy=byId.get(p.copyId);
-    return {key:pocketKey(p),card:copy?.catalog.kind==='identified'?cards.get(copy.catalog.cardId) ?? null:null,
-      kind:!copy || copy.disposition!=='held'?'unavailable':copy.possession==='received'?'owned':copy.possession==='pending'?'pending':'unknown'};
-  });
-}
 const sampleCopies=(): CardCopy[]=>{
   const original=createSampleCopies();
   const reference=original[0]!.catalog; if(reference.kind!=='identified') throw Error('Invalid sample reference');
@@ -57,7 +48,7 @@ export function BinderPage() {
   const query=useQuery({queryKey:key,enabled:!!owner,queryFn:()=>preview?Promise.resolve(sampleBinder()):readBinder(getFirebaseServices()!.db,owner!),retry:1,staleTime:60_000});
   const binder=query.data ?? emptyBinder(owner ?? 'disconnected');
   // Keying the view by owner prevents drafts or navigation leaking across accounts.
-  const wishlistIds=preview?sampleWishlistIds:wish.owner===owner && !wish.loading && !wish.error?wish.wishlist.cardIds:[];
+  const wishlistIds=preview?sampleWishlistIds:wish.owner===owner && !wish.loading && !wish.error?wish.wishlist.cardIds:null;
   return <BinderView wishlistIds={wishlistIds} key={`${preview?'sample':'account'}:${owner ?? ''}`} binder={binder} copies={copies} preview={preview} disconnected={!owner}
     loading={!preview && account.loading || !!owner && query.isPending} error={!preview && account.error || query.error}
     reload={()=>{void query.refetch();}} onDemo={()=>{const next=new URLSearchParams(params);next.set('inventory','sample');setParams(next);}}
@@ -69,7 +60,7 @@ export function BinderPage() {
     }} />;
 }
 function BinderView({binder,copies,wishlistIds,preview,disconnected,loading,error,reload,onDemo,onSave}: {
-  binder:Binder;copies:readonly CardCopy[];wishlistIds:readonly string[];preview:boolean;disconnected:boolean;loading:boolean;error:unknown;
+  binder:Binder;copies:readonly CardCopy[];wishlistIds:readonly string[] | null;preview:boolean;disconnected:boolean;loading:boolean;error:unknown;
   reload:()=>void;onDemo:()=>void;onSave:(next:Binder)=>Promise<void>;
 }) {
   const {t}=useTranslation();
@@ -93,15 +84,15 @@ function BinderView({binder,copies,wishlistIds,preview,disconnected,loading,erro
     catch {setPendingLayout(null);setFailed(true);return false;}
     finally {setBusy(false);}
   };
-  const visuals=visualPockets(visibleBinder,copies);
+  const visuals=visualPockets(visibleBinder,copies,wishlistIds);
   if(loading || error) return <PortfolioStatus loading={loading} error={error} />;
   return <section className="binder-page" aria-label={t('binderUi.label')} aria-busy={busy}>
     {disconnected && <p className="binder-message">{t('binderUi.disconnected')} <button className="underline" onClick={onDemo}>{t('binderUi.demo')}</button></p>}
     {failed && <p className="binder-error" role="alert">{t('binderUi.failed')} <button onClick={reload} className="underline">{t('binderUi.reload')}</button></p>}
     <p className="sr-only" role="status">{busy?t('binderUi.saving'):notice}</p>
     <BinderBook pockets={visuals} page={current} onPage={changePage} onOptions={!disconnected?()=>setPanel('options'):undefined} onEmpty={!disconnected?(index=>{setFailed(false);setEmptyTarget(index);}):undefined} includeWish={binder.includeWish} busy={busy} onMove={!disconnected?((from,to)=>{try{void save({...binder,pockets:placePocket(binder.pockets,binder.pockets[from]!,to)});}catch{setFailed(true);}}):undefined} onRemove={!disconnected?((from)=>{try{void save({...binder,pockets:unplacePocket(binder.pockets,from)});}catch{setFailed(true);}}):undefined} />
-    {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} wishCardIds={wishlistIds} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPickWish={async cardId=>{
-      if(!eligibleBinderWishes(binder,wishlistIds).includes(cardId) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
+    {emptyTarget!==null && <BinderPicker binder={binder} copies={copies} wishCardIds={wishlistIds ?? []} busy={busy} failed={failed} onClose={()=>setEmptyTarget(null)} onPickWish={async cardId=>{
+      if(!eligibleBinderWishes(binder,wishlistIds ?? []).includes(cardId) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
       try {if(await save({...binder,pockets:placePocket(binder.pockets,{kind:'wish',cardId},emptyTarget)}))setEmptyTarget(null);}catch{setFailed(true);}
     }} onPick={async copy=>{
       if(!eligibleBinderCopies(binder,copies).some(c=>c.id===copy.id) || (binder.pockets[emptyTarget] && binder.pockets[emptyTarget]!.kind!=='empty')){setFailed(true);return;}
@@ -121,7 +112,7 @@ function BinderView({binder,copies,wishlistIds,preview,disconnected,loading,erro
       <Button variant="outline" onClick={()=>setPanel('reader')}><LuBookOpen aria-hidden />{t('binderUi.reader')}</Button>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wishDraft?.revision===binder.revision ? wishDraft.value : binder.includeWish} disabled={busy} onChange={e=>{const value=e.target.checked;setWishDraft({revision:binder.revision,value});void save({...binder,includeWish:value}).then(ok=>{if(!ok)setWishDraft(null);});}} />{t('binderUi.includeWish')}</label>
     </div></UtilitySheet>}
-    {panel==='arrange' && <ArrangeSheet binder={binder} copies={copies} current={current} busy={busy} failed={failed} onClose={()=>setPanel(null)} onSave={async(pockets,index)=>{if(await save({...binder,pockets})){changePage(Math.floor(index/9));setPanel(null);}}} />}
+    {panel==='arrange' && <ArrangeSheet binder={binder} copies={copies} wishlistIds={wishlistIds ?? []} current={current} busy={busy} failed={failed} onClose={()=>setPanel(null)} onSave={async(pockets,index)=>{if(await save({...binder,pockets})){changePage(Math.floor(index/9));setPanel(null);}}} />}
     {panel==='page' && <MovePageSheet count={pageCount(binder.pockets)} current={current} busy={busy} failed={failed} onClose={()=>setPanel(null)} onApply={async(from,to)=>{try{if(await save({...binder,pockets:movePage(binder.pockets,from,to)})){changePage(to);setPanel(null);}}catch{setFailed(true);}}} />}
     {panel==='reader' && <UtilitySheet title={t('binderUi.reader')} contentMode="contained" onClose={()=>setPanel(null)}><div className="binder-reader"><BinderBook pockets={visuals} page={current} onPage={changePage} reader includeWish={binder.includeWish} /></div></UtilitySheet>}
     {panel==='share' && <ShareSheet binder={binder} copies={copies} preview={preview} onClose={()=>setPanel(null)} />}
@@ -130,12 +121,12 @@ function BinderView({binder,copies,wishlistIds,preview,disconnected,loading,erro
 function PageSelect({label,count,value,onChange}: {label:string;count:number;value:number;onChange:(n:number)=>void}) {
   return <label className="flex flex-1 flex-col gap-1 text-sm font-bold">{label}<Select aria-label={label} value={value+1} onChange={e=>onChange(Number(e.target.value)-1)}>{Array.from({length:count},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</Select></label>;
 }
-function ArrangeSheet({binder,copies,current,busy,failed,onClose,onSave}: {binder:Binder;copies:readonly CardCopy[];current:number;busy:boolean;failed:boolean;onClose:()=>void;onSave:(p:BinderPocket[],index:number)=>Promise<void>}) {
+function ArrangeSheet({binder,copies,wishlistIds,current,busy,failed,onClose,onSave}: {binder:Binder;copies:readonly CardCopy[];wishlistIds:readonly string[];current:number;busy:boolean;failed:boolean;onClose:()=>void;onSave:(p:BinderPocket[],index:number)=>Promise<void>}) {
   const {t}=useTranslation();
   const [mode,setMode]=useState('copy'),[query,setQuery]=useState(''),[selected,setSelected]=useState<BinderPocket|null>(null);
   const [page,setPage]=useState(current),[slot,setSlot]=useState(0),[localError,setLocalError]=useState(false);
   const source=selected?binder.pockets.findIndex(p=>pocketKey(p)===pocketKey(selected)):-1;
-  const apply=()=>{try {setLocalError(false);const index=page*9+slot;void onSave(mode==='empty'?reservePocket(binder.pockets,index):placePocket(binder.pockets,selected!,index),index);}catch{setLocalError(true);}};
+  const apply=()=>{try {setLocalError(false);const index=page*9+slot;if(selected?.kind==='wish'&&!wishlistIds.includes(selected.cardId))throw Error('Wishlist card unavailable');void onSave(mode==='empty'?reservePocket(binder.pockets,index):placePocket(binder.pockets,selected!,index),index);}catch{setLocalError(true);}};
   if(mode==='pick-copy') return <BinderPicker moving binder={binder} copies={copies} busy={busy} failed={failed} onClose={()=>setMode('copy')} onPick={async copy=>{setSelected({kind:'copy',copyId:copy.id});setMode('copy');}} />;
   return <UtilitySheet title={t('binderUi.arrange')} onClose={busy?()=>{}:onClose}><div className="binder-arrange">
     <Select aria-label={t('binderUi.arrange')} value={mode} disabled={busy} onChange={e=>{setMode(e.target.value);setSelected(null);setQuery('');}}>
@@ -143,7 +134,7 @@ function ArrangeSheet({binder,copies,current,busy,failed,onClose,onSave}: {binde
     </Select>
     {mode==='copy' && !selected && <Button variant="outline" onClick={()=>setMode('pick-copy')}>{t('binderUi.chooseCopy')}</Button>}
     
-    {mode==='wish' && !selected && <div className="h-96 min-h-0"><CatalogSearch query={query} onQuery={setQuery} onSelect={card=>setSelected({kind:'wish',cardId:card.id})} /></div>}
+    {mode==='wish' && !selected && <div className="h-96 min-h-0"><CatalogSearch query={query} onQuery={setQuery} allowedCardIds={new Set(eligibleBinderWishes(binder,wishlistIds,true))} onSelect={card=>setSelected({kind:'wish',cardId:card.id})} /></div>}
     {selected && <p className="text-sm font-bold">{selected.kind==='copy'?copies.find(c=>c.id===selected.copyId)?.catalog.kind==='identified' ? cards.get((copies.find(c=>c.id===selected.copyId)!.catalog as {cardId:string}).cardId)?.name : selected.copyId:selected.kind==='wish'?cards.get(selected.cardId)?.name:''}</p>}
     <div className="flex gap-3"><PageSelect label={t('binderUi.targetPage')} count={pageCount(binder.pockets)} value={page} onChange={setPage} /><PageSelect label={t('binderUi.targetSlot')} count={9} value={slot} onChange={setSlot} /></div>
     {(failed||localError) && <p role="alert" className="binder-error">{t('binderUi.failed')}</p>}
