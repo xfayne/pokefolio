@@ -238,8 +238,20 @@ export const revisionSchema = z.strictObject({
   ...metadata, recordId: idSchema, actorUid: idSchema,
   operation: z.enum(['edit', 'reverse', 'basis-correction', 'delivery']),
   reason: reasonSchema, before: revisionSnapshotSchema, after: revisionSnapshotSchema,
+  // Additional before/after snapshots share one immutable audit document.
+  // Firestore rules validate every referenced member against the actual updated document.
+  additional: z.record(idSchema, z.strictObject({
+    before: revisionSnapshotSchema, after: revisionSnapshotSchema,
+  })).optional(),
 }).refine((revision) => revision.ownerUid === revision.actorUid &&
   revision.before.ownerUid === revision.ownerUid && revision.after.ownerUid === revision.ownerUid &&
   revision.recordId === revision.before.id && revision.recordId === revision.after.id &&
-  revision.after.revision === revision.before.revision + 1, 'Invalid revision identity or version');
+  revision.after.revision === revision.before.revision + 1 &&
+  (!revision.additional || (Object.keys(revision.additional).length > 0 &&
+    Object.keys(revision.additional).length <= 80 &&
+    !Object.hasOwn(revision.additional, revision.recordId) &&
+    Object.entries(revision.additional).every(([id, change]) =>
+      change.before.ownerUid === revision.ownerUid && change.after.ownerUid === revision.ownerUid &&
+      change.before.id === id && change.after.id === id &&
+      change.after.revision === change.before.revision + 1))), 'Invalid revision identity or version');
 export type Revision = z.infer<typeof revisionSchema>;
