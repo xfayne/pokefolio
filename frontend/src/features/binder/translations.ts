@@ -1,7 +1,7 @@
 export const binderTranslations = {
   en: {
     chooseCopy:'Choose a copy', pages:'Pages {{from}}–{{to}} of {{count}}', swipe:'Swipe to change page', label:'Binder', options:'Binder options', share:'Share binder', page:'Page {{page}} of {{count}}', previous:'Previous page', next:'Next page',
-    hint:'Hold to drag · Swipe to change page', empty:'Empty pocket', wish:'Wishlist', pending:'On the way', unavailable:'Copy unavailable',
+    hint:'Hold to drag · Swipe to change page', empty:'Empty pocket', wish:'Wishlist', pending:'On the way', unavailable:'Copy unavailable', wishUnavailable:'Wishlist unavailable',
     arrange:'Arrange cards', add:'Add / move card', reserve:'Reserve empty pocket', remove:'Remove from binder', releaseRemove:'Release to remove', clear:'Remove empty pocket',
     movePage:'Move page', addPage:'Add empty page', sourcePage:'From page', targetPage:'To page', targetSlot:'Pocket', apply:'Apply',
     copies:'Your copies', wishes:'Wishlist pocket', search:'Search cards', wishHint:'Reserve a place for a card you want. This does not change your Wishlist.',
@@ -15,7 +15,7 @@ export const binderTranslations = {
   },
   he: {
     chooseCopy:'בחירת עותק', pages:'עמודים {{from}}–{{to}} מתוך {{count}}', swipe:'החלקה למעבר עמוד', label:'בינדר', options:'אפשרויות בינדר', share:'שיתוף בינדר', page:'עמוד {{page}} מתוך {{count}}', previous:'עמוד קודם', next:'עמוד הבא',
-    hint:'לחיצה ארוכה לגרירה · החלקה למעבר עמוד', empty:'כיס ריק', wish:'רשימת משאלות', pending:'בדרך', unavailable:'העותק אינו זמין',
+    hint:'לחיצה ארוכה לגרירה · החלקה למעבר עמוד', empty:'כיס ריק', wish:'רשימת משאלות', pending:'בדרך', unavailable:'העותק אינו זמין', wishUnavailable:'הוסר מרשימת המשאלות',
     arrange:'סידור קלפים', add:'הוספה / העברת קלף', reserve:'שמירת כיס ריק', remove:'הסרה מהבינדר', releaseRemove:'שחרור להסרה', clear:'ביטול כיס ריק',
     movePage:'העברת עמוד', addPage:'הוספת עמוד ריק', sourcePage:'מעמוד', targetPage:'לעמוד', targetSlot:'כיס', apply:'אישור',
     copies:'העותקים שלך', wishes:'כיס למשאלה', search:'חיפוש קלפים', wishHint:'שמירת מקום לקלף שתרצה. הפעולה אינה משנה את רשימת המשאלות.',

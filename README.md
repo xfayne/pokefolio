@@ -251,3 +251,6 @@ and audited copy edits. Explicit sample views do not expose account copies.
 ## Compact purchase card rows
 
 New and Edit Purchase share the owner-approved compact rows: equal-width and equal-height 16px inputs, full-card artwork, and an accessible `1st` checkbox alongside Condition. No transaction behavior changes.
+
+Binder displays removed Wishlist reservations as unavailable and allows unavailable
+copy or wish placements to be dragged out without shifting any other pockets.

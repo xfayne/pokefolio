@@ -6,7 +6,7 @@ import { PokemonArt } from '@/components/ui/pokemon-art';
 import { pageCount } from './model';
 import { readerSpread } from './reader-spread';
 
-export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown'};
+export type VisualPocket = {key:string;card:InventoryCatalogCard|null;kind:'owned'|'pending'|'wish'|'empty'|'unavailable'|'unknown';wishUnavailable?:boolean};
 type Gesture = {id:number;x:number;y:number;from:number|null;active:boolean;timer:ReturnType<typeof setTimeout>|null;over:number|null;turn:ReturnType<typeof setTimeout>|null;turnPage:number|null};
 export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true,reader=false,busy=false,onEmpty,onOptions}: {
   pockets:readonly VisualPocket[];page:number;onPage:(page:number)=>void;onMove?:((from:number,to:number)=>void)|undefined;
@@ -56,7 +56,7 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
   const move=(event:ReactPointerEvent<HTMLDivElement>)=>{
     const g=gesture.current;if(!g || g.id!==event.pointerId) return;
     const distance=Math.hypot(event.clientX-g.x,event.clientY-g.y);
-    if(!g.active && distance>6 && onMove && g.from!==null && pockets[g.from] && !['empty','unavailable'].includes(pockets[g.from]!.kind)) g.active=true;
+    if(!g.active && distance>6 && onMove && g.from!==null && pockets[g.from] && pockets[g.from]!.kind!=='empty') g.active=true;
     if(!g.active || g.from===null) return;
     const hit=document.elementFromPoint(event.clientX,event.clientY);
     const target=hit?.closest<HTMLElement>('[data-pocket-index]');
@@ -105,15 +105,16 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
             {Array.from({length:9},(_,slot)=>{
               const index=number*9+slot,p=pockets[index];
               const kind=p?.kind ?? 'empty';
+              const unavailableLabel=t(p?.wishUnavailable?'binderUi.wishUnavailable':'binderUi.unavailable');
               return <div key={p?.key ?? `implicit-${index}`} data-pocket-index={number<total ? index : undefined} data-kind={kind} data-dragging={drag?.from===index || undefined} data-drop={drag?.over===index || undefined} className="binder-slot" onClick={event=>{if(kind==='empty'&&!busy&&!suppressClick.current){
                 // Pointer-driven selection must not leave a persistent focus ring
                 // when the sheet restores focus on close. Keyboard activation
                 // continues to preserve its visible focus for accessibility.
                 if(event.detail>0)event.currentTarget.blur();
                 onEmpty?.(index);
-              }}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? t('binderUi.empty')}`}>
+              }}} role={kind==='empty' && onEmpty?'button':'group'} tabIndex={kind==='empty' && onEmpty?0:undefined} onKeyDown={e=>{if(onEmpty&&kind==='empty'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();onEmpty(index);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? (kind==='unavailable'?unavailableLabel:t('binderUi.empty'))}`}>
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
-                {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{t(kind==='empty'?'binderUi.empty':'binderUi.unavailable')}</span>}
+                {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{kind==='empty'?t('binderUi.empty'):unavailableLabel}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
                 {(kind==='pending'||kind==='unknown') && <span className="binder-pending">{kind==='pending'?<LuPackage aria-hidden />:<LuCircleHelp aria-hidden />}<span>{t(kind==='pending'?'binderUi.pending':'inventory.unknown')}</span></span>}
               </div>;
@@ -128,6 +129,6 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
       {onOptions && <button type="button" className="binder-options-overlay" aria-label={t('binderUi.options')} disabled={busy} onClick={onOptions}>•••</button>}
       </div>
     </div>
-    {drag && dragPocket?.card && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}><img src={dragPocket.card.imageUrl} alt="" draggable={false} />{drag.outside && onRemove && <span className="binder-drag-remove">{t('binderUi.releaseRemove')}</span>}</div>}
+    {drag && dragPocket && <div className="binder-drag-ghost" style={{left:drag.x,top:drag.y}}>{dragPocket.card?<img src={dragPocket.card.imageUrl} alt="" draggable={false} />:<span className="binder-pocket-label">{t(dragPocket.wishUnavailable?'binderUi.wishUnavailable':'binderUi.unavailable')}</span>}{drag.outside && onRemove && <span className="binder-drag-remove">{t('binderUi.releaseRemove')}</span>}</div>}
   </div>;
 }

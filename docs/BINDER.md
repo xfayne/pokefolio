@@ -107,3 +107,13 @@ optimistic Firestore write, inventory deletion, or Wishlist mutation is performe
 The options trigger has no painted background, and book spacing is tightened so
 the raised navigation Poké Ball slightly overlaps the bottom Binder frame while
 the card grid remains usable. No document scroll or horizontal overflow is added.
+
+## Unavailable placements — 2026-11-24
+
+Missing or disposed copy pointers and reservations for cards no longer on the
+loaded Wishlist remain in their exact slots, visibly unavailable. Both can be
+dragged or removed by releasing outside the book, leaving a reserved gap. A
+failed or pending Wishlist read does not imply removal. Re-adding a wish
+restores its existing reservation. New reservations through Arrange use the
+current Wishlist. No automatic cleanup, migration, or change to previously
+published sharing snapshots is performed.
