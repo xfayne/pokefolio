@@ -136,3 +136,49 @@ it('adds an exact copy to a pending purchase, reallocates shipping and retains i
  expect(state.store.get(`users/owner/shipments/${draft.id}-shipment/memberships/added-copy-membership`)).toMatchObject({record:{copyId:'added-copy',transactionId:draft.id}});
  expect(state.store.get(`users/owner/transactions/${draft.id}`)).toMatchObject({record:{payable:{minor:15200}}});
 });
+
+it('commits 21 distinct copy corrections atomically through one grouped immutable audit, with idempotent replay', async()=>{
+  const template=createPurchaseDraft(true);
+  const many={...template,id:'bulk-edit-purchase',cards:Array.from({length:21},(_,i)=>({
+    ...template.cards[0]!,id:'bulk-copy-'+i,amount:'1.00',
+  }))};
+  const originals=purchaseCommit('owner',many,'2026-11-21T08:00:00Z');
+  await commitPortfolio(db,'owner',originals);
+  const copies=originals.creates.filter(e=>e.collection==='copies');
+  const at='2026-11-24T08:00:00Z';
+  const updates=copies.map(entry=>{
+    if(entry.collection!=='copies')throw Error('Unexpected copy');
+    return {before:entry,after:{collection:'copies' as const,record:{
+      ...entry.record,notes:'Bulk verified',revision:entry.record.revision+1,updatedAt:at,
+    }}};
+  });
+  const first=updates[0]!;
+  const revisions=await import('@/domain/schema');
+  const grouped=revisions.revisionSchema.parse({
+    schemaVersion:1,id:'audit-bulk-21',ownerUid:'owner',actorUid:'owner',
+    revision:1,createdAt:at,updatedAt:at,recordId:first.before.record.id,
+    operation:'edit',reason:'Synthetic grouped correction',
+    before:first.before.record,after:first.after.record,
+    additional:Object.fromEntries(updates.slice(1).map(e=>[e.before.record.id,{
+      before:e.before.record,after:e.after.record,
+    }])),
+  });
+  const command={
+    ownerUid:'owner',idempotencyKey:'grouped-bulk-21',
+    creates:[{collection:'revisions' as const,record:grouped}],updates,
+  };
+  await commitPortfolio(db,'owner',command);
+  const saved=new Map(state.store);
+  await commitPortfolio(db,'owner',command);
+  expect(state.store).toEqual(saved);
+  for(const entry of copies) {
+    const value=state.store.get('users/owner/copies/'+entry.record.id);
+    expect(value).toMatchObject({auditId:'audit-bulk-21',record:{
+      id:entry.record.id,notes:'Bulk verified',revision:2,
+      acquiredOn:entry.record.acquiredOn,
+    }});
+  }
+  await expect(commitPortfolio(db,'owner',{...command,idempotencyKey:'other-grouped-attempt'}))
+    .rejects.toThrow('Record changed');
+  expect(state.store).toEqual(saved);
+});
