@@ -149,7 +149,7 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
                 // continues to preserve its visible focus for accessibility.
                 if(event.detail>0)event.currentTarget.blur();
                 onEmpty?.(index);
-              }}} role={interactive?'button':'group'} tabIndex={interactive?0:undefined} onKeyDown={e=>{if(!busy&&interactive&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(kind==='empty')onEmpty?.(index);else if(p?.card&&canSelect)onSelect?.(p.card);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? (kind==='unavailable'?unavailableLabel:t('binderUi.empty'))}`}>
+              }}} role={interactive?'button':'group'} tabIndex={interactive?0:undefined} onKeyDown={e=>{if(!busy&&interactive&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(kind==='empty')onEmpty?.(index);else if(p?.card&&canSelect)onSelect?.(p.card);}}} aria-label={`${t('binderUi.selected',{slot:slot+1,page:number+1})}: ${p?.card?.name ?? (kind==='unavailable'?unavailableLabel:t('binderUi.empty'))}${kind==='wish'&&includeWish?` · ${t('binderUi.wish')}`:kind==='pending'?` · ${t('binderUi.pending')}`:kind==='unknown'?` · ${t('inventory.unknown')}`:''}`}>
                 {p?.card && <PokemonArt size="zoom" src={p.card.imageUrl} alt={p.card.name} className="binder-art" />}
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{kind==='empty'?t('binderUi.empty'):unavailableLabel}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
