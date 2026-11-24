@@ -180,10 +180,15 @@ service cloud.firestore {
         allow list, delete: if false;
       }
       match /preferences/{id} {
-        allow read: if isOwner(uid) && id == 'display';
+        allow read: if isOwner(uid) && id in ['display','purchases'];
         allow create, update: if isOwner(uid) && id == 'display'
           && request.resource.data.keys().hasOnly(['currency','updatedAt'])
           && request.resource.data.currency in ['USD','ILS','EUR','GBP']
+          && request.resource.data.updatedAt == request.time;
+        allow create, update: if isOwner(uid) && id == 'purchases'
+          && request.resource.data.keys().hasOnly(['autoFulfillWishlist','updatedAt'])
+          && request.resource.data.keys().hasAll(['autoFulfillWishlist','updatedAt'])
+          && request.resource.data.autoFulfillWishlist is bool
           && request.resource.data.updatedAt == request.time;
       }
       match /sharing/{documentId} {

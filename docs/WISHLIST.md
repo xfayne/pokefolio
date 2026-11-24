@@ -68,3 +68,7 @@ staging Add/Remove/reorder/reload and measured hundreds-of-cards performance
 tests. Existing unit, emulator authorization, and mobile E2E regression checks
 passed, but the waived checks are not claimed as verified. New regressions should
 be tracked as separate focused issues. #115 still owns the Deals action handoff.
+
+## Optional purchase fulfillment (2026-11-24)
+
+Settings → Auto-fulfill Wishlist is owner-scoped and defaults off when no preference exists. Only creation of a new ordinary purchase reads the preference; edits, receipt, sale, imports, and receipt replays never fulfill wishes. With the option on, purchased catalog IDs are removed from the current Wishlist without reordering the remaining entries, and matching wish pockets are replaced in place with the first new physical copy (pending receipt). Existing copy pockets, explicit gaps, page order and includeWish are preserved. Purchase, Wishlist, Binder and receipt writes commit in a single Firestore transaction; no partial commit or automatic replay on old purchases. Existing shared links remain explicit snapshots. No legacy or production writes, migrations, or changes to currency preferences.

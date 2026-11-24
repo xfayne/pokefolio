@@ -17,6 +17,11 @@ import { validateSaleCommit } from '@/domain/sale';
 import { validateImportedPurchaseEdit } from '@/domain/imported-purchase-edit';
 import { planPurchase } from '@/domain/purchase';
 import { idSchema } from '@/domain/schema';
+import { decodeWishlist } from '@/features/wishlist/storage';
+import { decodeBinder } from '@/features/binder/storage';
+import { binderSchema } from '@/features/binder/model';
+import { wishlistSchema } from '@/features/wishlist/model';
+import { isNewPurchase } from './purchase-wishlist-fulfillment';
 
 export function portfolioPath(owner: string, entry: PortfolioRecord) {
   idSchema.parse(owner);
@@ -159,6 +164,40 @@ export async function commitPortfolio(
     const snapshots = await Promise.all(
       entries.map((e) => tx.get(doc(db, portfolioPath(owner, e)))),
     );
+    // Read the current account preference and current layouts in this same transaction.
+    // The receipt check above prevents replay from fulfilling newly added wishes.
+    let organizationWrites: (() => void) | undefined;
+    if (isNewPurchase(command)) {
+      const pref = await tx.get(doc(db, `users/${owner}/preferences/purchases`));
+      if (pref.exists() && typeof pref.data().autoFulfillWishlist !== 'boolean')
+        throw Error('Invalid purchase preference');
+      if (pref.data()?.autoFulfillWishlist === true) {
+        const wishlistRef = doc(db, `users/${owner}/wishlists/main`);
+        const binderRef = doc(db, `users/${owner}/binders/main`);
+        const [wishSnapshot, binderSnapshot] = await Promise.all([tx.get(wishlistRef), tx.get(binderRef)]);
+        const wishlist = wishSnapshot.exists() ? decodeWishlist(wishSnapshot.data(), owner) : null;
+        const binder = binderSnapshot.exists() ? decodeBinder(binderSnapshot.data(), owner) : null;
+        const firstCopies = new Map<string, string>();
+        for (const entry of command.creates) {
+          if (entry.collection !== 'copies' || entry.record.catalog.kind !== 'identified') continue;
+          const {cardId} = entry.record.catalog;
+          if (!firstCopies.has(cardId)) firstCopies.set(cardId, entry.record.id);
+        }
+        const remaining = wishlist?.cardIds.filter(cardId => !firstCopies.has(cardId));
+        const pockets = binder?.pockets.map(pocket => {
+          const copyId = pocket.kind === 'wish' ? firstCopies.get(pocket.cardId) : undefined;
+          return copyId ? {kind:'copy' as const, copyId} : pocket;
+        });
+        const nextWishlist = wishlist && remaining && remaining.length !== wishlist.cardIds.length
+          ? wishlistSchema.parse({...wishlist, cardIds: remaining, revision: wishlist.revision + 1}) : null;
+        const nextBinder = binder && pockets && !same(binder.pockets,pockets)
+          ? binderSchema.parse({...binder, pockets, revision:binder.revision + 1}) : null;
+        organizationWrites = () => {
+          if (nextWishlist) tx.set(wishlistRef, {schemaVersion:1, ownerUid:owner, revision:nextWishlist.revision, ids:nextWishlist.cardIds.join(';'), updatedAt:serverTimestamp()});
+          if (nextBinder) tx.set(binderRef, {...nextBinder, pockets:JSON.stringify(nextBinder.pockets), updatedAt:serverTimestamp()});
+        };
+      }
+    }
     // All reads precede writes, including optimistic concurrency checks.
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i]!,
@@ -180,6 +219,7 @@ export async function commitPortfolio(
         committedAt: serverTimestamp(),
       });
     }
+    organizationWrites?.();
     tx.set(receipt, { fingerprint, committedAt: serverTimestamp() });
   });
 }

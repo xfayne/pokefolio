@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './use-auth';
 import { getFirebaseServices } from '@/services/firebase';
 import { commitPortfolio, readPortfolio } from '@/services/portfolio';
+import { isNewPurchase } from '@/services/purchase-wishlist-fulfillment';
 import { catalogCards } from '@/features/catalog/catalog';
 import type { PortfolioCommit } from '@/domain/persistence';
 import type { HistoryData } from '@/domain/transaction-history';
@@ -35,7 +36,13 @@ export function usePortfolio() {
     if (!owner || getFirebaseServices()?.auth.currentUser?.uid !== owner)
       throw Error('Sign in before saving');
     await commitPortfolio(getFirebaseServices()!.db, owner, command);
-    await client.invalidateQueries({ queryKey: ['portfolio', owner] });
+    await Promise.all([
+      client.invalidateQueries({ queryKey: ['portfolio', owner] }),
+      ...(isNewPurchase(command) ? [
+        client.invalidateQueries({ queryKey: ['wishlist', owner] }),
+        client.invalidateQueries({ queryKey: ['binder', 'account', owner] }),
+      ] : []),
+    ]);
   }
   return {
     owner,

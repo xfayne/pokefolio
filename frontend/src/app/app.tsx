@@ -11,6 +11,7 @@ import { TransactionHeaderContext } from '@/features/transactions/transaction-he
 import { NewSalePage } from '@/features/transactions/new-sale-page';
 import { SalePage, SaleActions } from '@/features/transactions/sale-page';
 import {DisplayCurrencyProvider,CurrencySettings} from '@/services/display-currency';
+import { PurchaseWishlistSettings } from '@/services/purchase-wishlist-settings';
 import { PurchaseActions } from '@/features/transactions/purchase-actions';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
@@ -163,7 +164,7 @@ function Shell() {
     {/* Keep Search mounted behind Card Details. Returning reveals the same
         scrollport and decoded images, without replaying the catalog entrance. */}
     {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} wishlist={wish.wishlist.cardIds} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><StagingYearLoader /><StagingEnglishLanguageRepair /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+      {utility === 'search' ? <CatalogSearch owned={catalogOwned} wishlist={wish.wishlist.cardIds} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><PurchaseWishlistSettings /><StagingYearLoader /><StagingEnglishLanguageRepair /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
     {utility === 'search' && catalogCard && <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} portfolio={['inventory','transactions','wishlist','binder','dashboard'].some(key => contextParams.get(key) === 'sample') ? undefined : account} onViewPurchase={id => { setCatalogCard(null); void navigate(`/transactions/purchases/${id}`, {replace:true}); }} />}
   </div>;
