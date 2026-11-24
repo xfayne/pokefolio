@@ -10,6 +10,16 @@ _Last updated: 2026-11-19 — independent Production Firebase/API provisioned; s
 - Source snapshot pinned to legacy main commit `16b89318e77ebea3180461824a09711ae3f93782`.
 - Original legacy README and project context are retained verbatim in `docs/LEGACY_README.md` and `docs/LEGACY_PROJECT_CONTEXT.md`. They describe the **legacy** implementation, not Pokefolio deployment status.
 
+## Purchase correction consistency (2026-11-24, #149)
+
+The shared purchase edit form preserves existing copy acquisition dates. Explicit
+owner-entered shipping on an imported purchase is evenly allocated and reconciled
+with card subtotal in a user-confirmed total; untouched historical shipping
+remains unknown. Large edits use one grouped immutable audit record referenced
+by each validated Firestore update, allowing atomic 20-copy corrections without
+bypassing the owner rules, retry receipt or stale-revision checks. No migration
+or automatic writes to the legacy or production environment are performed.
+
 ## Current state
 
 The safe legacy baseline was imported in PRs #22–#23. The owner approved a fresh React foundation in #3. The new application is in `frontend/`; retained Vanilla JS source is reference only, with no compatibility bridge and no old screens loaded in the new app.
