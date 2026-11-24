@@ -59,8 +59,8 @@ export function prepareCommit(ownerUid: string, raw: unknown, maxWrites: number)
   }
   for (const entry of commit.creates) {
     if (entry.collection !== 'revisions' || !entry.record.additional) continue;
-    const audit = entry.record;
-    for (const [id, snapshot] of Object.entries(audit.additional)) {
+    const additional = entry.record.additional;
+    for (const [id, snapshot] of Object.entries(additional)) {
       const matching = commit.updates.filter(change => change.before.record.id === id &&
         JSON.stringify(change.before.record) === JSON.stringify(snapshot.before) &&
         JSON.stringify(change.after.record) === JSON.stringify(snapshot.after));
