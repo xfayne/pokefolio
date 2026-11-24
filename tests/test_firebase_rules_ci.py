@@ -13,8 +13,9 @@ SPEC.loader.exec_module(mod)
 class RulesPromotionTests(unittest.TestCase):
     def setUp(self):
         self.target = (ROOT / "firebase" / "firestore.private.rules").read_text()
-        self.before_wishlist = mod.without_wishlist(self.target)
-        self.before_binder = mod.without_binder_and_wishlist(self.target)
+        self.initial = (ROOT / "tests" / "fixtures" / "initial_staging_firestore.rules").read_text()
+        self.before_wishlist = mod.without_wishlist(self.initial)
+        self.before_binder = mod.without_binder_and_wishlist(self.initial)
 
     def test_no_change_is_idempotent(self):
         self.assertEqual(mod.promotion_plan(self.target, self.target, self.target), "already-current")
@@ -26,10 +27,10 @@ class RulesPromotionTests(unittest.TestCase):
             mod.promotion_plan(self.target + "\n// unexpected drift", self.target, next_rules)
 
     def test_first_ever_activation_is_limited_to_pinned_revision(self):
-        self.assertEqual(mod.git_blob_hash(self.target), mod.INITIAL_GIT_BLOB)
-        self.assertEqual(mod.promotion_plan(self.before_wishlist, self.target, self.target), "initial-wishlist-activation")
-        self.assertEqual(mod.promotion_plan(self.before_binder, self.target, self.target), "initial-binder-and-wishlist-activation")
-        modified = self.target + "\n// Future rule change"
+        self.assertEqual(mod.git_blob_hash(self.initial), mod.INITIAL_GIT_BLOB)
+        self.assertEqual(mod.promotion_plan(self.before_wishlist, self.initial, self.initial), "initial-wishlist-activation")
+        self.assertEqual(mod.promotion_plan(self.before_binder, self.initial, self.initial), "initial-binder-and-wishlist-activation")
+        modified = self.initial + "\n// Future rule change"
         for active in [self.before_wishlist, self.before_binder]:
             with self.assertRaisesRegex(RuntimeError, "Refusing"):
                 mod.promotion_plan(active, modified, modified)

@@ -462,3 +462,26 @@ test('21-record imported correction uses a single auditable atomic revision, wit
   await assertFails(getDoc(doc(other,path(original))));
  }finally{await env.cleanup();}
 });
+
+test('purchase automation preference is owner-only and strictly boolean',async()=>{
+ const env=await environment('firestore.private.rules');
+ try {
+  await seed(env);
+  const db=env.authenticatedContext(alice).firestore();
+  const foreign=env.authenticatedContext(bob).firestore();
+  const anon=env.unauthenticatedContext().firestore();
+  const path=`users/${alice}/preferences/purchases`;
+  const payload=autoFulfillWishlist=>({autoFulfillWishlist,updatedAt:serverTimestamp()});
+  await assertSucceeds(getDoc(doc(db,path)));
+  await assertSucceeds(setDoc(doc(db,path),payload(true)));
+  await assertSucceeds(setDoc(doc(db,path),payload(false)));
+  for(const client of [foreign,anon]){
+   await assertFails(getDoc(doc(client,path)));
+   await assertFails(setDoc(doc(client,path),payload(true)));
+  }
+  await assertFails(setDoc(doc(db,path),payload('true')));
+  await assertFails(setDoc(doc(db,path),{...payload(true),extra:true}));
+  await assertFails(setDoc(doc(db,path),{updatedAt:serverTimestamp()}));
+  await assertFails(deleteDoc(doc(db,path)));
+ } finally { await env.cleanup(); }
+});

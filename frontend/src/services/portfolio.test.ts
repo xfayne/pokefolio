@@ -182,3 +182,57 @@ it('commits 21 distinct copy corrections atomically through one grouped immutabl
     .rejects.toThrow('Record changed');
   expect(state.store).toEqual(saved);
 });
+
+const purchasePrefs = 'users/owner/preferences/purchases';
+const wishlistPath = 'users/owner/wishlists/main';
+const binderPath = 'users/owner/binders/main';
+function seedOrganization(id: string, enabled?: boolean) {
+  if (enabled !== undefined) state.store.set(purchasePrefs,{autoFulfillWishlist:enabled});
+  state.store.set(wishlistPath,{schemaVersion:1,ownerUid:'owner',revision:7,ids:'neo2-13;'+id+';basep-9'});
+  const pockets=[{kind:'empty',token:'first-gap'},{kind:'wish',cardId:id},{kind:'copy',copyId:'existing-copy'},{kind:'wish',cardId:'neo2-13'}];
+  state.store.set(binderPath,{schemaVersion:1,ownerUid:'owner',revision:9,pockets:JSON.stringify(pockets),includeWish:false});
+  return pockets;
+}
+it('fulfills wishes and replaces only reserved pockets atomically using the first new pending copy',async()=>{
+  const draft=createPurchaseDraft(true);
+  const first=draft.cards[0]!;
+  if(first.catalog.kind!=='identified') throw Error('Expected catalog fixture');
+  const id=first.catalog.cardId;
+  const pockets=seedOrganization(id,true);
+  const command=purchaseCommit('owner',{...draft,cards:[first,{...first,id:'duplicate-copy'}]},'2026-11-24T00:00:00Z');
+  await commitPortfolio(db,'owner',command);
+  expect(state.store.get(wishlistPath)).toMatchObject({revision:8,ids:'neo2-13;basep-9'});
+  expect(state.store.get(binderPath)).toMatchObject({revision:10,includeWish:false,pockets:JSON.stringify([pockets[0],{kind:'copy',copyId:first.id},pockets[2],pockets[3]])});
+  expect(state.store.get('users/owner/copies/'+first.id)).toMatchObject({record:{possession:'pending'}});
+  const saved=new Map(state.store);
+  await commitPortfolio(db,'owner',command);
+  expect(state.store).toEqual(saved);
+});
+it.each([false,undefined])('does not change layouts when preference is %s',async enabled=>{
+  const draft=createPurchaseDraft(true);
+  const first=draft.cards[0]!;
+  if(first.catalog.kind!=='identified') throw Error('Expected catalog fixture');
+  seedOrganization(first.catalog.cardId,enabled);
+  const wishlist=state.store.get(wishlistPath),binder=state.store.get(binderPath);
+  await commitPortfolio(db,'owner',purchaseCommit('owner',draft,'2026-11-24T00:00:00Z'));
+  expect(state.store.get(wishlistPath)).toEqual(wishlist);
+  expect(state.store.get(binderPath)).toEqual(binder);
+});
+it('never fulfills wishes on edits or retries, and rejects invalid layout atomically',async()=>{
+  const draft=createPurchaseDraft(true);
+  const first=draft.cards[0]!;
+  if(first.catalog.kind!=='identified') throw Error('Expected catalog fixture');
+  seedOrganization(first.catalog.cardId,false);
+  const command=purchaseCommit('owner',draft,'2026-11-24T00:00:00Z');
+  await commitPortfolio(db,'owner',command);
+  state.store.set(purchasePrefs,{autoFulfillWishlist:true});
+  const wishlist=state.store.get(wishlistPath),binder=state.store.get(binderPath);
+  await commitPortfolio(db,'owner',command);
+  await commitPortfolio(db,'owner',purchaseCommit('owner',{...draft,shipping:'1.00'},'2026-11-24T01:00:00Z',command.creates));
+  expect(state.store.get(wishlistPath)).toEqual(wishlist);
+  expect(state.store.get(binderPath)).toEqual(binder);
+  state.store.set(binderPath,{invalid:true});
+  const before=new Map(state.store);
+  await expect(commitPortfolio(db,'owner',purchaseCommit('owner',createPurchaseDraft(true),'2026-11-24T02:00:00Z'))).rejects.toThrow();
+  expect(state.store).toEqual(before);
+});
