@@ -15,7 +15,7 @@ to turn a page before dropping. Taps never navigate to card details.
 An accessible Options → Add / move card sheet provides explicit page/pocket
 placement and removal without drag. Options also moves whole pages, preserving
 partial-page trailing holes, toggles Wishlist artwork, and opens a read-only
-viewer. That viewer shows two pages in landscape at >=600px. Section navigation
+viewer. That viewer shows paired interior pages in landscape at >=600px; first and last pages are always single, centered leaves. An unpaired interior page remains single rather than generating a phantom leaf. The same navigation applies to the shared reader. Section navigation
 and the last page remain on this device; collection contents are never saved in
 browser storage.
 
