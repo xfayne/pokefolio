@@ -63,7 +63,7 @@ function unchangedExcept(before: object, after: object, allowed: readonly string
     .filter(([key]) => !allowed.includes(key) && key !== 'revision' && key !== 'updatedAt')));
   return stable(before) === stable(after);
 }
-const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping', 'source'];
+const stableTransaction = ['transactionOn', 'notes', 'subtotal', 'payable', 'currency', 'nativeCardTotals', 'unpricedCopyCount', 'shipping', 'shippingIncludedInCardPrices', 'totalBasis', 'source'];
 const stableCopy = ['cardCost', 'shippingCost', 'condition', 'removedFromImport'];
 
 export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean {
@@ -115,12 +115,17 @@ export function validateImportedPurchaseEdit(command: PortfolioCommit): boolean 
             (JSON.stringify(before.record.cardCost) !== JSON.stringify(after.record.cardCost) ||
              JSON.stringify(before.record.condition) !== JSON.stringify(after.record.condition))))
         throw Error('Imported copy dates, references and identity must be preserved');
-      if (before.record.shippingCost.status === 'exact' && before.record.shippingCost.value.minor === 0) {
-        if (after.record.shippingCost.status !== 'exact' || after.record.shippingCost.value.minor !== 0 ||
-            (after.record.cardCost.status === 'exact' && after.record.shippingCost.value.currency !== after.record.cardCost.value.currency))
-          throw Error('Imported extra shipping cannot change');
-      } else if (JSON.stringify(before.record.shippingCost) !== JSON.stringify(after.record.shippingCost))
-        throw Error('Imported shipping evidence must be preserved');
+      if (JSON.stringify(before.record.shippingCost) !== JSON.stringify(after.record.shippingCost)) {
+        const shipping = after.record.shippingCost;
+        if (shipping.status !== 'exact' ||
+            (after.record.cardCost.status === 'exact' && shipping.value.currency !== after.record.cardCost.value.currency))
+          throw Error('Imported shipping correction must match the card currency');
+        if (shipping.value.minor > 0 &&
+            (tx.after.record.shipping.status !== 'known' ||
+             tx.after.record.shipping.value.currency !== shipping.value.currency ||
+             tx.after.record.totalBasis !== 'owner-confirmed-total'))
+          throw Error('Allocated shipping must have a confirmed transaction total');
+      }
       const priceChanged = JSON.stringify(before.record.cardCost) !== JSON.stringify(after.record.cardCost);
       const lineId = before.record.acquisition.lineId;
       const line = command.updates.find(u => u.before.collection === 'lines' && u.before.record.id === lineId);
@@ -363,7 +368,7 @@ export function importedPurchaseEditCommit(owner: string, input: ImportedPurchas
         minor:safeInteger(BigInt(nextSubtotal.value.minor)+BigInt(shipping.value.minor)+extras),
       },source:'user' as const}
     : nextSubtotal;
-  const {shippingIncludedInCardPrices:originalShippingIncluded,...originalFields}=before;
+  const {shippingIncludedInCardPrices:_originalShippingIncluded,...originalFields}=before;
   const transaction: ImportedPurchase = importedPurchaseSchema.parse({
     ...(confirmedShipping ? originalFields : before),
     transactionOn:nextDate,notes:input.notes,
