@@ -24,15 +24,17 @@ const report=() => ({
     {index:3,token:'base1-2',kind:'wish',copyId:null},
   ],
 });
-it('preserves Wishlist order and every Binder pocket including pending and reserved gaps',()=>{
+it('preserves physical Binder positions, Wishlist order, pending copies and reserved gaps',()=>{
   const input=report(),before=structuredClone(input);
   const payload=materializeLegacyImport(input,'owner','2026-11-23T00:00:00Z');
   const {binder,wishlist}=materializeLegacyOrganization(input,payload.copies,'owner');
   expect(wishlist.cardIds).toEqual(['base1-2']);
   expect(binder.pockets).toEqual([
-    {kind:'copy',copyId:'rec'},
-    {kind:'empty',token:'__binder_empty__:original'},
     {kind:'copy',copyId:'pend'},
+    {kind:'empty',token:'__binder_empty__:original'},
+    {kind:'copy',copyId:'rec'},
+    {kind:'empty',token:'import-row-gap:3'},
+    {kind:'empty',token:'import-row-gap:4'},
     {kind:'wish',cardId:'base1-2'},
   ]);
   expect(payload.copies.find(c=>c.id==='pend')?.possession).toBe('pending');

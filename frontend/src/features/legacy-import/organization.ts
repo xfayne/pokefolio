@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { binderSchema, capacity } from '@/features/binder/model';
 import { wishlistCardId, wishlistSchema } from '@/features/wishlist/model';
 import type { CardCopy } from '@/domain/schema';
+import { normalizeImportedBinderOrder } from './binder-order';
 
 const sourceSchema = z.object({
   mappingVersion: z.literal(3),
@@ -21,7 +22,7 @@ const sourceSchema = z.object({
   })),
 });
 
-/** Pure, non-destructive materialization. Never reorder, compact or fill pockets. */
+/** Pure materialization. Validate source indexes before normalizing physical left/right positions. */
 export function materializeLegacyOrganization(rawReport: unknown, copies: readonly CardCopy[], ownerUid: string) {
   const report = sourceSchema.parse(rawReport);
   if (report.source.ownerUid !== ownerUid) throw Error('OWNER_MISMATCH');
@@ -55,7 +56,7 @@ export function materializeLegacyOrganization(rawReport: unknown, copies: readon
     throw Error('UNRESOLVED_BINDER_REFERENCE');
   });
   const binder = binderSchema.parse({
-    schemaVersion: 1, ownerUid, revision: 1, pockets,
+    schemaVersion: 1, ownerUid, revision: 1, pockets: normalizeImportedBinderOrder(pockets),
     includeWish: source.binderIncludeWish ?? true,
   });
   const wishlist = wishlistSchema.parse({
