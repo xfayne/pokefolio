@@ -307,18 +307,24 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .new-purchase-add { width: 100%; min-height: 1.75rem; padding-block: 0; margin-bottom: 0.375rem; border-radius: 0.625rem; color: #0050c0; font-weight: var(--font-weight-bold); }
 .new-purchase-add svg { width: 1.25rem; height: 1.25rem; }
 .new-purchase-cards ul { display: flex; flex-direction: column; gap: 0.25rem; }
-.new-purchase-copy { display: flex; gap: 0.75rem; padding: 0.25rem 0.375rem; border: 1px solid var(--surface-border); border-radius: 0.625rem; }
-.new-purchase-art { align-self: center; width: 2.875rem; height: 3.375rem; }
+.new-purchase-copy { display: grid; grid-template-columns: 3.75rem minmax(0,1fr); align-items: stretch; gap: 0.625rem; padding: 0.3125rem; border: 1px solid var(--surface-border); border-radius: 0.625rem; }
+.new-purchase-art { align-self: stretch; width: 100%; height: auto; min-height: 0; border: 0; background: transparent !important; }
+.new-purchase-art .pokemon-art-window { position: absolute; inset: 0; background: transparent; }
+.new-purchase-art img { object-fit: contain; object-position: center; transform: none; }
 .new-purchase-copy-body { flex: 1; min-width: 0; }
-.new-purchase-copy-heading { display: flex; justify-content: space-between; gap: 0.25rem; }
+.new-purchase-copy-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.25rem; margin-bottom: 0.25rem; }
 .new-purchase-copy-heading > div { min-width: 0; }
 .new-purchase-copy-heading h3 { font-size: 0.9375rem; line-height: 1.125; overflow-wrap: anywhere; }
 .new-purchase-copy-heading p { font-size: 0.6875rem; line-height: 1.2; color: #445575; overflow-wrap: anywhere; }
 .new-purchase-copy-heading button { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border-radius: 0.375rem; color: #445575; }
 .new-purchase-copy-heading svg { width: 1rem; height: 1rem; }
-.new-purchase-copy-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); gap: 1rem; margin-top: 0.125rem; }
-.new-purchase-copy-fields .new-purchase-field > span:first-child { font-size: 0.625rem; }
-.new-purchase-copy-fields .new-purchase-input { min-height: 1.5rem; }
+.new-purchase-copy-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0.5rem; }
+.new-purchase-copy-fields .new-purchase-field { gap: 0; }
+.new-purchase-copy-fields .new-purchase-field > span:first-child, .new-purchase-condition-label { display: flex; align-items: center; min-height: 1.0625rem; font-size: 0.625rem; line-height: 1.2; font-weight: var(--font-weight-bold); }
+.new-purchase-condition-label { justify-content: space-between; gap: 0.125rem; }
+.new-purchase-edition { display: inline-flex; align-items: center; gap: 0.1875rem; font-size: 0.625rem; font-weight: 500; color: #445575; white-space: nowrap; cursor: pointer; }
+.new-purchase-edition input { width: 0.8125rem; height: 0.8125rem; margin: 0; accent-color: var(--adventure-blue); }
+.new-purchase-copy-fields .new-purchase-input { box-sizing: border-box; height: 1.8125rem; min-height: 1.8125rem; border-radius: 0.375rem; font-size: 16px; }
 .new-purchase-money { display: block; position: relative; }
 .new-purchase-money > span { position: absolute; inset-inline-start: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem; color: #445575; pointer-events: none; }
 .new-purchase-money input { padding-inline-start: 1.5rem; }
@@ -339,7 +345,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .new-purchase-lot p { color: #445575; font-size: 0.75rem; }
 @media (max-width: 359px) {
   .new-purchase-meta { column-gap: 0.5rem; }
-  .new-purchase-copy { gap: 0.5rem; }
+  .new-purchase-copy { grid-template-columns: 3rem minmax(0,1fr); gap: 0.375rem; }
   .new-purchase-copy-fields { gap: 0.5rem; }
   .new-purchase-pricing button { padding-inline: 0.25rem; }
   .new-purchase-cards-heading h2, .new-purchase-cards-heading h2 > span { font-size: 0.8125rem; }

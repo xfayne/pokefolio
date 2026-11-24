@@ -707,3 +707,7 @@ panel, market quotes, purchase links and audited metadata edits are reused.
 Sample views remain isolated from account copies. Removed the obsolete
 coming-soon caption; unavailable actions remain unchanged. No migration or
 schema changes are involved.
+
+## Purchase form density (2026-11-24)
+
+Owner approved compact purchase card rows with equal condition/price fields, full-height artwork and `1st` adjacent to the condition label. The shared creation/edit form retains existing financial validation and save behavior.
