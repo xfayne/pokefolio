@@ -1,7 +1,7 @@
 export const inventoryTranslations = {
   en: {
     demo: 'Demo', listCounts: '{{cards}} cards · {{copies}} copies', owned: '{{count}} owned', cost: 'Cost', paidShort: 'Paid', holo: 'Holo', copyCondition: 'Copy / condition', marketValue: 'Market value',
-    copyDetails: 'Details', enlarge: 'Enlarge card image', image: 'Card image', imageHint: 'Scroll to inspect the full image.', actionsSoon: 'Deals and purchase actions are coming soon.', removeWishlist: 'Remove from Wishlist', removeWishlistShort: 'Remove', wishlistFailed: 'Could not update Wishlist. Try again.', addWishlist: 'Add to Wishlist', findDeals: 'Find deals', recordPurchase: 'Record purchase',
+    copyDetails: 'Details', enlarge: 'Enlarge card image', image: 'Card image', imageHint: 'Scroll to inspect the full image.', removeWishlist: 'Remove from Wishlist', removeWishlistShort: 'Remove', wishlistFailed: 'Could not update Wishlist. Try again.', addWishlist: 'Add to Wishlist', findDeals: 'Find deals', recordPurchase: 'Record purchase',
     options: 'Sort and filter', marketPrice: 'Market price', perCard: 'Per copy', marketCondition: 'Price condition', copies_one: '{{count}} copy', copies_other: '{{count}} copies',
     delivery: 'Delivery status',
     title: 'Your cards', sample: 'Sample collection', sampleNotice: 'Demo data. Edits last until you leave this screen or reload.', explore: 'Explore sample collection', disconnected: 'Your collection', connectionDetail: 'Sign in through Settings to view your cards, or explore the sample collection.',
@@ -15,7 +15,7 @@ export const inventoryTranslations = {
   },
   he: {
     demo: 'הדגמה', listCounts: '{{cards}} קלפים · {{copies}} עותקים', owned: '{{count}} באוסף', cost: 'עלות', paidShort: 'שולם', holo: 'הולו', copyCondition: 'עותק / מצב', marketValue: 'שווי שוק',
-    copyDetails: 'פרטים', enlarge: 'הגדלת תמונת הקלף', image: 'תמונת הקלף', imageHint: 'אפשר לגלול כדי לבחון את התמונה המלאה.', actionsSoon: 'פעולות המציאות והרכישה יהיו זמינות בהמשך.', removeWishlist: 'הסרה מהמשאלות', removeWishlistShort: 'הסרה', wishlistFailed: 'לא ניתן לעדכן את רשימת המשאלות. נסה שוב.', addWishlist: 'הוספה למשאלות', findDeals: 'חיפוש מציאות', recordPurchase: 'תיעוד רכישה',
+    copyDetails: 'פרטים', enlarge: 'הגדלת תמונת הקלף', image: 'תמונת הקלף', imageHint: 'אפשר לגלול כדי לבחון את התמונה המלאה.', removeWishlist: 'הסרה מהמשאלות', removeWishlistShort: 'הסרה', wishlistFailed: 'לא ניתן לעדכן את רשימת המשאלות. נסה שוב.', addWishlist: 'הוספה למשאלות', findDeals: 'חיפוש מציאות', recordPurchase: 'תיעוד רכישה',
     options: 'מיון וסינון', marketPrice: 'מחיר שוק', perCard: 'לקלף יחיד', marketCondition: 'מצב למחירון', copies_one: 'עותק אחד', copies_two: '{{count}} עותקים', copies_many: '{{count}} עותקים', copies_other: '{{count}} עותקים',
     delivery: 'סטטוס הגעה',
     title: 'הקלפים שלך', sample: 'אוסף לדוגמה', sampleNotice: 'נתוני הדגמה. העריכות נשמרות עד יציאה מהמסך או רענון.', explore: 'פתיחת אוסף לדוגמה', disconnected: 'האוסף שלך', connectionDetail: 'יש להיכנס לחשבון דרך ההגדרות כדי לראות את הקלפים שלך. אפשר גם לצפות באוסף לדוגמה.',
