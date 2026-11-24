@@ -20,9 +20,9 @@ from firebase_rules_rest import (
 
 ROOT = Path(__file__).resolve().parent.parent
 RULES = ROOT / "firebase" / "firestore.private.rules"
-# Immutable reviewed policy from #124. Only this exact source can bootstrap
+# Reviewed staging-only grouped audit policy (#149). Only this exact source can bootstrap
 # staging if its rules are still from before the Binder or Wishlist addition.
-INITIAL_GIT_BLOB = "c5fdbdde4d7b96b026a9e4f015cb9306e27cafff"
+INITIAL_GIT_BLOB = "a99d22b45236b60cae63db3953d29ada614654f6"
 
 
 def git_blob_hash(source):
