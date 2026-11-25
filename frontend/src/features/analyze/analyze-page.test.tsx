@@ -66,3 +66,15 @@ it('keeps the breakdown open, sorts original probabilities and includes exactly 
  expect(screen.queryByText(/Analyzed .* of .* photos/)).not.toBeInTheDocument();
  expect(runAnalysis).not.toHaveBeenCalled();
 });
+
+it('prefills eBay mode from a deal without loading photos or starting AI',async()=>{
+ render(<AnalyzePage initialListingUrl={fixtureListing.url}/>);
+ expect(screen.getByRole('button',{name:'eBay'})).toHaveAttribute('aria-pressed','true');
+ expect(screen.getByRole('textbox',{name:'eBay listing URL'})).toHaveValue(fixtureListing.url);
+ expect(resolveListing).not.toHaveBeenCalled();
+ expect(runAnalysis).not.toHaveBeenCalled();
+ await userEvent.click(screen.getByRole('button',{name:'Load photos'}));
+ await screen.findByRole('button',{name:'Inspect photo 1'});
+ expect(resolveListing).toHaveBeenCalledWith('owner',fixtureListing.url,expect.any(AbortSignal));
+ expect(runAnalysis).not.toHaveBeenCalled();
+});

@@ -742,3 +742,9 @@ The owner requested keeping the existing Card Details header and swapping only i
 content. The explicit Find deals tap starts one fresh single-card search, including
 on reentry; Back restores card details and its scroll position. Wishlist Deals
 remains manual and its exclusions are unchanged. No backend or data changes.
+
+## Deals Analyzer handoff (2026-11-25)
+
+Deals links to the existing Analyzer with the selected eBay URL prefilled; photo
+loading and AI remain manual. The Deals gallery is photo-only; the seller-detail
+check and scan behavior remain unchanged. See [Deals migration](docs/DEALS_MIGRATION.md).
