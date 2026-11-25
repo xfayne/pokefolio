@@ -41,6 +41,7 @@ it('retains comparison controls and eBay actions in the polished listing',async(
  await user.click(screen.getByRole('button',{name:'Find deals'}));
  const listing=await screen.findByRole('article');
  expect(within(listing).getByText('Gengar Fossil 5/62')).toBeInTheDocument();
+ expect(within(listing).getByText('Buy It Now',{exact:true})).toBeInTheDocument();
  expect(within(listing).getByRole('button',{name:'Listing photos'})).toBeEnabled();
  await waitFor(()=>expect(within(listing).getByRole('button',{name:'Check seller details'})).toBeEnabled());
  expect(within(listing).getByRole('link',{name:'Open on eBay'})).toHaveAttribute('href',url);
