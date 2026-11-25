@@ -30,4 +30,5 @@ it('does not scan on open, persists exclusions on reload, and searches only sele
  await waitFor(()=>expect(fetchBatch).toHaveBeenCalledTimes(1));
  expect(vi.mocked(fetchBatch).mock.calls[0]?.[1].map(c=>c.id)).toEqual(['neo2-13','basep-9']);
  await screen.findByText('No matching listings');
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Scan again'})).toBeEnabled());
 });
