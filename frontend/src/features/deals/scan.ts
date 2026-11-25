@@ -9,7 +9,7 @@ export type Grade = z.infer<typeof gradeSchema>;
 const cash = z.object({value:z.number().finite().nonnegative(),currency:z.string().regex(/^[A-Z]{3}$/)});
 const ebayUrl = z.string().url().refine(value => {
   const u = new URL(value);
-  return u.protocol === 'https:' && /^(www\.)?ebay\.(com|co\.uk|de)$/.test(u.hostname) && u.pathname.startsWith('/itm/');
+  return u.protocol === 'https:' && !u.username && !u.password && !u.port && /^(www\.)?ebay\.(com|co\.uk|de)$/.test(u.hostname) && u.pathname.startsWith('/itm/');
 });
 export const itemSchema = z.object({
   cardId:z.string(), itemId:z.string().regex(/^v\d\|\d{3,20}\|\d{1,6}$/), title:z.string(),
@@ -54,7 +54,9 @@ export function dealsClient(owner:string) {
   return createApiClient(STAGING_API,async()=>{
     const user=getFirebaseServices()?.auth.currentUser;
     if(!user||user.uid!==owner)throw Error('Account changed');
-    return user.getIdToken();
+    const token=await user.getIdToken();
+    if(getFirebaseServices()?.auth.currentUser?.uid!==owner)throw Error('Account changed');
+    return token;
   });
 }
 export async function fetchBatch(owner:string,cards:readonly DealCard[],signal:AbortSignal,postalCode?:string):Promise<Batch>{

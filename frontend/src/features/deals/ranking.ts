@@ -18,4 +18,4 @@ export function evaluate(item:DealItem,market:number|null,current:number|null,sh
   const score=(discount??-1)*100+(item.format==='FIXED_PRICE'?20:hours!==null&&hours<=6?18:hours!==null&&hours<=24?9:0)+item.matchConfidence/20;
   return {grade,source,allIn,market,discount,hours,group,score};
 }
-export const compareRecommended=(a:Evaluation,b:Evaluation)=>a.group-b.group||b.score-a.score;
+export const compareRecommended=(a:Evaluation,b:Evaluation)=>a.group-b.group||(a.group===4?(b.discount??-Infinity)-(a.discount??-Infinity):0)||b.score-a.score;
