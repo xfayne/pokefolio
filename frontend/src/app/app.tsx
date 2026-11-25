@@ -1,3 +1,4 @@
+import { DealsPage } from '@/features/deals/deals-page';
 import { WishlistPage } from '@/features/wishlist/wishlist-page';
 import { SectionTabsBar } from '@/components/ui/section-tabs-bar';
 import { useWishlist } from '@/features/wishlist/use-wishlist';
@@ -68,9 +69,9 @@ function SectionPage({ name }: { name: Destination }) {
   const createTransaction = () => {
     void navigate({ pathname: '/transactions/new', search: location.search }, { state: { purchaseFrom: 'history' } });
   };
-  return <div className={location.pathname === '/collection/binder' ? 'binder-section' : ['/collection/cards', '/wishlist/cards', '/transactions/history'].includes(location.pathname) ? 'space-y-1' : 'space-y-6'}>
+  return <div className={location.pathname === '/collection/binder' ? 'binder-section' : ['/collection/cards', '/wishlist/cards', '/wishlist/deals', '/transactions/history'].includes(location.pathname) ? 'space-y-1' : 'space-y-6'}>
     {hasTabs && <SectionTabsBar section={name as Section} search={isTransactions ? location.search : ''} action={isTransactions ? <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800"><LuPlus aria-hidden className="size-5" /></button> : undefined} />}
-    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/wishlist/deals' ? <DealsPage /> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
