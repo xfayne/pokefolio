@@ -22,3 +22,5 @@ The owner approved a denser HTML/CSS mock: listing type and match status are com
 The owner-approved compact search panel places the single-card scan action beside the card identity, reduces header and sort/filter control heights, and displays the last scan time without seconds. The progress bar is visible only while busy, with a green completion indicator only for a successful completed scan; pause/resume, partial failures, rate limits, stale-result warnings, and Wishlist scope selection remain available. Existing listing cards are unchanged.
 
 The Wishlist scope actions share one row, with an accessible icon-only Select cards button next to Find deals. Client-side listing validation failures are counted separately from marketplace request failures; only schema field names (not listing values) are surfaced for diagnostics. Existing validation and scan behavior are unchanged.
+
+The condition source now appears in parentheses alongside the Condition label instead of below the selector, in both Deals views. Source semantics and grade selection are unchanged.
