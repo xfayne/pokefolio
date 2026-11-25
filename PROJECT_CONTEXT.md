@@ -736,3 +736,9 @@ React uses the isolated staging eBay endpoints, exact printing prices, progressi
 batch results, local filters and lazy listing galleries. Single-card search remains
 independent of Wishlist exclusions. See `docs/DEALS_MIGRATION.md` for scope and
 remaining verification. No legacy or production data mutation.
+
+## Inline single-card Deals (2026-11-25)
+The owner requested keeping the existing Card Details header and swapping only its
+content. The explicit Find deals tap starts one fresh single-card search, including
+on reentry; Back restores card details and its scroll position. Wishlist Deals
+remains manual and its exclusions are unchanged. No backend or data changes.
