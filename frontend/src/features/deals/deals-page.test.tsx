@@ -26,11 +26,20 @@ it('does not scan on open, persists exclusions on reload, and searches only sele
  view.unmount();mount();
  expect(screen.getByText('2 of 3 cards selected')).toBeInTheDocument();
  expect(fetchBatch).not.toHaveBeenCalled();
+ let finishScan!: (result: Awaited<ReturnType<typeof fetchBatch>>) => void;
+ vi.mocked(fetchBatch).mockImplementationOnce(()=>new Promise(resolve=>{finishScan=resolve;}));
+ expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
  await user.click(screen.getByRole('button',{name:'Find deals'}));
  await waitFor(()=>expect(fetchBatch).toHaveBeenCalledTimes(1));
+ expect(screen.getByRole('progressbar')).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Pause'})).toBeEnabled();
+ finishScan({items:[],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});
  expect(vi.mocked(fetchBatch).mock.calls[0]?.[1].map(c=>c.id)).toEqual(['neo2-13','basep-9']);
  await screen.findByText('No matching listings');
  await waitFor(()=>expect(screen.getByRole('button',{name:'Scan again'})).toBeEnabled());
+ expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+ expect(screen.getByText('2 of 2 cards scanned')).toBeInTheDocument();
+ expect(screen.getByText(/Last scanned:/)).toBeInTheDocument();
 });
 
 it('retains comparison controls and eBay actions in the polished listing',async()=>{
