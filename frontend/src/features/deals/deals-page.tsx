@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -56,7 +56,7 @@ export function SingleCardDeals({cardId,reference}:{cardId:string;reference:Cata
  const auth=useAuth();const {t}=useTranslation();
  if(auth.status==='loading')return <p role="status">{t('loading')}</p>;
  if(!auth.user)return <p>{t('dealsUi.signIn')}</p>;
- return <DealsPanel key={auth.user.uid+':'+cardId+':'+catalogIdentity(reference)} owner={auth.user.uid} ids={[cardId]} reference={reference}/>;
+ return <DealsPanel key={auth.user.uid+':'+cardId+':'+catalogIdentity(reference)} owner={auth.user.uid} ids={[cardId]} reference={reference} autoStart/>;
 }
 const detailSchema=z.object({grade:gradeSchema.nullable(),source:z.enum(['seller','unknown']),label:z.string().nullable(),verificationStatus:z.enum(['strong','review','rejected','unknown']),verificationReasons:z.array(z.string()),matchConfidence:z.number()});
 type Detail=z.infer<typeof detailSchema>;
@@ -96,7 +96,7 @@ function ListingGallery({owner,item,onClose,onGrade}:{owner:string;item:DealItem
   <Button asChild variant="outline" className="w-full"><a href={item.url} target="_blank" rel="noopener noreferrer">{t('dealsUi.open')}</a></Button>
  </div></UtilitySheet>;
 }
-function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];reference?:CatalogRef}){
+function DealsPanel({owner,ids,reference,autoStart=false}:{owner:string;ids:readonly string[];reference?:CatalogRef;autoStart?:boolean}){
  const {t,i18n}=useTranslation();
  const money=useDisplayMoney(0),display=useDisplayCurrency();
  const [excluded,setExcluded]=useState(()=>stored(owner)),[picker,setPicker]=useState(false),[storageError,setStorageError]=useState(false);
@@ -150,6 +150,14 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
   catch{if(!controller.signal.aborted)setFailure(true);}
   finally{if(active.current===controller){active.current=null;setBusy(false);}}
  }
+ // Single-card entry is an explicit user action. Defer until effect setup settles
+ // so StrictMode's setup/cleanup replay cannot issue duplicate marketplace requests.
+ const startOnEntry=useEffectEvent(()=>{void start();});
+ useEffect(()=>{
+  if(!autoStart)return;
+  const timer=setTimeout(()=>startOnEntry(),0);
+  return ()=>clearTimeout(timer);
+ },[autoStart]);
  function pause(){active.current?.abort();}
  function resetResults(){setCompletedAt(0);setStableOrder(null);for(const controller of detailRequests.current)controller.abort();detailRequests.current.clear();setScan(null);setDetails({});setChecking([]);setCheckFailed([]);setOverrides({});setAiGrades({});}
  function saveScope(next:string[]){setExcluded(next);try{setStorageError(!saveExclusions(localStorage,owner,next));}catch{setStorageError(true);}setPicker(false);resetResults();}
