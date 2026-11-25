@@ -1,0 +1,33 @@
+import { render,screen,within,waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router';
+import { beforeEach,expect,it,vi } from 'vitest';
+import '@/lib/i18n';
+import { DealsPage } from './deals-page';
+import { fetchBatch } from './scan';
+const mock=vi.hoisted(()=>({owner:'owner-a',ids:['neo2-13','base3-5','basep-9']}));
+vi.mock('@/features/wishlist/use-wishlist',()=>({useWishlist:()=>({owner:mock.owner,wishlist:{cardIds:mock.ids},loading:false,error:null})}));
+vi.mock('@/services/environment',()=>({getEnvironment:()=>({workerUrl:'https://pokefolio-api-staging.xfayne.workers.dev'}),STAGING_API:'https://pokefolio-api-staging.xfayne.workers.dev'}));
+vi.mock('./scan',async original=>({...await original<typeof import('./scan')>(),fetchBatch:vi.fn()}));
+vi.mock('@/features/catalog/market-prices',()=>({fetchMarketQuotes:vi.fn(async()=>[])}));
+beforeEach(()=>{localStorage.clear();vi.clearAllMocks();mock.owner='owner-a';mock.ids=['neo2-13','base3-5','basep-9'];vi.mocked(fetchBatch).mockResolvedValue({items:[],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});});
+function mount(){const client=new QueryClient({defaultOptions:{queries:{retry:false}}});return render(<MemoryRouter><QueryClientProvider client={client}><DealsPage/></QueryClientProvider></MemoryRouter>);}
+it('does not scan on open, persists exclusions on reload, and searches only selected cards',async()=>{
+ const user=userEvent.setup(),view=mount();
+ expect(fetchBatch).not.toHaveBeenCalled();
+ expect(screen.getByText('3 of 3 cards selected')).toBeInTheDocument();
+ await user.click(screen.getByRole('button',{name:'Select cards'}));
+ const dialog=screen.getByRole('dialog',{name:'Select cards'});
+ await user.click(within(dialog).getByRole('checkbox',{name:/Gengar/}));
+ await user.click(within(dialog).getByRole('button',{name:/Done/}));
+ expect(screen.getByText('2 of 3 cards selected')).toBeInTheDocument();
+ expect(fetchBatch).not.toHaveBeenCalled();
+ view.unmount();mount();
+ expect(screen.getByText('2 of 3 cards selected')).toBeInTheDocument();
+ expect(fetchBatch).not.toHaveBeenCalled();
+ await user.click(screen.getByRole('button',{name:'Find deals'}));
+ await waitFor(()=>expect(fetchBatch).toHaveBeenCalledTimes(1));
+ expect(vi.mocked(fetchBatch).mock.calls[0]?.[1].map(c=>c.id)).toEqual(['neo2-13','basep-9']);
+ await screen.findByText('No matching listings');
+});

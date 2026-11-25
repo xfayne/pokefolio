@@ -256,3 +256,11 @@ Binder displays removed Wishlist reservations as unavailable and allows unavaila
 copy or wish placements to be dragged out without shifting any other pockets.
 
 Compact card rows omit per-card copy-count badges and round displayed monetary values to whole currency units outside purchase/sale screens. Counts, sorting, stored money and detailed transaction amounts are unchanged.
+
+
+## Deals discovery (#15)
+
+Wishlist → Deals and the Card Details Find deals action use explicit eBay search,
+owner-specific browser exclusions, progressive four-card batches and condition-specific
+comparison. Existing staging Worker routes are reused. See [Deals contracts](docs/DEALS_MIGRATION.md)
+for behavior and remaining roadmap acceptance; no legacy data or Worker changes.
