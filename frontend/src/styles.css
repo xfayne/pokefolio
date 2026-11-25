@@ -499,8 +499,14 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 /* Deals-only sheet treatment; other utility sheets keep the Adventure Blue header. */
 .utility-dialog[data-appearance="deals"] .sheet-frame { background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); }
-.utility-dialog[data-appearance="deals"] .sheet-header { background: transparent; color: var(--color-slate-950); min-height: 5rem; }
+.utility-dialog[data-appearance="deals"] .sheet-header { background: transparent; color: var(--color-slate-950); min-height: 3.75rem; padding: max(1rem, env(safe-area-inset-top)) 0.875rem 0.5rem; gap: 0.5rem; }
 .utility-dialog[data-appearance="deals"] .sheet-header::before { background: #9aaac0; }
-.utility-dialog[data-appearance="deals"] .sheet-header h1 { text-align: center; font-size: 1.5rem; line-height: 1.2; }
-.utility-dialog[data-appearance="deals"] .sheet-header button { background: #dce8fb; outline-color: var(--adventure-blue); }
+.utility-dialog[data-appearance="deals"] .sheet-header h1 { text-align: center; font-size: 1.3125rem; line-height: 1.2; padding-block: 0; }
+.utility-dialog[data-appearance="deals"] .sheet-header button { background: #dce8fb; outline-color: var(--adventure-blue); width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; }
 .utility-dialog[data-appearance="deals"] .sheet-content { background: transparent; }
+
+/* Only the Deals progress indicator is custom-colored, including mobile Safari. */
+.deals-scan-progress { appearance: none; -webkit-appearance: none; border: 0; border-radius: 999px; overflow: hidden; background: #e3edfa; color: var(--adventure-blue); }
+.deals-scan-progress::-webkit-progress-bar { background: #e3edfa; border-radius: 999px; }
+.deals-scan-progress::-webkit-progress-value { background: var(--adventure-blue); border-radius: 999px; }
+.deals-scan-progress::-moz-progress-bar { background: var(--adventure-blue); border-radius: 999px; }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight, LuExternalLink, LuClock } from 'react-icons/lu';
+import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight, LuExternalLink, LuClock, LuCircleCheck } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
@@ -195,16 +195,32 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
  if(stableOrder){const positions=new Map(stableOrder.map((id,i)=>[id,i]));rows.sort((a,b)=>(positions.get(a.item.itemId)??Infinity)-(positions.get(b.item.itemId)??Infinity)||0);}
  const selectFilter=(key:'format'|'end'|'shipMax'|'totalMax'|'discountMin'|'condition',options:string[],label:string)=> <label className="min-w-0 space-y-1 text-xs font-semibold">{t('dealsUi.'+label)}<Select className="w-full text-base" value={filters[key]} onChange={e=>filter(key,e.target.value)}><option value="all">{t('dealsUi.all')}</option>{options.map(value=><option key={value} value={value}>{key==='format'?t(value==='AUCTION'?'dealsUi.auction':'dealsUi.fixed'):key==='shipMax'||key==='totalMax'?money({minor:Number(value)*100,currency:'USD'}):value}</option>)}</Select></label>;
  const canResume=!!scan&&scan.searched<scan.cards.length;
+ const scanComplete=!!scan&&!busy&&!canResume&&!scan.throttled&&!failure&&completedAt>0&&scan.errors.length===0;
+ const compactAction='min-h-[34px] min-w-0 rounded-lg px-3 py-1 text-xs font-bold leading-tight';
+ const scanButton=<Button className={compactAction+' shrink-0 gap-1.5'} disabled={busy||!cards.length||!postalValid||unavailable} onClick={()=>void start()}><LuSearch aria-hidden className="size-3.5 shrink-0"/>{t(scan?'dealsUi.again':'dealsUi.find')}</Button>;
  return <section className="min-w-0 space-y-2" aria-label={t('inventory.findDeals')}>
-  <div className="space-y-3 rounded-xl border border-blue-200 bg-white p-3">
-    <div className="flex items-center gap-2"><div className="min-w-0 flex-1"><p className="font-bold">{reference?cards[0]?.name:t('dealsUi.scope')}</p><p className="text-xs text-slate-600">{reference?cards[0]?.setName:t('dealsUi.selected',{count:cards.length,total:ids.length})}</p></div>{!reference&&<Button variant="outline" disabled={busy} onClick={()=>setPicker(true)}><LuListFilter/>{t('dealsUi.select')}</Button>}</div>
-    <Button className="w-full" disabled={busy||!cards.length||!postalValid||unavailable} onClick={()=>void start()}><LuSearch/>{t(scan?'dealsUi.again':'dealsUi.find')}</Button>
-    {unavailable&&<p role="alert" className="text-sm">{t('dealsUi.notConfigured')}</p>}
-    {storageError&&<p role="alert" className="text-xs">{t('dealsUi.storage')}</p>}
-    {completedAt>0&&<p className="text-xs text-slate-600">{t('dealsUi.cached')}: {new Date(completedAt).toLocaleTimeString(i18n.language)}{now-completedAt>30*60_000?' · '+t('dealsUi.stale'):''}</p>}
-    {scan&&<><progress className="h-2 w-full accent-blue-600" value={scan.searched} max={Math.max(scan.cards.length,1)} aria-label={t('dealsUi.progress',{searched:scan.searched,total:scan.cards.length})}/><p role="status" className="text-xs">{t('dealsUi.progress',{searched:scan.searched,total:scan.cards.length})}</p>{(busy||canResume)&&<Button variant="outline" onClick={()=>busy?pause():void start(true)}>{t(busy?'dealsUi.pause':'dealsUi.resume')}</Button>}{scan.errors.length>0&&<p role="status" className="text-xs">{t('dealsUi.partial',{count:scan.errors.length})}</p>}{scan.throttled&&<p role="alert">{t('dealsUi.rate')}</p>}{failure&&<p role="alert">{t('dealsUi.failed')}</p>}</>}
+  <div className="space-y-2 rounded-2xl border border-blue-100 bg-white p-2.5 shadow-[0_3px_10px_#174b9310]">
+   <div className="flex items-center justify-between gap-2">
+    <div className="min-w-0 flex-1"><p className="break-words text-base font-bold leading-tight">{reference?cards[0]?.name:t('dealsUi.scope')}</p><p className="mt-0.5 text-xs leading-tight text-slate-600">{reference?cards[0]?.setName:t('dealsUi.selected',{count:cards.length,total:ids.length})}</p></div>
+    {reference?scanButton:<Button variant="outline" className={compactAction+' shrink-0 gap-1.5'} disabled={busy} onClick={()=>setPicker(true)}><LuListFilter aria-hidden className="size-3.5 shrink-0"/>{t('dealsUi.select')}</Button>}
+   </div>
+   {!reference&&<div className="flex justify-end">{scanButton}</div>}
+   {unavailable&&<p role="alert" className="text-xs">{t('dealsUi.notConfigured')}</p>}
+   {storageError&&<p role="alert" className="text-xs">{t('dealsUi.storage')}</p>}
+   {scan&&<div className="space-y-2 border-t border-slate-200 pt-2">
+    {busy&&<progress className="deals-scan-progress block h-1.5 w-full" value={scan.searched} max={Math.max(scan.cards.length,1)} aria-label={t('dealsUi.progress',{searched:scan.searched,total:scan.cards.length})}/>}
+    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] leading-tight text-slate-600">
+     <p role="status" className={`flex min-w-0 items-center gap-1 ${scanComplete?'font-semibold text-emerald-700':''}`}>{scanComplete&&<LuCircleCheck aria-hidden className="size-3.5 shrink-0"/>}{t('dealsUi.progress',{searched:scan.searched,total:scan.cards.length})}</p>
+     {completedAt>0&&<p className="ms-auto text-end">{t('dealsUi.cached')}: {new Date(completedAt).toLocaleTimeString(i18n.language,{hour:'numeric',minute:'2-digit'})}</p>}
+    </div>
+    {completedAt>0&&now-completedAt>30*60_000&&<p className="text-xs text-slate-600">{t('dealsUi.stale')}</p>}
+    {(busy||canResume)&&<Button variant="outline" className={compactAction} onClick={()=>busy?pause():void start(true)}>{t(busy?'dealsUi.pause':'dealsUi.resume')}</Button>}
+    {scan.errors.length>0&&<p role="status" className="text-xs">{t('dealsUi.partial',{count:scan.errors.length})}</p>}
+    {scan.throttled&&<p role="alert" className="text-xs">{t('dealsUi.rate')}</p>}
+    {failure&&<p role="alert" className="text-xs">{t('dealsUi.failed')}</p>}
+   </div>}
   </div>
-  <div className="flex gap-2"><Select className="min-w-0 flex-1 bg-white text-base" aria-label={t('inventory.sort')} value={sort} onChange={e=>{setSort(e.target.value);setStableOrder(null);setLimit(40);}}>{['recommended','discount','closing','bids','match','shipping','shippingDesc'].map(value=><option key={value} value={value}>{t('dealsUi.'+value)}</option>)}</Select><Button variant="outline" aria-expanded={filterOpen} onClick={()=>setFilterOpen(v=>!v)}><LuSlidersHorizontal/>{t('dealsUi.filters')}</Button></div>
+  <div className="flex gap-2"><Select className="min-h-[34px] min-w-0 flex-1 rounded-lg bg-white px-2 py-0.5 text-base" aria-label={t('inventory.sort')} value={sort} onChange={e=>{setSort(e.target.value);setStableOrder(null);setLimit(40);}}>{['recommended','discount','closing','bids','match','shipping','shippingDesc'].map(value=><option key={value} value={value}>{t('dealsUi.'+value)}</option>)}</Select><Button variant="outline" className={compactAction+' shrink-0 gap-1.5'} aria-expanded={filterOpen} onClick={()=>setFilterOpen(v=>!v)}><LuSlidersHorizontal aria-hidden className="size-3.5 shrink-0"/>{t('dealsUi.filters')}</Button></div>
   {filterOpen&&<div className="space-y-3 rounded-xl border border-blue-200 bg-white p-3">
    <div className="grid grid-cols-2 gap-2">{selectFilter('format',['AUCTION','FIXED_PRICE'],'format')}{selectFilter('end',['1','6','24','72','168'],'end')}{selectFilter('shipMax',['0','5','10','15','25','50'],'shipMax')}{selectFilter('totalMax',['25','50','100','200','500'],'totalMax')}{selectFilter('discountMin',['10','20','30','40','50'],'discountMin')}{selectFilter('condition',[...gradeSchema.options],'condition')}</div>
    <label className="block text-xs font-semibold">{t('dealsUi.postal')}<input className={fieldClass} inputMode="numeric" maxLength={7} value={postal} disabled={busy||canResume} onChange={e=>{const v=e.target.value;setPostal(v);resetResults();if(!v||/^\d{7}$/.test(v))try{localStorage.setItem(postalKey(owner),v);}catch{/* optional cache */}}}/></label>{!postalValid&&<p role="alert">{t('dealsUi.invalidPostal')}</p>}
