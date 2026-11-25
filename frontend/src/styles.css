@@ -496,3 +496,11 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard-empty { color: #526178; font-size: 0.8125rem; margin: 0; padding-block: 0.75rem; }
 [dir="rtl"] .dashboard-section-heading button > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
 @media (min-width: 640px) { .dashboard-banner { margin-inline: -1.5rem; } }
+
+/* Deals-only sheet treatment; other utility sheets keep the Adventure Blue header. */
+.utility-dialog[data-appearance="deals"] .sheet-frame { background: linear-gradient(135deg, #e5f1ff, #f2f7ff 65%, #e5f0ff); }
+.utility-dialog[data-appearance="deals"] .sheet-header { background: transparent; color: var(--color-slate-950); min-height: 5rem; }
+.utility-dialog[data-appearance="deals"] .sheet-header::before { background: #9aaac0; }
+.utility-dialog[data-appearance="deals"] .sheet-header h1 { text-align: center; font-size: 1.5rem; line-height: 1.2; }
+.utility-dialog[data-appearance="deals"] .sheet-header button { background: #dce8fb; outline-color: var(--adventure-blue); }
+.utility-dialog[data-appearance="deals"] .sheet-content { background: transparent; }

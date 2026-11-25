@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight } from 'react-icons/lu';
+import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight, LuExternalLink } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
@@ -216,12 +216,34 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
    <Button variant="outline" onClick={()=>{setFilters(emptyFilters);setStableOrder(null);setLimit(40);}}>{t('dealsUi.reset')}</Button>
   </div>}
   {!scan?<div className="flex flex-col items-center gap-2 py-10 text-sm text-slate-500"><LuSearch className="size-9"/>{t(cards.length?'dealsUi.ready':'dealsUi.noCards')}</div>:<>
-   <p className="text-xs font-semibold text-slate-600">{t('dealsUi.results',{count:rows.length})}</p>
+   <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">{t('dealsUi.results',{count:rows.length})}</p>
    {!rows.length&&!busy&&<p className="py-6 text-center text-sm">{t('dealsUi.none')}</p>}
-   {rows.slice(0,limit).map(({item,evaluation:e})=><article key={item.itemId} className="space-y-2 rounded-xl border border-blue-200 bg-white p-2">
-    <div className="flex gap-2"><button type="button" className="w-20 shrink-0 self-start rounded-lg bg-blue-50" onClick={()=>setGallery(item)} aria-label={t('dealsUi.photos')}>{item.image?<img src={item.image} loading="lazy" className="h-24 w-full object-contain" alt={item.title}/>:<LuSearch className="m-auto h-24"/>}</button><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-blue-700">{catalog.get(item.cardId)?.name} · {t(item.format==='AUCTION'?'dealsUi.auction':'dealsUi.fixed')}</p><p className="line-clamp-2 break-words text-sm font-bold">{item.title}</p><p className="text-xs text-slate-600">{t(item.verificationStatus==='strong'?'dealsUi.strong':'dealsUi.needsReview')} · {item.sellerName} {item.sellerFeedback!==null?`(${item.sellerFeedback}%)`:''}</p><p className="text-xs text-slate-600">{item.bidCount!==null&&t('dealsUi.countBids',{count:item.bidCount})}{item.bestOffer?' · '+t('dealsUi.offer'):''}{item.endTime?' · '+t('dealsUi.ends')+' '+new Date(item.endTime).toLocaleString(i18n.language):''}</p></div><div className="shrink-0 text-end"><p className="font-bold">{formatted(item.currentBid)}</p><p className="text-xs">{t('dealsUi.ship')} {formatted(item.shipping)}</p>{e.discount!==null&&<p className={`text-sm font-bold ${e.discount>0?'text-emerald-700':'text-red-700'}`}>{e.discount>0?'-':'+'}{Math.round(Math.abs(e.discount)*100)}%</p>}</div></div>
-    <div className="grid grid-cols-3 items-center gap-2 border-t border-blue-100 pt-2 text-xs"><label className="min-w-0">{t('dealsUi.grade')}<Select className="w-full text-base" value={e.grade} onChange={ev=>{setStableOrder(rows.map(r=>r.item.itemId));setOverrides(v=>({...v,[item.itemId]:gradeSchema.parse(ev.target.value)}));}}>{gradeSchema.options.map(g=><option key={g}>{g}</option>)}</Select><span>{t('dealsUi.'+(e.source==='unknown'?'sourceUnknown':e.source))}</span></label><div>{t('dealsUi.market')}<p className="font-bold">{amount(e.market)}</p></div><div>{t('dealsUi.total')}<p className="font-bold">{amount(e.allIn)}</p></div></div>
-    <div className="flex gap-2"><Button variant="outline" className="min-w-0 flex-1 px-2" disabled={busy||checking.includes(item.itemId)} onClick={()=>void check(item)}>{t(checking.includes(item.itemId)?'dealsUi.checking':'dealsUi.check')}</Button><Button asChild className="min-w-0 flex-1 px-2"><a href={item.url} target="_blank" rel="noopener noreferrer">{t('dealsUi.open')}</a></Button></div>{checkFailed.includes(item.itemId)&&<p role="alert" className="text-xs">{t('dealsUi.checkFailed')}</p>}
+   {rows.slice(0,limit).map(({item,evaluation:e})=><article key={item.itemId} className="min-w-0 space-y-3 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_4px_16px_#174b9320]">
+    <div className="grid grid-cols-[clamp(3.25rem,19vw,5.5rem)_minmax(0,1fr)_minmax(0,auto)] items-start gap-2 sm:gap-3">
+     <button type="button" className="aspect-[4/5] w-full overflow-hidden rounded-xl bg-slate-100 focus-visible:outline-2 focus-visible:outline-blue-600" onClick={()=>setGallery(item)} aria-label={t('dealsUi.photos')}>
+      {item.image?<img src={item.image} loading="lazy" className="h-full w-full object-contain" alt={item.title}/>:<LuSearch className="m-auto h-full w-6"/>}
+     </button>
+     <div className="min-w-0 space-y-1">
+      <p className="w-fit max-w-full rounded-lg bg-blue-50 px-1.5 py-0.5 text-xs font-bold leading-tight text-blue-700 [overflow-wrap:anywhere]">{t(item.format==='AUCTION'?'dealsUi.auction':'dealsUi.fixed')}</p>
+      <p className="line-clamp-2 break-words text-sm font-bold leading-tight">{item.title}</p>
+      <p className="text-xs leading-snug text-slate-600 [overflow-wrap:anywhere]">{t(item.verificationStatus==='strong'?'dealsUi.strong':'dealsUi.needsReview')} · {item.sellerName} {item.sellerFeedback!==null?`(${item.sellerFeedback}%)`:''}</p>
+      {(item.bidCount!==null||item.bestOffer||item.endTime)&&<p className="text-xs leading-snug text-slate-600 [overflow-wrap:anywhere]">{item.bidCount!==null&&t('dealsUi.countBids',{count:item.bidCount})}{item.bestOffer?' · '+t('dealsUi.offer'):''}{item.endTime?' · '+t('dealsUi.ends')+' '+new Date(item.endTime).toLocaleString(i18n.language):''}</p>}
+     </div>
+     <div className="min-w-0 max-w-[7rem] space-y-1 border-s border-slate-200 ps-2 text-end [overflow-wrap:anywhere] sm:ps-3">
+      <p className="text-lg font-bold leading-tight tabular-nums">{formatted(item.currentBid)}</p>
+      <p className="text-xs leading-tight text-slate-600">{t('dealsUi.ship')} {formatted(item.shipping)}</p>
+      {e.discount!==null&&<p className={`inline-block rounded-full px-2 py-0.5 text-sm font-bold tabular-nums ${e.discount>0?'bg-emerald-50 text-emerald-800':e.discount<0?'bg-red-50 text-red-700':'bg-slate-100 text-slate-600'}`}>{e.discount>0?'-':'+'}{Math.round(Math.abs(e.discount)*100)}%</p>}
+     </div>
+    </div>
+    <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 border-t border-slate-200 pt-3 text-xs">
+     <label className="min-w-0 space-y-1 text-slate-600"><span className="block font-semibold leading-tight">{t('dealsUi.grade')}</span><Select className="w-full border-slate-300 bg-slate-50 font-bold text-slate-950" value={e.grade} onChange={ev=>{setStableOrder(rows.map(r=>r.item.itemId));setOverrides(v=>({...v,[item.itemId]:gradeSchema.parse(ev.target.value)}));}}>{gradeSchema.options.map(g=><option key={g}>{g}</option>)}</Select><span className="block leading-tight">{t('dealsUi.'+(e.source==='unknown'?'sourceUnknown':e.source))}</span></label>
+     <div className="min-w-0 border-s border-slate-200 ps-3 text-slate-600">{t('dealsUi.market')}<p className="text-base font-bold leading-tight text-slate-950 tabular-nums [overflow-wrap:anywhere]">{amount(e.market)}</p></div>
+     <div className="min-w-0 border-s border-slate-200 ps-3 text-slate-600">{t('dealsUi.total')}<p className="text-base font-bold leading-tight text-slate-950 tabular-nums [overflow-wrap:anywhere]">{amount(e.allIn)}</p></div>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+     <Button variant="outline" className="min-w-0 border-blue-300 bg-white px-2 text-center text-xs font-bold text-blue-950 sm:text-sm" disabled={busy||checking.includes(item.itemId)} onClick={()=>void check(item)}>{t(checking.includes(item.itemId)?'dealsUi.checking':'dealsUi.check')}</Button>
+     <Button asChild className="min-w-0 gap-1.5 px-2 text-center text-xs font-bold sm:text-sm"><a href={item.url} target="_blank" rel="noopener noreferrer"><LuExternalLink aria-hidden className="size-4 shrink-0"/>{t('dealsUi.open')}</a></Button>
+    </div>{checkFailed.includes(item.itemId)&&<p role="alert" className="text-xs">{t('dealsUi.checkFailed')}</p>}
    </article>)}
    {rows.length>limit&&<Button variant="outline" className="w-full" onClick={()=>setLimit(v=>v+40)}>{t('dealsUi.more')}</Button>}
   </>}

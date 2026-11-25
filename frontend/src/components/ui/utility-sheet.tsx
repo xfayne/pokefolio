@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { LuArrowLeft, LuX } from 'react-icons/lu';
 import { useTranslation } from 'react-i18next';
 
-export function UtilitySheet({ title, onClose, onBack, backLabel, children, transition = 'slide', contentMode = 'scroll' }: { title: string; onClose: () => void; onBack?: () => void; backLabel?: string; children: ReactNode; transition?: 'slide' | 'subtle' | undefined; contentMode?: 'scroll' | 'contained' }) {
+export function UtilitySheet({ title, onClose, onBack, backLabel, children, transition = 'slide', contentMode = 'scroll', appearance = 'default' }: { title: string; onClose: () => void; onBack?: () => void; backLabel?: string; children: ReactNode; transition?: 'slide' | 'subtle' | undefined; contentMode?: 'scroll' | 'contained'; appearance?: 'default' | 'deals' }) {
   const ref = useRef<HTMLDialogElement>(null);
   const { t } = useTranslation();
   useEffect(() => {
@@ -25,7 +25,7 @@ export function UtilitySheet({ title, onClose, onBack, backLabel, children, tran
       opener?.focus({ preventScroll: true });
     };
   }, []);
-  return <dialog ref={ref} tabIndex={-1} aria-modal="true" aria-labelledby="sheet-title" className="utility-dialog" data-transition={transition} onCancel={(event) => { event.preventDefault(); onClose(); }}>
+  return <dialog ref={ref} tabIndex={-1} aria-modal="true" aria-labelledby="sheet-title" className="utility-dialog" data-transition={transition} data-appearance={appearance} onCancel={(event) => { event.preventDefault(); onClose(); }}>
     <div className="sheet-frame flex h-full flex-col">
       <div className="sheet-header top-bar relative flex min-h-16 shrink-0 items-center justify-between gap-3 bg-slate-900 px-4 pt-3 text-white">
         {onBack && <button type="button" onClick={onBack} aria-label={backLabel ?? t('back')} className="flex size-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline-white"><LuArrowLeft aria-hidden className="size-6 rtl:rotate-180" /></button>}<h1 id="sheet-title" className={`flex-1 font-bold ${onBack ? 'py-3 text-xl' : 'py-5 text-2xl'}`}>{title}</h1>
