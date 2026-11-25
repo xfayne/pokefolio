@@ -15,3 +15,6 @@ export function writeScanCache(key:string,snapshot:ScanSnapshot){
  cache.delete(key);cache.set(key,snapshot);
  while(cache.size>24){const oldest=cache.keys().next().value;if(oldest===undefined)break;cache.delete(oldest);}
 }
+
+// Clock is sampled by explicit scan completion, not result rendering.
+export const scanClock=()=>Date.now();

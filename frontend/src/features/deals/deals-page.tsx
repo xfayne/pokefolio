@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,7 @@ import { z } from 'zod';
 import { dealCards, dealsClient, fetchBatch, gradeSchema, newScan, runScan, type DealCard, type DealItem, type Grade, type ScanState } from './scan';
 import { readExclusions, saveExclusions, selectedIds } from './scope';
 import { compareRecommended, evaluate } from './ranking';
-import { readScanCache, writeScanCache, scanCacheKey } from './cache';
-import { createListingDraft } from './purchase-draft';
-import { useUIStore } from '@/state/ui';
+import { readScanCache, writeScanCache, scanCacheKey, scanClock } from './cache';
 
 const catalog=new Map(catalogCards.map(card=>[card.id,card]));
 const emptyFilters={format:'all',end:'all',shipMax:'all',totalMax:'all',discountMin:'all',condition:'all',grades:[] as Grade[],known:false,review:true,sets:[] as string[],keyword:''};
@@ -112,7 +110,7 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
    return {...c,firstEdition:reference.edition==='first-edition',finish:finish==='holo'||finish==='normal'||finish==='shining'?finish:null} satisfies DealCard;
  });
  const cacheKey=scanCacheKey(owner,reference?'card':'wishlist',cards,postal);
- const [cached]=useState(()=>readScanCache(cacheKey,Date.now()));
+ const [cached]=useState(()=>readScanCache(cacheKey,now));
  const [completedAt,setCompletedAt]=useState(cached?.completedAt??0);
  const [scan,setScan]=useState<ScanState|null>(cached?.scan??null),[busy,setBusy]=useState(false),[failure,setFailure]=useState(false),[limit,setLimit]=useState(40);
  const [overrides,setOverrides]=useState<Record<string,Grade>>(cached?.overrides??{}),[aiGrades,setAiGrades]=useState<Record<string,{grade:Grade;confidence:number}>>(cached?.aiGrades??{}),[details,setDetails]=useState<Record<string,Detail>>(cached?.details??{});
@@ -121,8 +119,6 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
  const active=useRef<AbortController|null>(null),detailRequests=useRef(new Set<AbortController>());
  useEffect(()=>{const requests=detailRequests.current;return()=>{active.current?.abort();for(const controller of requests)controller.abort();};},[]);
  const [stableOrder,setStableOrder]=useState<string[]|null>(null);
- const [draftItem,setDraftItem]=useState<DealItem|null>(null);
- const navigate=useNavigate();
  useEffect(()=>{if(scan&&completedAt&&!busy)writeScanCache(cacheKey,{scan,completedAt,details,overrides,aiGrades});},[cacheKey,scan,completedAt,busy,details,overrides,aiGrades]);
  const cardIndex=new Map((scan?.cards??cards).map(c=>[c.id,c]));
  const priceRefs=(scan?.cards??[]).map(c=>{const ref=reference??catalogMarketReference(c.id);return {card:catalog.get(c.id)!,ref};});
@@ -148,7 +144,7 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
     for(const item of candidates){controller.signal.throwIfAborted();const card=complete.cards.find(c=>c.id===item.cardId);if(!card)continue;
      try{const value=detailSchema.parse((await dealsClient(owner).post('/api/item-condition',{itemId:item.itemId,marketplace:item.marketplace,card,...(postal?{postalCode:postal}:{})},{signal:controller.signal})).data);controller.signal.throwIfAborted();setDetails(v=>({...v,[item.itemId]:value}));}catch{if(controller.signal.aborted)break;}
     }
-    if(!controller.signal.aborted)setCompletedAt(Date.now());
+    if(!controller.signal.aborted)setCompletedAt(scanClock());
    }
   }
   catch{if(!controller.signal.aborted)setFailure(true);}
@@ -197,12 +193,6 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
   return compareRecommended(a.evaluation,b.evaluation)||b.item.matchConfidence-a.item.matchConfidence;
  });
  if(stableOrder){const positions=new Map(stableOrder.map((id,i)=>[id,i]));rows.sort((a,b)=>(positions.get(a.item.itemId)??Infinity)-(positions.get(b.item.itemId)??Infinity)||0);}
- function recordPurchase(item:DealItem,replace=false){
-   const mode='account-'+owner, store=useUIStore.getState(), existing=store.purchaseDrafts[mode];
-   if(!replace&&existing&&(existing.cards.length||existing.seller||existing.listingUrl||existing.trackingNumber||existing.shipping||existing.lotTotal)){setDraftItem(item);return;}
-   const draft=createListingDraft(item,reference??catalogMarketReference(item.cardId));
-   store.setPurchaseDraft(mode,draft);setDraftItem(null);void navigate('/transactions/new');
- }
  const selectFilter=(key:'format'|'end'|'shipMax'|'totalMax'|'discountMin'|'condition',options:string[],label:string)=> <label className="min-w-0 space-y-1 text-xs font-semibold">{t('dealsUi.'+label)}<Select className="w-full text-base" value={filters[key]} onChange={e=>filter(key,e.target.value)}><option value="all">{t('dealsUi.all')}</option>{options.map(value=><option key={value} value={value}>{key==='format'?t(value==='AUCTION'?'dealsUi.auction':'dealsUi.fixed'):key==='shipMax'||key==='totalMax'?money({minor:Number(value)*100,currency:'USD'}):value}</option>)}</Select></label>;
  const canResume=!!scan&&scan.searched<scan.cards.length;
  return <section className="space-y-3" aria-label={t('inventory.findDeals')}>
@@ -231,11 +221,10 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
    {rows.slice(0,limit).map(({item,evaluation:e})=><article key={item.itemId} className="space-y-2 rounded-xl border border-blue-200 bg-white p-2">
     <div className="flex gap-2"><button type="button" className="w-20 shrink-0 self-start rounded-lg bg-blue-50" onClick={()=>setGallery(item)} aria-label={t('dealsUi.photos')}>{item.image?<img src={item.image} loading="lazy" className="h-24 w-full object-contain" alt={item.title}/>:<LuSearch className="m-auto h-24"/>}</button><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-blue-700">{catalog.get(item.cardId)?.name} · {t(item.format==='AUCTION'?'dealsUi.auction':'dealsUi.fixed')}</p><p className="line-clamp-2 break-words text-sm font-bold">{item.title}</p><p className="text-xs text-slate-600">{t(item.verificationStatus==='strong'?'dealsUi.strong':'dealsUi.needsReview')} · {item.sellerName} {item.sellerFeedback!==null?`(${item.sellerFeedback}%)`:''}</p><p className="text-xs text-slate-600">{item.bidCount!==null&&t('dealsUi.countBids',{count:item.bidCount})}{item.bestOffer?' · '+t('dealsUi.offer'):''}{item.endTime?' · '+t('dealsUi.ends')+' '+new Date(item.endTime).toLocaleString(i18n.language):''}</p></div><div className="shrink-0 text-end"><p className="font-bold">{formatted(item.currentBid)}</p><p className="text-xs">{t('dealsUi.ship')} {formatted(item.shipping)}</p>{e.discount!==null&&<p className={`text-sm font-bold ${e.discount>0?'text-emerald-700':'text-red-700'}`}>{e.discount>0?'-':'+'}{Math.round(Math.abs(e.discount)*100)}%</p>}</div></div>
     <div className="grid grid-cols-3 items-center gap-2 border-t border-blue-100 pt-2 text-xs"><label className="min-w-0">{t('dealsUi.grade')}<Select className="w-full text-base" value={e.grade} onChange={ev=>{setStableOrder(rows.map(r=>r.item.itemId));setOverrides(v=>({...v,[item.itemId]:gradeSchema.parse(ev.target.value)}));}}>{gradeSchema.options.map(g=><option key={g}>{g}</option>)}</Select><span>{t('dealsUi.'+(e.source==='unknown'?'sourceUnknown':e.source))}</span></label><div>{t('dealsUi.market')}<p className="font-bold">{amount(e.market)}</p></div><div>{t('dealsUi.total')}<p className="font-bold">{amount(e.allIn)}</p></div></div>
-    <div className="flex gap-2"><Button variant="outline" className="min-w-0 flex-1 px-2" disabled={busy||checking.includes(item.itemId)} onClick={()=>void check(item)}>{t(checking.includes(item.itemId)?'dealsUi.checking':'dealsUi.check')}</Button><Button asChild className="min-w-0 flex-1 px-2"><a href={item.url} target="_blank" rel="noopener noreferrer">{t('dealsUi.open')}</a></Button></div><Button variant="outline" className="w-full" onClick={()=>recordPurchase(item)}>{t('inventory.recordPurchase')}</Button>{checkFailed.includes(item.itemId)&&<p role="alert" className="text-xs">{t('dealsUi.checkFailed')}</p>}
+    <div className="flex gap-2"><Button variant="outline" className="min-w-0 flex-1 px-2" disabled={busy||checking.includes(item.itemId)} onClick={()=>void check(item)}>{t(checking.includes(item.itemId)?'dealsUi.checking':'dealsUi.check')}</Button><Button asChild className="min-w-0 flex-1 px-2"><a href={item.url} target="_blank" rel="noopener noreferrer">{t('dealsUi.open')}</a></Button></div>{checkFailed.includes(item.itemId)&&<p role="alert" className="text-xs">{t('dealsUi.checkFailed')}</p>}
    </article>)}
    {rows.length>limit&&<Button variant="outline" className="w-full" onClick={()=>setLimit(v=>v+40)}>{t('dealsUi.more')}</Button>}
   </>}
-  {draftItem&&<UtilitySheet title={t('inventory.recordPurchase')} onClose={()=>setDraftItem(null)}><div className="space-y-3"><p>{t('dealsUi.existingDraft')}</p><Button className="w-full" onClick={()=>{setDraftItem(null);void navigate('/transactions/new');}}>{t('dealsUi.openDraft')}</Button><Button variant="outline" className="w-full" onClick={()=>recordPurchase(draftItem,true)}>{t('dealsUi.replaceDraft')}</Button></div></UtilitySheet>}
   {picker&&<ScopePicker ids={ids} excluded={excluded} onDone={saveScope} onClose={()=>setPicker(false)}/>}
   {gallery&&<ListingGallery key={gallery.itemId} owner={owner} item={gallery} onClose={()=>setGallery(null)} onGrade={(grade,confidence)=>{setStableOrder(rows.map(r=>r.item.itemId));setAiGrades(v=>({...v,[gallery.itemId]:{grade,confidence}}));}}/>}
  </section>;
