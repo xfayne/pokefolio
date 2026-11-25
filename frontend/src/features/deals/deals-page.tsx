@@ -101,6 +101,8 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
  const [excluded,setExcluded]=useState(()=>stored(owner)),[picker,setPicker]=useState(false),[storageError,setStorageError]=useState(false);
  const [postal,setPostal]=useState(()=>storedPostal(owner));
  const [filters,setFilters]=useState(emptyFilters),[filterOpen,setFilterOpen]=useState(false),[sort,setSort]=useState('recommended');
+ const [now,setNow]=useState(()=>Date.now());
+ useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),60_000);return()=>clearInterval(timer);},[]);
  const [scan,setScan]=useState<ScanState|null>(null),[busy,setBusy]=useState(false),[failure,setFailure]=useState(false),[limit,setLimit]=useState(40);
  const [overrides,setOverrides]=useState<Record<string,Grade>>({}),[aiGrades,setAiGrades]=useState<Record<string,{grade:Grade;confidence:number}>>({}),[details,setDetails]=useState<Record<string,Detail>>({});
  const [checking,setChecking]=useState<string[]>([]),[checkFailed,setCheckFailed]=useState<string[]>([]);
@@ -157,7 +159,7 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
   const grade=overrides[item.itemId]??aiGrades[item.itemId]?.grade??item.conditionGrade??'MP';
   const q=(quoteMap.get(item.cardId)??[]).filter(q=>q.condition===(grade==='DMG'?'DAMAGED':grade));
   const latest=Math.max(...q.map(v=>Date.parse(v.observedAt)));const latestQuotes=q.filter(v=>Date.parse(v.observedAt)===latest);const first=latestQuotes[0]?.money;const market=first&&latestQuotes.every(v=>v.money.minor===first.minor)?(display?display.convert(first.minor,first.currency):first.minor):null;
-  const shipping=convert(item.shipping),evaluation=evaluate(item,market,convert(item.currentBid),shipping,Date.now(),overrides[item.itemId],aiGrades[item.itemId]);
+  const shipping=convert(item.shipping),evaluation=evaluate(item,market,convert(item.currentBid),shipping,now,overrides[item.itemId],aiGrades[item.itemId]);
   return [{item,evaluation,shipping}];
  }).filter(({item,evaluation:e,shipping})=>{
   if(!filters.review&&item.verificationStatus!=='strong')return false;
