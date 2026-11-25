@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { render,screen,within,waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
@@ -5,8 +6,11 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach,expect,it,vi } from 'vitest';
 import '@/lib/i18n';
 import { DealsPage } from './deals-page';
+import { CollectionCards } from '@/features/inventory/collection-cards';
+import { createSampleCopies, sampleCatalog, sampleOwner, sampleQuotes } from '@/features/inventory/sample';
 import { fetchBatch } from './scan';
 const mock=vi.hoisted(()=>({owner:'owner-a',ids:['neo2-13','base3-5','basep-9']}));
+vi.mock('@/hooks/use-auth',()=>({useAuth:()=>({status:'authenticated',user:{uid:'owner-a'}})}));
 vi.mock('@/features/wishlist/use-wishlist',()=>({useWishlist:()=>({owner:mock.owner,wishlist:{cardIds:mock.ids},loading:false,error:null})}));
 vi.mock('@/services/environment',()=>({getEnvironment:()=>({workerUrl:'https://pokefolio-api-staging.xfayne.workers.dev'}),STAGING_API:'https://pokefolio-api-staging.xfayne.workers.dev'}));
 vi.mock('./scan',async original=>({...await original<typeof import('./scan')>(),fetchBatch:vi.fn()}));
@@ -66,4 +70,26 @@ it('retains comparison controls and eBay actions in the polished listing',async(
  await user.selectOptions(grade,'HP');
  expect(grade).toHaveValue('HP');
  expect(within(listing).getByText('Manual')).toBeInTheDocument();
+});
+
+
+it('opens deals inside the same card details sheet and scans once per explicit entry',async()=>{
+ const user=userEvent.setup(),client=new QueryClient({defaultOptions:{queries:{retry:false}}});
+ render(<StrictMode><MemoryRouter><QueryClientProvider client={client}><CollectionCards data={{ownerUid:sampleOwner,copies:createSampleCopies(),catalog:sampleCatalog,quotes:sampleQuotes,currency:'USD'}} onSave={vi.fn()} onViewPurchase={vi.fn()}/></QueryClientProvider></MemoryRouter></StrictMode>);
+ await user.click(screen.getByRole('button',{name:/^Card details: Charizard/}));
+ const dialog=screen.getByRole('dialog',{name:'Card details'});
+ const header=within(dialog).getByRole('heading',{name:'Card details'});
+ expect(fetchBatch).not.toHaveBeenCalled();
+ await user.click(within(dialog).getByRole('button',{name:'Find deals'}));
+ await waitFor(()=>expect(fetchBatch).toHaveBeenCalledTimes(1));
+ expect(screen.getByRole('dialog',{name:'Card details'})).toBe(dialog);
+ expect(within(dialog).getByRole('heading',{name:'Card details'})).toBe(header);
+ expect(vi.mocked(fetchBatch).mock.calls[0]?.[1]).toEqual([expect.objectContaining({name:'Charizard'})]);
+ await waitFor(()=>expect(within(dialog).getByRole('button',{name:'Scan again'})).toBeEnabled());
+ await user.click(within(dialog).getByRole('button',{name:'Back to card'}));
+ expect(within(dialog).getByRole('button',{name:'Enlarge card image'})).toBeInTheDocument();
+ expect(fetchBatch).toHaveBeenCalledTimes(1);
+ await user.click(within(dialog).getByRole('button',{name:'Find deals'}));
+ await waitFor(()=>expect(fetchBatch).toHaveBeenCalledTimes(2));
+ await waitFor(()=>expect(within(dialog).getByRole('button',{name:'Scan again'})).toBeEnabled());
 });
