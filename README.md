@@ -260,7 +260,8 @@ Compact card rows omit per-card copy-count badges and round displayed monetary v
 
 ## Deals discovery (#15)
 
-Wishlist → Deals and the Card Details Find deals action use explicit eBay search,
-owner-specific browser exclusions, progressive four-card batches and condition-specific
+Wishlist → Deals uses manual eBay search with owner-specific browser exclusions.
+Card Details → Find deals keeps the card header and starts a fresh single-card scan
+immediately on the explicit tap. Both reuse progressive four-card batches and condition-specific
 comparison. Existing staging Worker routes are reused. See [Deals contracts](docs/DEALS_MIGRATION.md)
 for behavior and remaining roadmap acceptance; no legacy data or Worker changes.
