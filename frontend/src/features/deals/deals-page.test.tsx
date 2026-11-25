@@ -17,6 +17,7 @@ it('does not scan on open, persists exclusions on reload, and searches only sele
  const user=userEvent.setup(),view=mount();
  expect(fetchBatch).not.toHaveBeenCalled();
  expect(screen.getByText('3 of 3 cards selected')).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Select cards'}).parentElement).toBe(screen.getByRole('button',{name:'Find deals'}).parentElement);
  await user.click(screen.getByRole('button',{name:'Select cards'}));
  const dialog=screen.getByRole('dialog',{name:'Select cards'});
  await user.click(within(dialog).getByRole('checkbox',{name:/Gengar/}));
