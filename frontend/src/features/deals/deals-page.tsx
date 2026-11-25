@@ -224,7 +224,7 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
       {item.image?<img src={item.image} loading="lazy" className="h-full w-full object-contain" alt={item.title}/>:<LuSearch className="m-auto h-full w-6"/>}
      </button>
      <div className="min-w-0 space-y-1">
-      <p className="w-fit max-w-full rounded-lg bg-blue-50 px-1.5 py-0.5 text-xs font-bold leading-tight text-blue-700 [overflow-wrap:anywhere]">{catalog.get(item.cardId)?.name} · {t(item.format==='AUCTION'?'dealsUi.auction':'dealsUi.fixed')}</p>
+      <p className="w-fit max-w-full rounded-lg bg-blue-50 px-1.5 py-0.5 text-xs font-bold leading-tight text-blue-700 [overflow-wrap:anywhere]">{t(item.format==='AUCTION'?'dealsUi.auction':'dealsUi.fixed')}</p>
       <p className="line-clamp-2 break-words text-sm font-bold leading-tight">{item.title}</p>
       <p className="text-xs leading-snug text-slate-600 [overflow-wrap:anywhere]">{t(item.verificationStatus==='strong'?'dealsUi.strong':'dealsUi.needsReview')} · {item.sellerName} {item.sellerFeedback!==null?`(${item.sellerFeedback}%)`:''}</p>
       {(item.bidCount!==null||item.bestOffer||item.endTime)&&<p className="text-xs leading-snug text-slate-600 [overflow-wrap:anywhere]">{item.bidCount!==null&&t('dealsUi.countBids',{count:item.bidCount})}{item.bestOffer?' · '+t('dealsUi.offer'):''}{item.endTime?' · '+t('dealsUi.ends')+' '+new Date(item.endTime).toLocaleString(i18n.language):''}</p>}
