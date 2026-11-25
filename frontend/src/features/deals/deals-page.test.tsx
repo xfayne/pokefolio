@@ -36,16 +36,22 @@ it('does not scan on open, persists exclusions on reload, and searches only sele
 it('retains comparison controls and eBay actions in the polished listing',async()=>{
  const user=userEvent.setup();
  const url='https://www.ebay.com/itm/123456789';
- vi.mocked(fetchBatch).mockResolvedValue({items:[{cardId:'base3-5',itemId:'v1|123456789|0',title:'Gengar Fossil 5/62',url,image:null,currentBid:{value:20,currency:'USD'},shipping:{value:5,currency:'USD'},bidCount:null,endTime:null,sellerFeedback:100,sellerName:'seller',condition:'LP',conditionGrade:'LP',conditionSource:'seller',conditionLabel:'LP',format:'FIXED_PRICE',bestOffer:false,marketplace:'EBAY_US',matchConfidence:95,warnings:[],verificationStatus:'strong',verificationReasons:[]}],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});
+ const endTime=new Date(Date.now()+5*3600000+27*60000).toISOString();
+ vi.mocked(fetchBatch).mockResolvedValue({items:[{cardId:'base3-5',itemId:'v1|123456789|0',title:'Gengar Fossil 5/62',url,image:null,currentBid:{value:20,currency:'USD'},shipping:{value:5,currency:'USD'},bidCount:null,endTime:null,sellerFeedback:100,sellerName:'seller',condition:'LP',conditionGrade:'LP',conditionSource:'seller',conditionLabel:'LP',format:'FIXED_PRICE',bestOffer:false,marketplace:'EBAY_US',matchConfidence:95,warnings:[],verificationStatus:'strong',verificationReasons:[]},{cardId:'base3-5',itemId:'v1|123456790|0',title:'Gengar auction',url,image:null,currentBid:{value:20,currency:'USD'},shipping:{value:5,currency:'USD'},bidCount:11,endTime,sellerFeedback:100,sellerName:'seller',condition:'LP',conditionGrade:'LP',conditionSource:'seller',conditionLabel:'LP',format:'AUCTION',bestOffer:false,marketplace:'EBAY_US',matchConfidence:95,warnings:[],verificationStatus:'strong',verificationReasons:[]}],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});
  mount();
  await user.click(screen.getByRole('button',{name:'Find deals'}));
- const listing=await screen.findByRole('article');
+ const listings=await screen.findAllByRole('article');
+ const listing=listings.find(row=>within(row).queryByText('Buy It Now',{exact:true}))!;
+ const auction=listings.find(row=>within(row).queryByText('Auction',{exact:true}))!;
+ expect(within(auction).getByText(/^Ends in 5h 2[67]m$/)).toBeInTheDocument();
+ expect(within(auction).queryByText(/11 bids/)).not.toBeInTheDocument();
  expect(within(listing).getByText('Gengar Fossil 5/62')).toBeInTheDocument();
  expect(within(listing).getByText('Buy It Now',{exact:true})).toBeInTheDocument();
+ expect(within(listing).getByText('Strong match',{exact:true})).toBeInTheDocument();
  expect(within(listing).getByRole('button',{name:'Listing photos'})).toBeEnabled();
  await waitFor(()=>expect(within(listing).getByRole('button',{name:'Check seller details'})).toBeEnabled());
  expect(within(listing).getByRole('link',{name:'Open on eBay'})).toHaveAttribute('href',url);
- const grade=within(listing).getByRole('combobox',{name:/Comparison condition/});
+ const grade=within(listing).getByRole('combobox',{name:/Condition/});
  expect(grade).toHaveValue('LP');
  await user.selectOptions(grade,'HP');
  expect(grade).toHaveValue('HP');

@@ -16,3 +16,5 @@ Remaining verification: full visual and authenticated staging acceptance.  No re
 ## Results visual polish (2026-11-25)
 
 The owner-approved visual refresh applies to shared Wishlist and single-card listing results: rounded white cards, restrained shadows, aligned price/condition/market/total regions, signed comparison pills and an external-link icon. Only the Find deals utility sheet receives the lighter centered header; other sheets retain their existing styling. The comparison source remains visible. All existing controls, translations, scan and comparison logic are retained.
+
+The owner approved a denser HTML/CSS mock: listing type and match status are compact tags, seller metadata is one line, auction times count down on the existing minute clock, and bid count is omitted from the card (bid-based sorting is retained). Three comparison columns are equal-width and listing actions use compact 34px minimum heights. The source of the comparison grade remains visible and input text remains 16px to avoid mobile focus zoom. No evaluation or request behavior changes.
