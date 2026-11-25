@@ -12,3 +12,7 @@ Owner approved manual Find deals and Wishlist scope picker on 2026-11-25. The ex
 Completed scans are cached in memory for 30 minutes by owner, scope, exact printing and postal code; revisiting never starts a scan. Manual comparison-grade changes retain result positions until a new sort/filter/run. Multiple condition selection is local. Purchase draft handoff is explicitly deferred by the owner (2026-11-25); no transaction UI or data changes are included.
 
 Remaining verification: full visual and authenticated staging acceptance.  No release is claimed until the current PR checks and staging deployment pass.
+
+## Results visual polish (2026-11-25)
+
+The owner-approved visual refresh applies to shared Wishlist and single-card listing results: rounded white cards, restrained shadows, aligned price/condition/market/total regions, signed comparison pills and an external-link icon. Only the Find deals utility sheet receives the lighter centered header; other sheets retain their existing styling. The comparison source remains visible. All existing controls, translations, scan and comparison logic are retained.
