@@ -69,7 +69,7 @@ it('retains comparison controls and eBay actions in the polished listing',async(
  expect(grade).toHaveValue('LP');
  await user.selectOptions(grade,'HP');
  expect(grade).toHaveValue('HP');
- expect(within(listing).getByText('Manual')).toBeInTheDocument();
+ expect(within(listing).getByText('(Manual)')).toBeInTheDocument();
 });
 
 
