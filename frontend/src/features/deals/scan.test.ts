@@ -30,7 +30,7 @@ describe('explicit batch scan',()=>{
 });
 
  it('distinguishes rejected listing data from marketplace failures without retaining raw values',()=>{
-  const result=parseBatch({items:[{url:'https://untrusted.example/itm/123'}],errors:[{cardId:cards[0].id,error:'HTTP 503'}],fetchedAt:empty.fetchedAt},cards);
+  const result=parseBatch({items:[{url:'https://untrusted.example/itm/123'}],errors:[{cardId:cards[0]!.id,error:'HTTP 503'}],fetchedAt:empty.fetchedAt},cards);
   expect(result.items).toEqual([]);
   expect(result.errors[0]).toEqual({cardId:cards[0].id,error:'HTTP 503'});
   expect(result.errors[1]).toMatchObject({error:'Invalid listing response',invalidFields:expect.arrayContaining(['url','itemId'])});
