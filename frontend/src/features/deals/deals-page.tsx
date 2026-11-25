@@ -196,15 +196,20 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
  const selectFilter=(key:'format'|'end'|'shipMax'|'totalMax'|'discountMin'|'condition',options:string[],label:string)=> <label className="min-w-0 space-y-1 text-xs font-semibold">{t('dealsUi.'+label)}<Select className="w-full text-base" value={filters[key]} onChange={e=>filter(key,e.target.value)}><option value="all">{t('dealsUi.all')}</option>{options.map(value=><option key={value} value={value}>{key==='format'?t(value==='AUCTION'?'dealsUi.auction':'dealsUi.fixed'):key==='shipMax'||key==='totalMax'?money({minor:Number(value)*100,currency:'USD'}):value}</option>)}</Select></label>;
  const canResume=!!scan&&scan.searched<scan.cards.length;
  const scanComplete=!!scan&&!busy&&!canResume&&!scan.throttled&&!failure&&completedAt>0&&scan.errors.length===0;
+ const invalidListings=scan?.errors.filter(error=>error.invalidFields!==undefined)??[];
+ const marketplaceFailures=(scan?.errors.length??0)-invalidListings.length;
+ const invalidFields=[...new Set(invalidListings.flatMap(error=>error.invalidFields??[]))].join(', ');
  const compactAction='min-h-[34px] min-w-0 rounded-lg px-3 py-1 text-xs font-bold leading-tight';
  const scanButton=<Button className={compactAction+' shrink-0 gap-1.5'} disabled={busy||!cards.length||!postalValid||unavailable} onClick={()=>void start()}><LuSearch aria-hidden className="size-3.5 shrink-0"/>{t(scan?'dealsUi.again':'dealsUi.find')}</Button>;
  return <section className="min-w-0 space-y-2" aria-label={t('inventory.findDeals')}>
   <div className="space-y-2 rounded-2xl border border-blue-100 bg-white p-2.5 shadow-[0_3px_10px_#174b9310]">
    <div className="flex items-center justify-between gap-2">
     <div className="min-w-0 flex-1"><p className="break-words text-base font-bold leading-tight">{reference?cards[0]?.name:t('dealsUi.scope')}</p><p className="mt-0.5 text-xs leading-tight text-slate-600">{reference?cards[0]?.setName:t('dealsUi.selected',{count:cards.length,total:ids.length})}</p></div>
-    {reference?scanButton:<Button variant="outline" className={compactAction+' shrink-0 gap-1.5'} disabled={busy} onClick={()=>setPicker(true)}><LuListFilter aria-hidden className="size-3.5 shrink-0"/>{t('dealsUi.select')}</Button>}
+    <div className="flex shrink-0 items-center gap-1.5">
+     {!reference&&<Button variant="outline" className="size-[34px] min-h-[34px] shrink-0 rounded-lg p-0" disabled={busy} onClick={()=>setPicker(true)} aria-label={t('dealsUi.select')} title={t('dealsUi.select')}><LuListFilter aria-hidden className="size-4 shrink-0"/></Button>}
+     {scanButton}
+    </div>
    </div>
-   {!reference&&<div className="flex justify-end">{scanButton}</div>}
    {unavailable&&<p role="alert" className="text-xs">{t('dealsUi.notConfigured')}</p>}
    {storageError&&<p role="alert" className="text-xs">{t('dealsUi.storage')}</p>}
    {scan&&<div className="space-y-2 border-t border-slate-200 pt-2">
@@ -215,7 +220,8 @@ function DealsPanel({owner,ids,reference}:{owner:string;ids:readonly string[];re
     </div>
     {completedAt>0&&now-completedAt>30*60_000&&<p className="text-xs text-slate-600">{t('dealsUi.stale')}</p>}
     {(busy||canResume)&&<Button variant="outline" className={compactAction} onClick={()=>busy?pause():void start(true)}>{t(busy?'dealsUi.pause':'dealsUi.resume')}</Button>}
-    {scan.errors.length>0&&<p role="status" className="text-xs">{t('dealsUi.partial',{count:scan.errors.length})}</p>}
+    {marketplaceFailures>0&&<p role="status" className="text-xs">{t('dealsUi.partial',{count:marketplaceFailures})}</p>}
+    {invalidListings.length>0&&<p role="status" className="break-words text-xs">{t('dealsUi.invalidListings',{count:invalidListings.length})}{invalidFields&&<> · <bdi>{invalidFields}</bdi></>}</p>}
     {scan.throttled&&<p role="alert" className="text-xs">{t('dealsUi.rate')}</p>}
     {failure&&<p role="alert" className="text-xs">{t('dealsUi.failed')}</p>}
    </div>}
