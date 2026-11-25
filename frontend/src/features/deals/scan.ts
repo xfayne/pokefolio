@@ -33,15 +33,19 @@ export function dealCards(ids: readonly string[]): DealCard[] {
   });
 }
 const batchSchema = z.object({items:z.array(z.unknown()),errors:z.array(z.object({cardId:z.string(),error:z.string()})),fetchedAt:z.string()});
-export type Batch = {items:DealItem[];errors:{cardId:string;error:string}[];fetchedAt:string};
+export type Batch = {items:DealItem[];errors:{cardId:string;error:string;invalidFields?:string[]}[];fetchedAt:string};
 export type ScanState = {cards:readonly DealCard[];searched:number;items:DealItem[];errors:Batch['errors'];fetchedAt:string|null;throttled:boolean};
 export const newScan = (cards:readonly DealCard[]):ScanState => ({cards:[...cards],searched:0,items:[],errors:[],fetchedAt:null,throttled:false});
 export function parseBatch(raw:unknown, cards:readonly DealCard[]):Batch {
   const data=batchSchema.parse(raw), ids=new Set(cards.map(c=>c.id));
-  const items:DealItem[]=[], errors=[...data.errors];
+  const items:DealItem[]=[], errors:Batch['errors']=[...data.errors];
   for(const value of data.items){
     const parsed=itemSchema.safeParse(value);
-    if(!parsed.success){errors.push({cardId:'',error:'Invalid listing response'});continue;}
+    if(!parsed.success){
+      const invalidFields=[...new Set(parsed.error.issues.map(issue=>String(issue.path[0]??'listing')))];
+      errors.push({cardId:'',error:'Invalid listing response',invalidFields});
+      continue;
+    }
     if(!ids.has(parsed.data.cardId))continue;
     const title=parsed.data.title;
     if (/\bart[\s_-]*cases?\b|\b(?:japanese|japanisch\w*|jpn|jap|japonais\w*|japon[eé]s\w*|japan\s+(?:edition|version|print|language|import|card))\b/i.test(title)||/[\u3040-\u30ff\u3400-\u9fff]/u.test(title))continue;
