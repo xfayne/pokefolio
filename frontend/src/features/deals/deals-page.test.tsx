@@ -32,3 +32,21 @@ it('does not scan on open, persists exclusions on reload, and searches only sele
  await screen.findByText('No matching listings');
  await waitFor(()=>expect(screen.getByRole('button',{name:'Scan again'})).toBeEnabled());
 });
+
+it('retains comparison controls and eBay actions in the polished listing',async()=>{
+ const user=userEvent.setup();
+ const url='https://www.ebay.com/itm/123456789';
+ vi.mocked(fetchBatch).mockResolvedValue({items:[{cardId:'base3-5',itemId:'v1|123456789|0',title:'Gengar Fossil 5/62',url,image:null,currentBid:{value:20,currency:'USD'},shipping:{value:5,currency:'USD'},bidCount:null,endTime:null,sellerFeedback:100,sellerName:'seller',condition:'LP',conditionGrade:'LP',conditionSource:'seller',conditionLabel:'LP',format:'FIXED_PRICE',bestOffer:false,marketplace:'EBAY_US',matchConfidence:95,warnings:[],verificationStatus:'strong',verificationReasons:[]}],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});
+ mount();
+ await user.click(screen.getByRole('button',{name:'Find deals'}));
+ const listing=await screen.findByRole('article');
+ expect(within(listing).getByText('Gengar Fossil 5/62')).toBeInTheDocument();
+ expect(within(listing).getByRole('button',{name:'Listing photos'})).toBeEnabled();
+ await waitFor(()=>expect(within(listing).getByRole('button',{name:'Check seller details'})).toBeEnabled());
+ expect(within(listing).getByRole('link',{name:'Open on eBay'})).toHaveAttribute('href',url);
+ const grade=within(listing).getByRole('combobox',{name:/Comparison condition/});
+ expect(grade).toHaveValue('LP');
+ await user.selectOptions(grade,'HP');
+ expect(grade).toHaveValue('HP');
+ expect(within(listing).getByText('Manual')).toBeInTheDocument();
+});
