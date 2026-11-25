@@ -12,16 +12,16 @@ import './analyze.css';
 
 type Photo={url:string;blob?:Blob;slot:'front'|'back'|'closeup'|'listing'};
 type Task='idle'|'preparing'|'loading'|'busy'|'saving';
-export function AnalyzePage() {
+export function AnalyzePage({initialListingUrl=''}:{initialListingUrl?:string} = {}) {
   const auth=useAuth();
   // Changing accounts discards private in-memory photos/results immediately.
-  return <Analyzer key={auth.user?.uid ?? 'signed-out'} owner={auth.user?.uid ?? null} />;
+  return <Analyzer key={JSON.stringify([auth.user?.uid ?? null,initialListingUrl])} owner={auth.user?.uid ?? null} initialListingUrl={initialListingUrl} />;
 }
-function Analyzer({owner}:{owner:string|null}) {
+function Analyzer({owner,initialListingUrl}:{owner:string|null;initialListingUrl:string}) {
   const {t}=useTranslation(); const a=(key:string,options:Record<string,unknown>={})=>t(`analyzer.${key}`,options);
-  const [mode,setMode]=useState<'photos'|'ebay'>('photos');
+  const [mode,setMode]=useState<'photos'|'ebay'>(initialListingUrl?'ebay':'photos');
   const [photos,setPhotos]=useState<Photo[]>([]);const photosRef=useRef<Photo[]>([]);
-  const [listing,setListing]=useState<Listing|null>(null);const [url,setUrl]=useState('');
+  const [listing,setListing]=useState<Listing|null>(null);const [url,setUrl]=useState(initialListingUrl);
   const [result,setResult]=useState<AnalysisResult|null>(null);const [cached,setCached]=useState(false);
   const [task,setTask]=useState<Task>('idle');const [error,setError]=useState('');const [saveFailed,setSaveFailed]=useState(false);
   const [zoom,setZoom]=useState<number|null>(null);const [highlight,setHighlight]=useState<number|null>(null);

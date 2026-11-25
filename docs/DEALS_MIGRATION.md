@@ -24,3 +24,12 @@ The owner-approved compact search panel places the single-card scan action besid
 The Wishlist scope actions share one row, with an accessible icon-only Select cards button next to Find deals. Client-side listing validation failures are counted separately from marketplace request failures; only schema field names (not listing values) are surfaced for diagnostics. Existing validation and scan behavior are unchanged.
 
 The condition source now appears in parentheses alongside the Condition label instead of below the selector, in both Deals views. Source semantics and grade selection are unchanged.
+
+## Analyzer handoff (2026-11-25)
+
+Listing actions share one row: unchanged seller-detail check, Analyze link and
+icon-only accessible eBay link. Analyze opens the existing Analyzer in eBay mode
+with the listing URL prefilled; loading photos and AI analysis remain explicit.
+The listing gallery shows larger photos and photo navigation only; it no longer
+runs or loads AI analyses. The deal ranking, seller checks and scan policy are
+unchanged; Analyzer results are not automatically fed back into deal ranking.

@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { LuSearch, LuSlidersHorizontal, LuListFilter, LuChevronLeft, LuChevronRight, LuExternalLink, LuClock, LuCircleCheck } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import { catalogIdentity } from '@/domain/inventory';
 import { currencySchema, type CatalogRef } from '@/domain/schema';
 import { useDisplayCurrency, useDisplayMoney } from '@/services/display-currency';
 import { getEnvironment } from '@/services/environment';
-import { readAnalysis, runAnalysis, saveAnalysis, type AnalysisResult, type Source } from '@/features/analyze/analysis-service';
 import { z } from 'zod';
 import { dealCards, dealsClient, fetchBatch, gradeSchema, newScan, runScan, type DealCard, type DealItem, type Grade, type ScanState } from './scan';
 import { readExclusions, saveExclusions, selectedIds } from './scope';
@@ -61,39 +60,19 @@ export function SingleCardDeals({cardId,reference}:{cardId:string;reference:Cata
 const detailSchema=z.object({grade:gradeSchema.nullable(),source:z.enum(['seller','unknown']),label:z.string().nullable(),verificationStatus:z.enum(['strong','review','rejected','unknown']),verificationReasons:z.array(z.string()),matchConfidence:z.number()});
 type Detail=z.infer<typeof detailSchema>;
 const imageSchema=z.object({images:z.array(z.string().url().refine(v=>{const u=new URL(v);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&u.hostname==='i.ebayimg.com';})).max(25)});
-function ListingGallery({owner,item,onClose,onGrade}:{owner:string;item:DealItem;onClose:()=>void;onGrade:(grade:Grade,confidence:number)=>void}){
+function ListingGallery({owner,item,onClose}:{owner:string;item:DealItem;onClose:()=>void}){
  const {t}=useTranslation();
  const [index,setIndex]=useState(0);
- const source:Source={type:'ebay-listing',marketplace:item.marketplace,itemId:item.itemId};
  const key=['deals-images',owner,item.marketplace,item.itemId];
  const photos=useQuery({queryKey:key,queryFn:async({signal})=>imageSchema.parse((await dealsClient(owner).post('/api/item-images',{itemId:item.itemId,marketplace:item.marketplace},{signal})).data).images,staleTime:30*60_000,retry:false});
- const saved=useQuery({queryKey:['deals-analysis',owner,item.marketplace,item.itemId],queryFn:()=>readAnalysis(owner,source),retry:false,staleTime:60_000});
- const [result,setResult]=useState<AnalysisResult|null>(null);
- const [busy,setBusy]=useState(false);
- const [error,setError]=useState('');
- const request=useRef<AbortController|null>(null);
  const touch=useRef<number|null>(null);
- useEffect(()=>()=>request.current?.abort(),[]);
  const images=photos.data??(item.image?[item.image]:[]);
- const analysis=result??saved.data;
  const step=(direction:number)=>setIndex(v=>(v+direction+images.length)%Math.max(1,images.length));
- async function analyze(){
-  if(request.current)return;
-  const abort=new AbortController();request.current=abort;setBusy(true);setError('');
-  try{const value=await runAnalysis(owner,source,abort.signal);if(abort.signal.aborted)return;setResult(value);onGrade(value.analysis.grade,value.analysis.confidencePercent);
-   try{await saveAnalysis(owner,source,value);}catch{if(!abort.signal.aborted)setError(t('dealsUi.analysisSaveFailed'));}
-  }catch{if(!abort.signal.aborted)setError(t('dealsUi.analyzeFailed'));}
-  finally{if(!abort.signal.aborted){request.current=null;setBusy(false);}}
- }
  return <UtilitySheet title={t('dealsUi.photos')} onClose={onClose}><div className="space-y-3" onKeyDown={e=>{if(e.key==='ArrowLeft')step(-1);if(e.key==='ArrowRight')step(1);}}>
   <p className="text-sm font-bold">{item.title}</p>
-  {images[index]&&<div className="relative flex min-h-56 items-center justify-center bg-white" onTouchStart={e=>{touch.current=e.touches[0]?.clientX??null;}} onTouchEnd={e=>{const x=e.changedTouches[0]?.clientX;if(x!==undefined&&touch.current!==null&&Math.abs(x-touch.current)>35)step(x<touch.current?1:-1);touch.current=null;}}><img className="max-h-[48dvh] max-w-full object-contain" src={images[index]} alt={item.title}/>{images.length>1&&<><button className="absolute start-1 rounded-full bg-white p-2" aria-label={t('dealsUi.prev')} onClick={()=>step(-1)}><LuChevronLeft/></button><button className="absolute end-1 rounded-full bg-white p-2" aria-label={t('dealsUi.next')} onClick={()=>step(1)}><LuChevronRight/></button></>}</div>}
+  {images[index]&&<div className="relative flex min-h-56 items-center justify-center bg-white" onTouchStart={e=>{touch.current=e.touches[0]?.clientX??null;}} onTouchEnd={e=>{const x=e.changedTouches[0]?.clientX;if(x!==undefined&&touch.current!==null&&Math.abs(x-touch.current)>35)step(x<touch.current?1:-1);touch.current=null;}}><img className="max-h-[70dvh] max-w-full object-contain" src={images[index]} alt={item.title}/>{images.length>1&&<><button className="absolute start-1 rounded-full bg-white p-2" aria-label={t('dealsUi.prev')} onClick={()=>step(-1)}><LuChevronLeft/></button><button className="absolute end-1 rounded-full bg-white p-2" aria-label={t('dealsUi.next')} onClick={()=>step(1)}><LuChevronRight/></button></>}</div>}
   {photos.isPending&&<p role="status">{t('loading')}</p>}{photos.isError&&<p role="alert">{t('dealsUi.photoFailed')}</p>}
   <div className="flex gap-1 overflow-x-auto">{images.map((image,i)=><button key={image} className={`shrink-0 rounded border p-1 ${index===i?'border-blue-600':'border-blue-100'}`} aria-label={`${t('dealsUi.photos')} ${i+1}`} onClick={()=>setIndex(i)}><img src={image} loading="lazy" className="size-14 object-contain" alt=""/></button>)}</div>
-  <Button className="w-full" disabled={busy} onClick={()=>void analyze()}>{t(busy?'dealsUi.analyzing':analysis?'dealsUi.analyzeAgain':'dealsUi.analyze')}</Button>
-  {analysis&&<div className="rounded-xl border border-blue-200 bg-white p-3">{!result&&<p className="text-xs text-slate-600">{t('dealsUi.cachedAnalysis')}</p>}<p className="font-bold">{t('dealsUi.analysis')} · {analysis.analysis.grade} · {analysis.analysis.confidencePercent}%</p>{analysis.analysis.observations.map((o,i)=><p key={i} className="text-sm">{o.finding}</p>)}{analysis.analysis.limitations.map((o,i)=><p key={i} className="text-xs text-slate-600">{o}</p>)}</div>}
-  {error&&<p role="alert">{error}</p>}
-  <Button asChild variant="outline" className="w-full"><a href={item.url} target="_blank" rel="noopener noreferrer">{t('dealsUi.open')}</a></Button>
  </div></UtilitySheet>;
 }
 function DealsPanel({owner,ids,reference,autoStart=false}:{owner:string;ids:readonly string[];reference?:CatalogRef;autoStart?:boolean}){
@@ -277,15 +256,16 @@ function DealsPanel({owner,ids,reference,autoStart=false}:{owner:string;ids:read
       <div className="min-w-0 border-s border-slate-200 ps-2 text-slate-600">{t('dealsUi.market')}<p className="text-base font-bold leading-tight text-slate-950 tabular-nums [overflow-wrap:anywhere]">{amount(e.market)}</p></div>
       <div className="min-w-0 border-s border-slate-200 ps-2 text-slate-600">{t('dealsUi.total')}<p className="text-base font-bold leading-tight text-slate-950 tabular-nums [overflow-wrap:anywhere]">{amount(e.allIn)}</p></div>
      </div>
-     <div className="grid grid-cols-2 gap-2">
+     <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
       <Button variant="outline" className="min-h-[34px] min-w-0 rounded-lg border-blue-300 bg-white px-1.5 py-1 text-center text-xs font-bold leading-tight text-blue-950" disabled={busy||checking.includes(item.itemId)} onClick={()=>void check(item)}>{t(checking.includes(item.itemId)?'dealsUi.checking':'dealsUi.check')}</Button>
-      <Button asChild className="min-h-[34px] min-w-0 gap-1 rounded-lg px-1.5 py-1 text-center text-xs font-bold leading-tight"><a href={item.url} target="_blank" rel="noopener noreferrer"><LuExternalLink aria-hidden className="size-3.5 shrink-0"/>{t('dealsUi.open')}</a></Button>
+      <Button asChild variant="outline" className="min-h-[34px] min-w-0 rounded-lg border-blue-300 bg-white px-1.5 py-1 text-center text-xs font-bold leading-tight text-blue-950"><Link to={{pathname:'/analyze',search:new URLSearchParams({listing:item.url}).toString()}}>{t('dealsUi.analyzeLink')}</Link></Button>
+      <Button asChild className="size-[34px] min-h-[34px] shrink-0 rounded-lg p-0"><a href={item.url} target="_blank" rel="noopener noreferrer" aria-label={t('dealsUi.open')} title={t('dealsUi.open')}><LuExternalLink aria-hidden className="size-4 shrink-0"/></a></Button>
      </div>{checkFailed.includes(item.itemId)&&<p role="alert" className="text-xs">{t('dealsUi.checkFailed')}</p>}
     </article>;
    })}
    {rows.length>limit&&<Button variant="outline" className="w-full" onClick={()=>setLimit(v=>v+40)}>{t('dealsUi.more')}</Button>}
   </>}
   {picker&&<ScopePicker ids={ids} excluded={excluded} onDone={saveScope} onClose={()=>setPicker(false)}/>}
-  {gallery&&<ListingGallery key={gallery.itemId} owner={owner} item={gallery} onClose={()=>setGallery(null)} onGrade={(grade,confidence)=>{setStableOrder(rows.map(r=>r.item.itemId));setAiGrades(v=>({...v,[gallery.itemId]:{grade,confidence}}));}}/>}
+  {gallery&&<ListingGallery key={gallery.itemId} owner={owner} item={gallery} onClose={()=>setGallery(null)}/>}
  </section>;
 }

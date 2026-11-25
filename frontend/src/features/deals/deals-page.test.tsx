@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { render,screen,within,waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach,expect,it,vi } from 'vitest';
 import '@/lib/i18n';
 import { DealsPage } from './deals-page';
@@ -13,10 +13,11 @@ const mock=vi.hoisted(()=>({owner:'owner-a',ids:['neo2-13','base3-5','basep-9']}
 vi.mock('@/hooks/use-auth',()=>({useAuth:()=>({status:'authenticated',user:{uid:'owner-a'}})}));
 vi.mock('@/features/wishlist/use-wishlist',()=>({useWishlist:()=>({owner:mock.owner,wishlist:{cardIds:mock.ids},loading:false,error:null})}));
 vi.mock('@/services/environment',()=>({getEnvironment:()=>({workerUrl:'https://pokefolio-api-staging.xfayne.workers.dev'}),STAGING_API:'https://pokefolio-api-staging.xfayne.workers.dev'}));
-vi.mock('./scan',async original=>({...await original<typeof import('./scan')>(),fetchBatch:vi.fn()}));
+vi.mock('./scan',async original=>({...await original<typeof import('./scan')>(),fetchBatch:vi.fn(),dealsClient:vi.fn(()=>({post:vi.fn(async()=>({data:{images:['https://i.ebayimg.com/images/test.jpg']}}))}))}));
 vi.mock('@/features/catalog/market-prices',()=>({fetchMarketQuotes:vi.fn(async()=>[])}));
 beforeEach(()=>{localStorage.clear();vi.clearAllMocks();mock.owner='owner-a';mock.ids=['neo2-13','base3-5','basep-9'];vi.mocked(fetchBatch).mockResolvedValue({items:[],errors:[],fetchedAt:'2026-11-25T00:00:00Z'});});
-function mount(){const client=new QueryClient({defaultOptions:{queries:{retry:false}}});return render(<MemoryRouter><QueryClientProvider client={client}><DealsPage/></QueryClientProvider></MemoryRouter>);}
+function AnalyzerDestination(){const location=useLocation();return <p>{new URLSearchParams(location.search).get('listing')}</p>;}
+function mount(){const client=new QueryClient({defaultOptions:{queries:{retry:false}}});return render(<MemoryRouter><QueryClientProvider client={client}><Routes><Route path="/" element={<DealsPage/>}/><Route path="/analyze" element={<AnalyzerDestination/>}/></Routes></QueryClientProvider></MemoryRouter>);}
 it('does not scan on open, persists exclusions on reload, and searches only selected cards',async()=>{
  const user=userEvent.setup(),view=mount();
  expect(fetchBatch).not.toHaveBeenCalled();
@@ -64,12 +65,24 @@ it('retains comparison controls and eBay actions in the polished listing',async(
  expect(within(listing).getByText('Strong match',{exact:true})).toBeInTheDocument();
  expect(within(listing).getByRole('button',{name:'Listing photos'})).toBeEnabled();
  await waitFor(()=>expect(within(listing).getByRole('button',{name:'Check seller details'})).toBeEnabled());
- expect(within(listing).getByRole('link',{name:'Open on eBay'})).toHaveAttribute('href',url);
+ const external=within(listing).getByRole('link',{name:'Open on eBay'});
+ expect(external).toHaveAttribute('href',url);
+ expect(external.textContent).toBe('');
+ const analyze=within(listing).getByRole('link',{name:'Analyze'});
+ expect(analyze.parentElement).toBe(external.parentElement);
+ await user.click(within(listing).getByRole('button',{name:'Listing photos'}));
+ const gallery=screen.getByRole('dialog',{name:'Listing photos'});
+ expect(await within(gallery).findByAltText('Gengar Fossil 5/62')).toHaveAttribute('src','https://i.ebayimg.com/images/test.jpg');
+ expect(within(gallery).queryByRole('link',{name:'Open on eBay'})).not.toBeInTheDocument();
+ expect(within(gallery).queryByRole('button',{name:/Analyze/})).not.toBeInTheDocument();
+ await user.click(within(gallery).getByRole('button',{name:'Close'}));
  const grade=within(listing).getByRole('combobox',{name:/Condition/});
  expect(grade).toHaveValue('LP');
  await user.selectOptions(grade,'HP');
  expect(grade).toHaveValue('HP');
  expect(within(listing).getByText('(Manual)')).toBeInTheDocument();
+ await user.click(analyze);
+ expect(await screen.findByText(url)).toBeInTheDocument();
 });
 
 

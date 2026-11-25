@@ -265,3 +265,7 @@ Card Details → Find deals keeps the card header and starts a fresh single-card
 immediately on the explicit tap. Both reuse progressive four-card batches and condition-specific
 comparison. Existing staging Worker routes are reused. See [Deals contracts](docs/DEALS_MIGRATION.md)
 for behavior and remaining roadmap acceptance; no legacy data or Worker changes.
+
+Deals listing actions include a direct handoff to the existing Analyzer with the
+eBay listing URL prefilled. Photos and AI analysis remain explicitly initiated;
+the Deals photo gallery is photo-only. See [Deals migration](docs/DEALS_MIGRATION.md).
