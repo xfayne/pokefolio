@@ -1,5 +1,5 @@
 import {describe,expect,it,vi} from 'vitest';
-import {newScan,runScan,type DealCard,type Batch} from './scan';
+import {newScan,runScan,parseBatch,type DealCard,type Batch} from './scan';
 const cards:DealCard[]=Array.from({length:9},(_,i)=>({id:'base1-'+(i+1),name:'Card',setName:'Base Set',number:String(i+1),firstEdition:false,finish:'normal'}));
 const empty:Batch={items:[],errors:[],fetchedAt:'2026-11-25T00:00:00Z'};
 describe('explicit batch scan',()=>{
@@ -28,3 +28,11 @@ describe('explicit batch scan',()=>{
     expect(progress).not.toHaveBeenCalled();
   });
 });
+
+ it('distinguishes rejected listing data from marketplace failures without retaining raw values',()=>{
+  const result=parseBatch({items:[{url:'https://untrusted.example/itm/123'}],errors:[{cardId:cards[0].id,error:'HTTP 503'}],fetchedAt:empty.fetchedAt},cards);
+  expect(result.items).toEqual([]);
+  expect(result.errors[0]).toEqual({cardId:cards[0].id,error:'HTTP 503'});
+  expect(result.errors[1]).toMatchObject({error:'Invalid listing response',invalidFields:expect.arrayContaining(['url','itemId'])});
+  expect(JSON.stringify(result.errors)).not.toContain('untrusted.example');
+ });
