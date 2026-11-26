@@ -78,3 +78,21 @@ it('prefills eBay mode from a deal without loading photos or starting AI',async(
  expect(resolveListing).toHaveBeenCalledWith('owner',fixtureListing.url,expect.any(AbortSignal));
  expect(runAnalysis).not.toHaveBeenCalled();
 });
+
+it('removes listing photos, analyzes only retained images and leaves the full-listing cache untouched',async()=>{
+ const selectedResult={...fixtureResult,imageCount:1,analyzedPhotoIndices:[1],analysis:{...fixtureResult.analysis,observations:[{...fixtureResult.analysis.observations[0]!,locations:[{photoIndex:1,box2d:[100,200,300,400] as [number,number,number,number]}]}]}};
+ vi.mocked(readAnalysis).mockResolvedValue(fixtureResult);vi.mocked(runAnalysis).mockResolvedValue(selectedResult);
+ render(<AnalyzePage/>);const user=await load();
+ await user.click(screen.getByRole('button',{name:'Remove photo 1'}));
+ expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Inspect photo 2'})).not.toBeInTheDocument();
+ expect(screen.getByRole('img',{name:'Photo 1'})).toHaveAttribute('src',fixtureListing.images[1]);
+ await user.click(screen.getByRole('button',{name:'Analyze card'}));await screen.findByRole('heading',{name:'Analysis complete'});
+ expect(readAnalysis).not.toHaveBeenCalled();expect(saveAnalysis).not.toHaveBeenCalled();
+ expect(runAnalysis).toHaveBeenCalledWith('owner',fixtureListing.source,expect.any(AbortSignal),[fixtureListing.images[1]]);
+ await user.click(screen.getByRole('button',{name:/1 Minor edge whitening/}));expect(screen.getByRole('heading',{name:'Photo 1'})).toBeVisible();
+});
+it('disables analysis after removing every listing photo',async()=>{
+ render(<AnalyzePage/>);const user=await load();await user.click(screen.getByRole('button',{name:'Remove photo 1'}));await user.click(screen.getByRole('button',{name:'Remove photo 1'}));
+ expect(screen.getByRole('button',{name:'Analyze card'})).toBeDisabled();expect(runAnalysis).not.toHaveBeenCalled();
+});

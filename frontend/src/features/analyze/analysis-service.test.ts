@@ -31,3 +31,11 @@ it('uses multipart without JSON headers, rejects evidence for unanalyzed photos,
  state.post.mockImplementation(async()=>{state.uid='different';return {data:fixtureResult};});
  await expect(runAnalysis('owner',fixtureListing.source,new AbortController().signal)).rejects.toThrow('AI_AUTH_REQUIRED');
 });
+
+it('uses the selection-specific endpoint and rejects mismatched evidence',async()=>{
+ const signal=new AbortController().signal;const images=[fixtureListing.images[1]!];
+ await expect(runAnalysis('owner',fixtureListing.source,signal,images)).rejects.toThrow('AI_INVALID_PHOTOS');
+ expect(state.post).toHaveBeenCalledWith('/api/analyze-selected-condition',{source:fixtureListing.source,images},{signal,timeout:120_000});
+ state.post.mockResolvedValue({data:{...fixtureResult,imageCount:1,analyzedPhotoIndices:[1],analysis:{...fixtureResult.analysis,observations:[]}}});
+ await expect(runAnalysis('owner',fixtureListing.source,signal,images)).resolves.toMatchObject({imageCount:1,analyzedPhotoIndices:[1]});
+});

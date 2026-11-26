@@ -28,6 +28,7 @@ function Analyzer({owner,initialListingUrl}:{owner:string|null;initialListingUrl
   const controller=useRef<AbortController|null>(null);const serial=useRef(0);
   const files=useRef<HTMLInputElement>(null);const slot=useRef<Photo['slot']>('closeup');
   const busy=task!=='idle';
+  const filteredListing=!!listing&&photos.length!==listing.images.length;
   useEffect(()=>()=>{serial.current++;controller.current?.abort();photosRef.current.forEach(p=>{if(p.blob)URL.revokeObjectURL(p.url);});},[]);
   function replacePhotos(next:Photo[]) {
     photosRef.current.forEach(p=>{if(p.blob && !next.includes(p))URL.revokeObjectURL(p.url);});photosRef.current=next;setPhotos(next);
@@ -61,19 +62,20 @@ function Analyzer({owner,initialListingUrl}:{owner:string|null;initialListingUrl
     if(!owner || !photos.length || busy)return;const {id,signal}=start('busy');setSaveFailed(false);
     try {
       if(result&&!force){setCached(true);return;}
-      if(listing&&!force){
+      if(listing&&!filteredListing&&!force){
         let saved:AnalysisResult|null;
         try{saved=await readAnalysis(owner,listing.source);}catch{throw Error('CACHE_UNAVAILABLE');}
         if(id!==serial.current)return;
         if(saved){setResult(saved);setCached(true);return;}
       }
-      const data=await runAnalysis(owner,listing?listing.source:photos.map(p=>p.blob!),signal);
+      const input=listing?listing.source:photos.map(p=>p.blob!);
+      const data=filteredListing?await runAnalysis(owner,input,signal,photos.map(p=>p.url)):await runAnalysis(owner,input,signal);
       if(id!==serial.current)return;setResult(data);setCached(false);
-      if(listing){try{await saveAnalysis(owner,listing.source,data);}catch{if(id===serial.current)setSaveFailed(true);}}
+      if(listing&&!filteredListing){try{await saveAnalysis(owner,listing.source,data);}catch{if(id===serial.current)setSaveFailed(true);}}
     }catch(e){if(id===serial.current)fail(e);}finally{if(id===serial.current)setTask('idle');}
   }
   async function retrySave() {
-    if(!owner||!listing||!result||busy)return;const {id}=start('saving');
+    if(!owner||!listing||filteredListing||!result||busy)return;const {id}=start('saving');
     try{await saveAnalysis(owner,listing.source,result);if(id===serial.current)setSaveFailed(false);}
     catch(e){if(id===serial.current)fail(e);}finally{if(id===serial.current)setTask('idle');}
   }
@@ -97,7 +99,7 @@ function Analyzer({owner,initialListingUrl}:{owner:string|null;initialListingUrl
           return <div className="analyzer-upload" key={side}><strong>{a(side)}</strong>{photo?<button type="button" disabled={busy} className="analyzer-slot-preview" onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('add')}`}><img src={photo.url} alt={a(side)} /></button>:<LuCamera aria-hidden className="analyzer-camera" />}<div className="analyzer-pick"><button type="button" disabled={busy} onClick={()=>pick(side)} aria-label={`${a(side)} · ${a('files')}`}><LuImagePlus aria-hidden />{a('files')}</button></div></div>;
         })}</div>
       </>:<form className="analyzer-ebay" onSubmit={e=>{e.preventDefault();void loadListing();}}><label htmlFor="analysis-ebay-url">{a('url')}</label><input id="analysis-ebay-url" type="url" dir="ltr" maxLength={750} required value={url} disabled={busy} onChange={e=>setUrl(e.target.value)} placeholder="https://www.ebay.com/itm/…"/><Button disabled={!owner||busy||!url.trim()}>{a('load')}</Button>{listing&&<a href={listing.url} target="_blank" rel="noopener noreferrer">{listing.title} ↗</a>}</form>}
-      {!!photos.length&&<div className="analyzer-thumbs">{photos.map((photo,i)=><div key={photo.url}><button type="button" onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}><img src={photo.url} alt={a('photo',{number:i+1})}/></button>{mode==='photos'&&<button className="analyzer-remove" type="button" disabled={busy} onClick={()=>{replacePhotos(photos.filter((_,n)=>n!==i));clearResult();}} aria-label={a('remove',{number:i+1})}><LuX aria-hidden /></button>}</div>)}</div>}
+      {!!photos.length&&<div className="analyzer-thumbs">{photos.map((photo,i)=><div key={photo.url}><button type="button" onClick={()=>setZoom(i)} aria-label={a('zoom',{number:i+1})}><img src={photo.url} alt={a('photo',{number:i+1})}/></button>{<button className={`analyzer-remove${mode==='ebay'?' analyzer-remove-listing':''}`} type="button" disabled={busy} onClick={()=>{replacePhotos(photos.filter((_,n)=>n!==i));clearResult();}} aria-label={a('remove',{number:i+1})}><LuX aria-hidden /></button>}</div>)}</div>}
       <Button className="analyzer-run analyzer-pixel" disabled={!owner||!photos.length||busy} onClick={()=>void analyze(error===a('cacheError'))}>{busy?<LuLoaderCircle className="analyzer-spin" aria-hidden/>:<LuScanLine aria-hidden/>}{a(task==='busy'?'busy':'run')}</Button>
       {!photos.length&&!busy&&<p className="analyzer-hint">{a('empty')}</p>}
     </>:<>

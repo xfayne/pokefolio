@@ -289,12 +289,14 @@ async function imageBytes(url){
 }
 const analysisCooldown=new Map();
 /* Private inference endpoint; future photo sources can call analyzeCardCondition without eBay. */
-async function analyzeConditionApi(request,env,headers){
+async function analyzeConditionApi(request,env,headers,selected=false){
  if(!env.GEMINI_API_KEY)return reply({error:'AI_NOT_CONFIGURED'},503,headers);
- if(Number(request.headers.get('content-length')||0)>1800)return reply({error:'Payload too large'},413,headers);
+ if(Number(request.headers.get('content-length')||0)>(selected?16000:1800))return reply({error:'Payload too large'},413,headers);
  const ownerEmail=env.AI_OWNER_EMAIL||env.TRACK17_OWNER_EMAIL;
  if(!(await verifyFirebaseBearer(request,env,ownerEmail)))return reply({error:'AI_AUTH_REQUIRED'},403,headers);
  let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400,headers)}
+ const selection=selected?body?.images:null;
+ if(selected&&(!Array.isArray(selection)||selection.length<1||selection.length>25||new Set(selection).size!==selection.length||selection.some(url=>typeof url!=='string'||url.length>600||!isEbayImage(url))))return reply({error:'AI_INVALID_PHOTOS'},400,headers);
  const source=body?.source;
  if(source?.type!=='ebay-listing')return reply({error:'AI_SOURCE_NOT_SUPPORTED'},400,headers);
  const itemId=String(source.itemId||''),marketplace=String(source.marketplace||'');
@@ -309,7 +311,10 @@ async function analyzeConditionApi(request,env,headers){
  if(analysisCooldown.size>200)for(const [k,when] of analysisCooldown){if(Date.now()-when>60000)analysisCooldown.delete(k)}
  try{
   const listing=await getItemImages(itemId,marketplace,env);
-  const candidates=listing.images.map((url,i)=>({url,index:i+1})).filter(x=>isEbayImage(x.url)).slice(0,8);
+  // Match against the current listing, never fetch caller-supplied arbitrary URLs.
+  if(selected&&selection.some(url=>!listing.images.includes(url)))return reply({error:'EBAY_ITEM_IMAGES_CHANGED'},409,headers);
+  const images=selected?selection:listing.images;
+  const candidates=images.map((url,i)=>({url,index:i+1})).filter(x=>isEbayImage(x.url)).slice(0,8);
   if(!candidates.length)return reply({error:'AI_NO_USABLE_IMAGES'},422,headers);
   // A failed photo should not hide the other usable photos.
   const fetched=await Promise.allSettled(candidates.map(async x=>({...await imageBytes(x.url),index:x.index})));
@@ -317,9 +322,9 @@ async function analyzeConditionApi(request,env,headers){
   if(!photos.length)return reply({error:'AI_NO_USABLE_IMAGES'},422,headers);
   const analysis=await analyzeCardCondition({photos,cardContext:{name,setName}},{apiKey:env.GEMINI_API_KEY});
   // A URL-set fingerprint detects listing photo changes without persisting seller bytes.
-  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(listing.images.join('\n')));
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(images.join('\n')));
   analysis.imageSetFingerprint=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-  return reply({analysis,source:{type:'ebay-listing',marketplace,itemId},imageCount:listing.images.length,analyzedPhotoIndices:photos.map(x=>x.index)},200,headers);
+  return reply({analysis,source:{type:'ebay-listing',marketplace,itemId},imageCount:images.length,analyzedPhotoIndices:photos.map(x=>x.index)},200,headers);
  }catch(e){
   const msg=String(e?.message||'AI_UNAVAILABLE');
   const status=msg==='AI_RATE_LIMITED'?429:msg==='AI_PROVIDER_TIMEOUT'?504:503;
@@ -449,6 +454,7 @@ export default {
   if(u.pathname==='/api/market/prices')return pricesApi(request,env,headers,{reply,verifyFirebaseBearer});
   if(u.pathname.startsWith('/api/shipments/'))return shipmentsApi(request,env,headers,u);
   if(request.method==='POST'&&u.pathname==='/api/analyze-condition')return analyzeConditionApi(request,env,headers);
+   if(request.method==='POST'&&u.pathname==='/api/analyze-selected-condition')return analyzeConditionApi(request,env,headers,true);
   if(request.method==='POST'&&u.pathname==='/api/analyze-upload')return analyzeUploadApi(request,env,headers,{reply,verifyFirebaseBearer});
   if(request.method==='POST'&&u.pathname==='/api/resolve-ebay-link')return resolveEbayLinkApi(request,env,headers,{reply,verifyFirebaseBearer,bearer,isEbayImage});
   if(request.method==='GET'&&u.pathname==='/health')return reply({service:'Pokefolio API',environment:firebaseProject(env)==='pokefolio-production'?'production':'staging',ready:!!(env.EBAY_CLIENT_ID&&env.EBAY_CLIENT_SECRET),provider:'eBay Browse API',shippingDestinationConfigured:/^[0-9]{5,10}$/.test(String(env.EBAY_DELIVERY_POSTAL_CODE||'').trim()),aiConfigured:Boolean(env.GEMINI_API_KEY)},200,headers);

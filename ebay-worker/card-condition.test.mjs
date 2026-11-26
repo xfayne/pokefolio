@@ -103,6 +103,18 @@ test('authenticated analysis downloads eBay photos with Workers-compatible redir
  assert.equal(providerCalls,1);
  assert.deepEqual(result.analyzedPhotoIndices,[2]);
  assert.deepEqual(result.analysis.observations[0].locations,valid.observations[0].locations);
+ // A separate listing avoids the existing per-listing cooldown; only the retained URL is fetched.
+ const selectedSource={...source,itemId:'v1|123457|0'};
+ const selectedRequest=images=>new Request('https://worker.example/api/analyze-selected-condition',{method:'POST',headers:{origin:'https://xfayne.github.io','content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({source:selectedSource,images})});
+ const env={ALLOWED_ORIGIN:'https://xfayne.github.io',GEMINI_API_KEY:'fixture-key',TRACK17_OWNER_EMAIL:owner,POKEFOLIO_FIREBASE_PROJECT_ID:project,EBAY_CLIENT_ID:'fixture-client',EBAY_CLIENT_SECRET:'fixture-secret'};
+ assert.equal((await worker.fetch(selectedRequest([]),env)).status,400);
+ const selectedResponse=await worker.fetch(selectedRequest(['https://i.ebayimg.com/usable.jpg']),env);
+ const selectedResult=await selectedResponse.json();
+ assert.equal(selectedResponse.status,200,JSON.stringify(selectedResult));
+ assert.equal(imageFetches,3);assert.equal(providerCalls,2);
+ assert.equal(selectedResult.imageCount,1);assert.deepEqual(selectedResult.analyzedPhotoIndices,[1]);
+ const stale=await worker.fetch(new Request('https://worker.example/api/analyze-selected-condition',{method:'POST',headers:{origin:'https://xfayne.github.io','content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({source:{...source,itemId:'v1|123458|0'},images:['https://i.ebayimg.com/not-in-listing.jpg']})}),env);
+ assert.equal(stale.status,409);assert.equal(providerCalls,2);assert.equal(imageFetches,3);
 });
 
 test('Gemini retries a 503 once and can recover without changing the model or request',async()=>{
