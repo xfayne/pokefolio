@@ -38,14 +38,19 @@ export async function resolveListing(owner:string,url:string,signal:AbortSignal)
   const data=(await client(owner).post('/api/resolve-ebay-link',{url},{signal})).data;
   ownerServices(owner);return listingSchema.parse(data);
 }
-export async function runAnalysis(owner:string,input:Source|readonly Blob[],signal:AbortSignal) {
+export async function runAnalysis(owner:string,input:Source|readonly Blob[],signal:AbortSignal,selectedImages?:readonly string[]) {
   const api=client(owner);
   let data:unknown;
   if (Array.isArray(input)) {
     const form=new FormData();input.forEach((blob,i)=>form.append('photos',blob,`card-${i+1}.jpg`));
     data=(await api.post('/api/analyze-upload',form,{signal,timeout:120_000})).data;
+  } else if(selectedImages) {
+    const images=z.array(ebayImage).min(1).max(25).parse(selectedImages);
+    data=(await api.post('/api/analyze-selected-condition',{source:input,images},{signal,timeout:120_000})).data;
   } else data=(await api.post('/api/analyze-condition',{source:input},{signal,timeout:120_000})).data;
-  ownerServices(owner);return resultSchema.parse(data);
+  ownerServices(owner);const result=resultSchema.parse(data);
+  if(selectedImages&&(result.imageCount!==selectedImages.length||result.analyzedPhotoIndices.some(i=>i>8)))throw Error('AI_INVALID_PHOTOS');
+  return result;
 }
 export function analysisKey(source:Source) { const s=sourceSchema.parse(source); return `ebay-listing__${s.marketplace}__${s.itemId.replace(/\|/g,'_')}`; }
 function cacheRef(owner:string,source:Source) { return doc(ownerServices(owner).db,'users',owner,'conditionAnalyses',analysisKey(source)); }

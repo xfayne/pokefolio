@@ -96,3 +96,16 @@ The stretchable middle SVG overlaps each fixed cap by one CSS pixel behind it.
 This prevents fractional clip edges on mobile from exposing a dark horizontal
 hairline above the heading or at the lower join. Artwork and layout are unchanged;
 Playwright checks both overlaps.
+
+## Remove listing photos (2026-11-26)
+
+The approved top-right X removes a listing thumbnail immediately; tapping the
+image still opens its preview. Analyze is disabled for an empty selection. The
+selection-specific authenticated endpoint verifies retained URLs against the
+current eBay listing, sends up to eight retained images in gallery order and
+returns indices relative to that gallery. Changed listings are rejected before
+inference. Filtered results remain session-only, without reading or overwriting
+the full-listing cache; ordinary full-listing and manual-upload analysis are
+unchanged. Deploy the staging Worker before releasing the frontend; older
+Workers do not recognize the selection-specific endpoint and cannot silently
+analyze excluded photos.
