@@ -79,5 +79,5 @@
 .analyzer-meter::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent 0 6px,#102b3d 6px 8px);pointer-events:none}
 
 /* Listing removals overlay the physical top-right corner; the preview remains a separate button. */
-.analyzer-thumbs .analyzer-remove-listing{position:absolute;top:-4px;right:-4px;left:auto;inset-inline-start:auto;inset-inline-end:auto;inset-block-start:-4px;width:32px;height:32px;min-width:32px;min-height:32px;margin:0;z-index:1;display:grid;place-items:start end}
+.analyzer-thumbs .analyzer-remove-listing{position:absolute;inset:-4px -4px auto auto;width:32px;height:32px;min-width:32px;min-height:32px;margin:0;z-index:1;display:grid;place-items:start end}
 .analyzer-remove-listing svg{background:#172333;border:2px solid white;width:23px;height:23px;padding:3px;box-shadow:0 1px 3px #0005}
