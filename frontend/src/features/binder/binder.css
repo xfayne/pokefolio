@@ -18,7 +18,7 @@
 .binder-leaf { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:repeat(3,minmax(0,1fr)); flex:1; min-width:0; gap:clamp(3px,1cqw,8px); padding:clamp(5px,1.6cqw,12px); border:1px solid var(--surface-border); border-radius:1.125rem; background:var(--surface-panel); box-shadow:0 3px 8px #216dc226,inset 0 1px 0 #fff; animation:binder-page-enter 180ms ease-out; }
 .binder-slot { position:relative; min-width:0; min-height:0; border:1px solid var(--surface-border); border-radius:.5rem; padding:3px; background:linear-gradient(135deg,#ffffffa6,#dcecff66); box-shadow:0 2px 3px #216dc21a,inset 0 1px 2px #fff; overflow:hidden; }
 .binder-slot[data-kind="empty"] { margin:3px; border:1px dashed #8faaca; background:transparent; box-shadow:none; display:flex; align-items:center; justify-content:center; }
-.binder-slot[data-kind="unavailable"] { opacity:.5; }
+.binder-slot[data-kind="unavailable"] > :not(.binder-pocket-film) { opacity:.5; }
 .binder-art.pokemon-art { border:0; border-radius:.375rem; width:100%; height:100%; max-width:none; aspect-ratio:auto; background:transparent; box-shadow:none; }
 .binder-art .pokemon-art-window { position:absolute; inset:0; }
 .binder-art img { width:100%; height:100%; object-fit:contain; pointer-events:none; -webkit-user-drag:none; }
@@ -30,7 +30,7 @@
 .binder-slot[data-kind="unavailable"] .binder-pocket-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#e4edfabf; }
 .binder-pending { position:absolute; inset-inline:3px; bottom:3px; display:flex; align-items:center; justify-content:center; gap:.125rem; padding:.125rem; background:#ecf6ffff; color:#123d73; border-radius:.25rem; font-weight:700; font-size:clamp(.5rem,2.5cqw,.75rem); pointer-events:none; }
 .binder-pending svg { width:.875rem; height:.875rem; flex-shrink:0; }
-.binder-slot[data-dragging] { opacity:.35; }
+.binder-slot[data-dragging] > :not(.binder-pocket-film) { visibility:hidden; }
 .binder-slot[data-drop] { outline:3px solid var(--adventure-blue); outline-offset:-3px; background:#c6e2ff; }
 .binder-drag-ghost { position:fixed; z-index:200; pointer-events:none; width:5rem; transform:translate(-50%,-50%) rotate(4deg); filter:drop-shadow(0 6px 9px #06233e55); }
 .binder-drag-ghost img { display:block; width:100%; border-radius:.375rem; }
@@ -104,3 +104,7 @@
 
 .binder-jump-dialog { position:fixed; inset:0; margin:auto; width:min(calc(100% - 2rem),20rem); height:fit-content; border:1px solid #b3ccec; border-radius:1rem; background:var(--surface-panel); color:var(--foreground,#10243b); padding:1rem; box-shadow:0 12px 32px #03233e33; touch-action:auto; }
 .binder-jump-dialog::backdrop { background:#071e38aa; }
+
+/* Optical film is fixed to the slot, including during drag and when empty. */
+.binder-pocket-film { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; }
+.binder-slot[data-kind="empty"] { margin:0; border:1px solid var(--surface-border); background:linear-gradient(135deg,#ffffffa6,#dcecff66); }
