@@ -154,6 +154,7 @@ export function BinderBook({pockets,page,onPage,onMove,onRemove,includeWish=true
                 {(kind==='empty' || kind==='unavailable') && <span className="binder-pocket-label">{kind==='empty'?t('binderUi.empty'):unavailableLabel}</span>}
                 {kind==='wish' && <span className="binder-wish" data-hidden={!includeWish || undefined}><LuHeart aria-hidden /><span>{t('binderUi.wish')}</span></span>}
                 {(kind==='pending'||kind==='unknown') && <span className="binder-pending">{kind==='pending'?<LuPackage aria-hidden />:<LuCircleHelp aria-hidden />}<span>{t(kind==='pending'?'binderUi.pending':'inventory.unknown')}</span></span>}
+                <PocketFilm />
               </div>;
             })}
           </div>;
@@ -182,4 +183,22 @@ function PageJump({count,current,onClose,onApply}:{count:number;current:number;o
     <p className="text-xs text-slate-600">{t('binderUi.pageRange',{count})}</p>
     <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>{t('binderUi.cancel')}</Button><Button type="submit" disabled={!valid}>{t('binderUi.go')}</Button></div>
   </form></dialog>;
+}
+
+// The film belongs to the physical pocket, never to the draggable card.
+function PocketFilm() {
+  const id = useId();
+  return <svg className="binder-pocket-film" viewBox="0 0 110 150" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id={id+'plastic'} x1="0" y1="0" x2=".8" y2="1"><stop stopColor="white" stopOpacity=".32"/><stop offset=".18" stopColor="white" stopOpacity=".04"/><stop offset=".48" stopColor="white" stopOpacity="0"/><stop offset=".82" stopColor="#c6def2" stopOpacity=".04"/><stop offset="1" stopColor="white" stopOpacity=".22"/></linearGradient>
+      <linearGradient id={id+'lip'}><stop stopColor="#344f68" stopOpacity="0"/><stop offset=".5" stopColor="#344f68" stopOpacity=".23"/><stop offset=".72" stopColor="white" stopOpacity=".95"/><stop offset="1" stopColor="white" stopOpacity=".1"/></linearGradient>
+      <linearGradient id={id+'shine'} x1="0" y1="0" x2=".8" y2="1"><stop stopColor="white" stopOpacity=".9"/><stop offset=".65" stopColor="white" stopOpacity=".08"/><stop offset="1" stopColor="white" stopOpacity="0"/></linearGradient>
+    </defs>
+    <path d="M106 2H7Q2 2 2 7V143Q2 148 7 148H106Q101 111 103 75Q101 39 106 2Z" fill={`url(#${id}plastic)`}/>
+    <path d="M106 2H7Q2 2 2 7V143Q2 148 7 148H106" fill="none" stroke="#718ca4" strokeOpacity=".42" strokeWidth=".9"/>
+    <path d="M105 3.5H7Q3.5 3.5 3.5 7V143Q3.5 146.5 7 146.5H105" fill="none" stroke="white" strokeOpacity=".95"/>
+    <path d="M106 2Q101 39 103 75Q101 111 106 148L108 148Q104 111 106 75Q104 39 108 2Z" fill={`url(#${id}lip)`}/>
+    <path d="M106 3Q101 39 103 75Q101 111 106 147" stroke="white" strokeOpacity=".85" fill="none"/>
+    <g opacity=".9"><path d="M5 6H36L5 43Z" fill={`url(#${id}shine)`} opacity=".42"/><path d="M5 52L47 5H52L5 59Z" fill="white" opacity=".13"/><path d="M79 146L102 117V131L90 146Z" fill="white" opacity=".18"/></g>
+  </svg>;
 }
