@@ -40,6 +40,10 @@ test('binder stays fixed, tapping opens details without moving the card, drag pr
   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
   await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[end]});
   await expect(page.locator('.binder-drag-ghost')).toBeVisible();
+  await expect(slots.first().locator('.binder-pocket-film')).toBeVisible();
+  await expect(slots.first().locator('.binder-art')).toBeHidden();
+  await expect(page.locator('.binder-drag-ghost .binder-pocket-film')).toHaveCount(0);
+  await expect(page.locator('.binder-pocket-film')).toHaveCount(9);
   await expect(slots.nth(8)).toHaveAttribute('data-drop','true');
   await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   // A move must never paint its original pocket again while storage confirms it.
