@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router';
 import {useTranslation} from 'react-i18next';
 import {LuCalendarDays,LuChartNoAxesCombined,LuChevronDown,LuChevronRight,LuLayers,LuTag,LuTrendingUp,LuWallet} from 'react-icons/lu';
 import {Card} from '@/components/ui/surfaces';
-import {PokemonArt} from '@/components/ui/pokemon-art';
+import {TopHoldings} from '@/components/ui/top-holdings';
 import {Button} from '@/components/ui/button';
 import {catalogCards} from '@/features/catalog/catalog';
 import type {CardCopy} from '@/domain/schema';
@@ -93,9 +93,9 @@ export function DashboardPage(){
    {result?.month.spend.covered!==result?.month.spend.total&&<p className="dashboard-note">{t.partial}: {result?.month.spend.covered}/{result?.month.spend.total}</p>}
    <button type="button" className="dashboard-month-link" onClick={openHistory}>{t.transactions}<LuChevronRight aria-hidden /></button>
   </Card>
-  <section aria-labelledby={`${id}-top`}><div className="dashboard-section-heading"><h2 id={`${id}-top`}>{t.top}</h2><button type="button" onClick={()=>{void navigate(`/collection/cards${allSearch}`);}}>{t.seeAll}<LuChevronRight aria-hidden /></button></div>
-   <Card className="dashboard-holdings">{result?.top.length&&connected?<ul>{result.top.map(({copy,market})=>{const c=card(copy);return <li key={copy.id}><button type="button" onClick={()=>openHolding(copy)} data-copy-id={copy.id}><PokemonArt src={c?.imageUrl} alt={c?.name??t.unknown} className="dashboard-holding-art" /><span className="dashboard-holding-name"><strong>{c?.name??t.unknown}</strong><span>{c?.setName} · #{c?.number}</span></span><bdi>{cardMetric(market)}</bdi><LuChevronRight aria-hidden /><span className="sr-only">{copy.id}</span></button></li>;})}</ul>:<p className="dashboard-empty">{data.error?t.portfolioFailed:data.loading?t.loading:t.emptyTop}</p>}</Card>
-  </section>
+  <TopHoldings id={`${id}-top`} title={t.top} actionLabel={t.seeAll} onViewAll={()=>{void navigate(`/collection/cards${allSearch}`);}}
+    items={connected?(result?.top??[]).map(({copy,market})=>{const c=card(copy);return {id:copy.id,name:c?.name??t.unknown,subtitle:`${c?.setName} · #${c?.number}`,imageUrl:c?.imageUrl,value:cardMetric(market),onOpen:()=>openHolding(copy)};}):[]}
+    empty={data.error?t.portfolioFailed:data.loading?t.loading:t.emptyTop}/>
   {!connected&&<Button variant="outline" onClick={()=>{void navigate('/settings');}}>{he?'להתחברות':'Sign in'}</Button>}
  </article>;
 }

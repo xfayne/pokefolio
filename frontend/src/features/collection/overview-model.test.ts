@@ -3,7 +3,7 @@ import { createSampleCopies, sampleOwner, sampleQuotes } from '@/features/invent
 import { catalogCards, catalogMarketReference } from '@/features/catalog/catalog';
 import type { CopyQuote } from '@/domain/inventory';
 import type { Money } from '@/domain/schema';
-import { remainingWishes, selectCollectionOverview, selectWishlistBudget } from './overview-model';
+import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown } from './overview-model';
 
 const convert = (money: Money) => money.currency === 'USD' ? money.minor : null;
 const input = () => ({owner:sampleOwner,copies:createSampleCopies(),catalog:catalogCards,quotes:sampleQuotes,currency:'USD' as const,fx:[],convert});
@@ -42,13 +42,15 @@ describe('Collection overview projections', () => {
     expect(selectWishlistBudget(['neo2-13'],quotes,'LP',convert).minor).toBeNull();
     expect(selectWishlistBudget(['neo2-13'],[quote('neo2-13',100)],'LP',()=>null).covered).toBe(0);
   });
-  it('aggregates concentration by catalog card and ranks gains only with complete costs', () => {
+  it('ranks received physical holdings and compares only complete costs', () => {
     const result = selectCollectionOverview(input());
     expect(result.total).toBe(54500);
-    expect(result.top.map(group=>[group.card.id,group.minor])).toEqual([['base1-4',48000],['base3-5',6500]]);
+    expect(result.top.map(holding=>[holding.copy.id,holding.market])).toEqual([['charizard-a',26000],['charizard-b',22000],['gengar-a',6500]]);
     expect(result.priced).toBe(3);
     expect(result.above.map(holding=>[holding.copy.id,holding.gain])).toEqual([['charizard-a',8000],['charizard-b',7000],['gengar-a',2000]]);
-    expect(result.compared).toBe(3);
+    expect(result.compared).toBe(4);
+    expect(result.comparableTotal).toBe(5);
+    expect(result.changes.find(item=>item.card.id==='base3-5')?.change).toMatchObject({gain:3200,basis:7500,market:10700,covered:2,total:2});
     expect(result.holdings.find(holding=>holding.copy.id==='snorlax-a')!.basis).toBeNull();
   });
   it('uses dated FX for acquisition costs and excludes foreign-language market values', () => {
@@ -74,4 +76,43 @@ describe('Collection overview projections', () => {
     data.copies = data.copies.map(copy=>copy.id==='charizard-a' ? {...copy,shippingCost:{status:'unknown',reason:'Not recorded'}} : copy);
     expect(selectCollectionOverview(data).holdings.find(holding=>holding.copy.id==='charizard-a')!.gain).toBeNull();
   });
+});
+
+describe('Collection breakdown', () => {
+  it('uses the same metric for total, shares and segment amounts, including pending market quotes', () => {
+    const figures = selectCollectionOverview(input());
+    const budget = {minor:90000, covered:9, total:9};
+    expect(figures.pendingValue).toBe(4200);
+    expect(figures.pendingPriced).toBe(1);
+    const value = selectCollectionBreakdown(figures,budget,'value');
+    expect(value.total).toBe(148700);
+    expect(value.categories.map(item=>item.amount)).toEqual([54500,4200,90000]);
+    expect(value.categories[2]!.share).toBeCloseTo(90000/148700);
+    expect(value.covered).toBe(13);
+    expect(value.count).toBe(14);
+    const quantity = selectCollectionBreakdown(figures,budget,'quantity');
+    expect(quantity.total).toBe(14);
+    expect(quantity.categories.map(item=>item.amount)).toEqual([4,1,9]);
+    expect(quantity.categories[0]!.share).toBeCloseTo(4/14);
+  });
+  it('does not invent prices or percentages for unpriced, zero or empty groups', () => {
+    const figures = selectCollectionOverview({...input(),quotes:[]});
+    const unknown = selectCollectionBreakdown(figures,{minor:null,covered:0,total:2},'value');
+    expect(unknown.total).toBeNull();
+    expect(unknown.categories.map(item=>item.share)).toEqual([null,null,null]);
+    const empty = selectCollectionBreakdown(selectCollectionOverview({...input(),copies:[]}),{minor:0,covered:0,total:0},'value');
+    expect(empty.total).toBe(0);
+    expect(empty.categories.map(item=>item.share)).toEqual([null,null,null]);
+    const partial = selectCollectionBreakdown(figures,{minor:100,covered:1,total:2},'value');
+    expect(partial.categories.map(item=>item.share)).toEqual([null,null,1]);
+    expect(partial.covered).toBe(1);
+  });
+});
+
+it('limits top holdings to ten received priced physical copies',()=> {
+  const data=input(), original=data.copies[0]!;
+  data.copies.push(...Array.from({length:12},(_,i)=>({...original,id:`extra-${i}`})));
+  const result=selectCollectionOverview(data);
+  expect(result.top).toHaveLength(10);
+  expect(result.top.every(holding=>holding.copy.possession==='received'&&holding.market===26000)).toBe(true);
 });

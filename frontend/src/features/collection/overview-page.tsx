@@ -1,8 +1,8 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuChartPie, LuSparkles, LuTruck, LuWallet } from 'react-icons/lu';
+import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuSparkles, LuTruck, LuChartNoAxesCombined, LuChevronDown } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { Card, EmptyState } from '@/components/ui/surfaces';
 import { PokemonArt } from '@/components/ui/pokemon-art';
@@ -15,11 +15,13 @@ import { useWishlist } from '@/features/wishlist/use-wishlist';
 import { sampleWishlistIds } from '@/features/wishlist/sample';
 import { createSampleCopies, sampleOwner, sampleQuotes } from '@/features/inventory/sample';
 import { catalogCards, catalogMarketReference } from '@/features/catalog/catalog';
-import { useDisplayCurrency, convertDisplay } from '@/services/display-currency';
-import { useHistoricalFx } from '@/services/historical-fx';
+import { useMarketChange } from '../inventory/use-market-change';
+import { compareMarketChanges } from '../inventory/market-change';
+import { CollectionCardRow, MarketChangeMetric, marketChangeDetail } from '../inventory/collection-card-row';
+import { ListCard } from '@/components/ui/list-card';
+import { TopHoldings } from '@/components/ui/top-holdings';
 import type { CopyQuote, InventoryCatalogCard } from '@/domain/inventory';
-import type { Money } from '@/domain/schema';
-import { currentCopies, remainingWishes, selectCollectionOverview, selectWishlistBudget, type Holding } from './overview-model';
+import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode } from './overview-model';
 import { useOverviewPrices } from './use-overview-prices';
 import { useFeaturedCards } from './use-featured-cards';
 import './overview.css';
@@ -27,17 +29,17 @@ import './overview.css';
 const labels = {
   en: {
     title: 'Collection overview', received: 'In Collection', pending: 'On the Way', wishlist: 'Wishlist', budget: 'Wishlist Estimate',
-    physical: 'received copies', arriving: 'copies arriving', toBuy: 'cards still to buy', lp: 'LP · card prices only',
+    breakdown: 'Collection Breakdown', chartMetric: 'Breakdown metric', quantity: 'Quantity', value: 'Market Value', totalCards: 'Total cards', totalValue: 'Total market value', partialValue: 'Partial market value', lp: 'Wishlist · LP',
     priced: 'priced', partial: 'Partial estimate', estimate: 'Market estimate',
     favorites: 'Your Highlights', choose: 'Choose cards', chooseTitle: 'Choose your highlights', chooseHint: 'Choose up to 5 cards from your collection.',
     emptyFavorites: 'Give your favorite cards a place in the spotlight.', save: 'Save selection', saveFailed: 'Could not save your selection. Try again.',
     favoriteFailed: 'Could not load your highlights.', search: 'Search your collection', noMatches: 'No matching cards.',
     noCards: 'Your received cards will appear here.',
-    comparison: 'Cost vs. Market', above: 'Above cost', below: 'Below cost', cost: 'Cost', market: 'Market',
-    compared: 'received copies with comparable prices and costs', comparisonEmpty: 'Comparable market prices and complete acquisition costs will appear here.',
+    comparison: 'Cost vs. Market', above: 'Top Gainers', below: 'Top Losers', viewAll: 'View all', noGainers: 'No cards above cost.', noLosers: 'No cards below cost.', cost: 'Cost', market: 'Market',
+    compared: 'copies with comparable prices and costs', comparisonEmpty: 'Comparable market prices and complete acquisition costs will appear here.',
     even: 'Your priced cards are currently at their recorded cost.',
-    concentration: 'Value Concentration', top: 'Top', ofValue: 'of priced value', rest: 'Rest of collection',
-    concentrationEmpty: 'Available market prices will reveal how your collection value is distributed.',
+    top: 'Top Holdings',
+    topEmpty: 'No priced, received holdings yet.',
     receivedPriced: 'received copies priced', unknown: 'copies with unknown receipt status',
     loading: 'Loading prices…', wishlistFailed: 'Could not load Wishlist.', pricesFailed: 'Some prices or exchange rates are unavailable.',
     signIn: 'Sign in to see your collection overview.', explore: 'Explore sample collection', retry: 'Retry',
@@ -45,17 +47,17 @@ const labels = {
   },
   he: {
     title: 'סקירת האוסף', received: 'באוסף שלי', pending: 'בדרך אליי', wishlist: 'רשימת משאלות', budget: 'אומדן המשאלות',
-    physical: 'עותקים שהתקבלו', arriving: 'עותקים בדרך', toBuy: 'קלפים שעוד ארצה לקנות', lp: 'LP · מחירי קלפים בלבד',
+    breakdown: 'התפלגות האוסף', chartMetric: 'מדד ההתפלגות', quantity: 'כמות', value: 'שווי שוק', totalCards: 'סך הקלפים', totalValue: 'שווי שוק כולל', partialValue: 'שווי שוק חלקי', lp: 'רשימת משאלות · LP',
     priced: 'מתומחרים', partial: 'אומדן חלקי', estimate: 'אומדן שוק',
     favorites: 'הנבחרים שלי', choose: 'בחירת קלפים', chooseTitle: 'בחירת הקלפים הנבחרים', chooseHint: 'בחר עד 5 קלפים מתוך האוסף שלך.',
     emptyFavorites: 'מקום לקלפים האהובים עליך באוסף.', save: 'שמירת הבחירה', saveFailed: 'לא ניתן לשמור את הבחירה. נסה שוב.',
     favoriteFailed: 'לא ניתן לטעון את הקלפים הנבחרים.', search: 'חיפוש באוסף', noMatches: 'לא נמצאו קלפים מתאימים.',
     noCards: 'כאן יופיעו הקלפים שכבר התקבלו.',
-    comparison: 'עלות מול שווי', above: 'מעל העלות', below: 'מתחת לעלות', cost: 'עלות', market: 'שוק',
-    compared: 'עותקים שהתקבלו עם מחיר שוק ועלות להשוואה', comparisonEmpty: 'כאן יוצגו קלפים עם מחיר שוק ועלות רכישה מלאה להשוואה.',
+    comparison: 'עלות מול שווי', above: 'המובילים ברווח', below: 'המובילים בהפסד', viewAll: 'הצג הכול', noGainers: 'אין קלפים מעל העלות.', noLosers: 'אין קלפים מתחת לעלות.', cost: 'עלות', market: 'שוק',
+    compared: 'עותקים עם מחיר שוק ועלות להשוואה', comparisonEmpty: 'כאן יוצגו קלפים עם מחיר שוק ועלות רכישה מלאה להשוואה.',
     even: 'שווי הקלפים המתומחרים שלך כרגע שווה לעלותם המתועדת.',
-    concentration: 'הרכב השווי', top: 'המובילים', ofValue: 'מהשווי המתומחר', rest: 'שאר האוסף',
-    concentrationEmpty: 'מחירי השוק הזמינים יציגו כיצד מתחלק שווי האוסף שלך.',
+    top: 'הקלפים היקרים באוסף',
+    topEmpty: 'עדיין אין עותקים שהתקבלו עם מחיר שוק.',
     receivedPriced: 'עותקים שהתקבלו מתומחרים', unknown: 'עותקים שסטטוס הקבלה שלהם לא ידוע',
     loading: 'טוען מחירים…', wishlistFailed: 'לא ניתן לטעון את רשימת המשאלות.', pricesFailed: 'חלק מהמחירים או שערי ההמרה אינם זמינים.',
     signIn: 'התחבר כדי לראות את סקירת האוסף שלך.', explore: 'צפייה באוסף לדוגמה', retry: 'ניסיון נוסף',
@@ -70,38 +72,35 @@ const demoWishQuotes: CopyQuote[] = sampleWishlistIds.slice(0, -1).map((id, inde
 }));
 
 export function CollectionOverviewPage() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const he = i18n.language === 'he', text = labels[he ? 'he' : 'en'];
   const [params] = useSearchParams();
   const preview = params.get('inventory') === 'sample';
   const navigate = useNavigate();
   const client = useQueryClient();
-  const account = usePortfolio(), wish = useWishlist(), display = useDisplayCurrency();
+  const account = usePortfolio(), wish = useWishlist();
   const copies = preview ? createSampleCopies() : account.history.copies;
   const owner = preview ? sampleOwner : account.owner ?? 'disconnected';
   const wishes = remainingWishes(copies, preview ? sampleWishlistIds : wish.wishlist.cardIds);
   const enabled = !preview && !!account.owner && !account.loading && !account.error;
   const prices = useOverviewPrices(copies, wish.loading || wish.error ? [] : wishes, enabled);
-  const currency = preview ? 'USD' : display?.currency ?? 'USD';
-  const convert = (money: Money) => preview ? convertDisplay(money.minor, money.currency, 'USD', { USD:1, GBP:0.8, EUR:0.9, ILS:3.7 })
-    : display ? display.convert(money.minor, money.currency) : money.currency === currency ? money.minor : null;
-  const held = currentCopies(copies).filter(copy => copy.possession === 'received');
-  const dates = held.flatMap(copy => copy.acquiredOn.status === 'known' ? [copy.acquiredOn.value] : []);
-  const needsHistoricalFx = held.some(copy => [copy.cardCost,copy.shippingCost,copy.taxCost,copy.feeCost].some(cost =>
-    (cost.status === 'exact' || cost.status === 'estimated') && cost.value.currency !== currency));
-  const fx = useHistoricalFx(dates, new Date().toISOString().slice(0,10), enabled && needsHistoricalFx);
+  const {display,currency,convert,fx} = useMarketChange(copies,enabled,preview);
   const figures = selectCollectionOverview({ owner, copies, catalog: catalogCards, quotes: preview ? sampleQuotes : prices.quotes,
     currency, fx: fx.rows, convert });
   const budget = selectWishlistBudget(wishes, preview ? demoWishQuotes : prices.quotes, 'LP', convert);
   const featured = useFeaturedCards(account.owner, preview);
   const [choosing, setChoosing] = useState(false);
+  const [breakdownMode, setBreakdownMode] = useState<BreakdownMode>('value');
+  const [gainSide,setGainSide] = useState<'above'|'below'>('above');
   const id = useId();
   const format = (minor: number | null, signed = false) => minor === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
     style:'currency', currency, maximumFractionDigits:0, minimumFractionDigits:0, ...(signed ? {signDisplay:'always' as const} : {}),
   }).format(minor / 100);
   const number = (value: number) => new Intl.NumberFormat(he ? 'he-IL' : 'en-US').format(value);
-  const openCollection = (delivery: 'received' | 'pending', copyId?: string) => {
-    const next = new URLSearchParams({delivery});
+  const openCollection = (delivery: 'received' | 'pending' | 'all', copyId?: string, sort?: string) => {
+    const next = new URLSearchParams();
+    if (delivery !== 'all') next.set('delivery',delivery);
+    if (sort) next.set('sort',sort);
     if (preview) next.set('inventory','sample');
     if (copyId) next.set('cardCopy',copyId);
     void navigate({pathname:'/collection/cards',search:next.toString()});
@@ -121,27 +120,86 @@ export function CollectionOverviewPage() {
     return holding ? [holding] : [];
   });
   const available = [...new Map(figures.holdings.map(holding => [holding.card.id,holding.card])).values()];
-  const coverage = `${number(budget.covered)}/${number(budget.total)} ${text.priced}`;
+  const breakdown = selectCollectionBreakdown(figures, budget, breakdownMode);
+  const valueMode = breakdownMode === 'value';
+  const complete = breakdown.covered === breakdown.count;
+  const formatBreakdown = (amount: number | null) => amount === null ? '—' : valueMode ? format(amount) : number(amount);
+  const compact = (amount: number | null) => amount === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
+    notation:'compact', maximumFractionDigits:1, ...(valueMode ? {style:'currency' as const, currency} : {}),
+  }).format(valueMode ? amount / 100 : amount);
+  const percent = (share: number | null) => share === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
+    style:'percent', maximumFractionDigits:1,
+  }).format(share);
+  const segments = breakdown.categories.map(item => {
+    const full = formatBreakdown(item.amount);
+    const short = (item.share ?? 0) < .27 && full.length > 4 ? compact(item.amount) : full;
+    // Very small shares cannot fit readable text without falsifying the segment width.
+    const inline = (item.share ?? 0) >= Math.max(.09, short.length * .024);
+    return {...item, full, short, inline, label:text[item.key], percent:percent(item.share)};
+  });
+  const changeSort = gainSide==='above'?'marketChangeDesc':'marketChangeAsc';
+  const rankedChanges = figures.changes.filter(item=>item.change.gain!==null&&(gainSide==='above'?item.change.gain>0:item.change.gain<0)).sort((a,b)=>compareMarketChanges(a.change,b.change,gainSide==='below')||a.card.name.localeCompare(b.card.name,i18n.language)||a.card.id.localeCompare(b.card.id)).slice(0,3);
+  const formatGain = (minor:number) => format(minor,true);
   const metrics = [
-    {key:'received',label:text.received,value:number(figures.received),detail:text.physical,Icon:LuLayers,onOpen:()=>openCollection('received')},
-    {key:'pending',label:text.pending,value:number(figures.pending),detail:text.arriving,Icon:LuTruck,onOpen:()=>openCollection('pending')},
-    {key:'wishlist',label:text.wishlist,value:wishReady?number(wishes.length):'—',detail:text.toBuy,Icon:LuHeart,onOpen:openWishlist},
-    {key:'budget',label:text.budget,value:wishReady?format(budget.minor):'—',detail:text.lp,Icon:LuWallet,onOpen:openWishlist},
+    {key:'received',label:text.received,value:number(figures.received),Icon:LuLayers,onOpen:()=>openCollection('received')},
+    {key:'pending',label:text.pending,value:number(figures.pending),Icon:LuTruck,onOpen:()=>openCollection('pending')},
+    {key:'wishlist',label:text.wishlist,value:wishReady?number(wishes.length):'—',Icon:LuHeart,onOpen:openWishlist},
   ];
   return <article className="collection-overview" aria-label={text.title}>
-    <div className="collection-metrics">{metrics.map(({key,label,value,detail,Icon,onOpen}) => <button type="button" key={key}
-      className="collection-metric surface-panel" data-metric={key} onClick={onOpen} disabled={!wishReady && ['wishlist','budget'].includes(key)}>
+    <div className="collection-metrics">{metrics.map(({key,label,value,Icon,onOpen}) => <button type="button" key={key}
+      className="collection-metric surface-panel" data-metric={key} onClick={onOpen} disabled={!wishReady && key==='wishlist'}>
       <span className="collection-metric-top"><span className="collection-metric-icon"><Icon aria-hidden /></span><LuChevronRight aria-hidden className="collection-metric-chevron rtl:rotate-180" /></span>
-      <span className="collection-metric-label">{label}</span><bdi className="collection-metric-value">{key==='budget'&&budget.minor!==null&&budget.total>0&&wishReady&&<span aria-hidden>≈ </span>}{value}</bdi>
-      <span className="collection-metric-detail">{detail}</span>
+      <span className="collection-metric-label">{label}</span><bdi className="collection-metric-value">{value}</bdi>
     </button>)}</div>
-    <div className="collection-budget-note" aria-live="polite">
-      <span>{!wishReady ? wish.error ? text.wishlistFailed : text.loading : budget.covered < budget.total ? text.partial : text.estimate}</span>
-      {wishReady && <span>{coverage}{priceLoading ? ' · …' : ''}</span>}
-      {!preview && wish.error && <button type="button" onClick={wish.retry}>{text.retry}</button>}
-    </div>
-    <p className="sr-only">{text.estimateNote}</p>
+    <Card className="collection-breakdown" aria-labelledby={`${id}-breakdown`}>
+      <div className="collection-section-heading"><h2 id={`${id}-breakdown`}>{text.breakdown}</h2>
+        <label className="dashboard-icon-control"><LuChartNoAxesCombined aria-hidden /><LuChevronDown aria-hidden className="dashboard-chevron" />
+          <select aria-label={text.chartMetric} value={breakdownMode} onChange={e=>setBreakdownMode(e.target.value as BreakdownMode)}>
+            <option value="value">{text.value}</option><option value="quantity">{text.quantity}</option>
+          </select>
+        </label>
+      </div>
+      <div className="collection-breakdown-summary" aria-live="polite">
+        <bdi className="collection-breakdown-total">{wishReady ? formatBreakdown(breakdown.total) : '—'}</bdi>
+        <span>{valueMode ? complete ? text.totalValue : text.partialValue : text.totalCards}</span>
+      </div>
+      {wishReady && <>
+        <div className="collection-breakdown-bar" role="img" aria-label={segments.map(item=>`${item.label}: ${item.percent}, ${item.full}`).join('; ')}>
+          {segments.filter(item => (item.share ?? 0)>0).map(item=><div key={item.key} data-category={item.key}
+            data-amount={item.amount ?? undefined} className="collection-breakdown-segment" style={{flexGrow:item.amount ?? 0}}
+            title={`${item.label}: ${item.percent} · ${item.full}`}>
+            {item.inline && <span className="collection-breakdown-labels" aria-hidden><bdi>{item.percent}</bdi><bdi>{item.short}</bdi></span>}
+          </div>)}
+        </div>
+        <div className="collection-breakdown-legend">
+          {segments.map(item=><div key={item.key} data-category={item.key} className="collection-breakdown-key">
+            <span><i aria-hidden />{item.label}</span>
+            {!item.inline && <bdi>{item.percent} · {item.full}</bdi>}
+          </div>)}
+        </div>
+        {valueMode && <div className="collection-breakdown-note"><span>{text.lp}</span><span>{number(breakdown.covered)}/{number(breakdown.count)} {text.priced}{priceLoading?' · …':''}</span></div>}
+        {valueMode && <p className="sr-only">{text.estimateNote}</p>}
+      </>}
+      {!wishReady && <p className="collection-note">{wish.error ? text.wishlistFailed : text.loading} {wish.error && <button type="button" onClick={wish.retry}>{text.retry}</button>}</p>}
+    </Card>
     {figures.unknown > 0 && <p className="collection-note">{number(figures.unknown)} {text.unknown}</p>}
+
+    <Card className="collection-comparison" aria-labelledby={`${id}-compare`}>
+      <div className="collection-section-heading"><h2 id={`${id}-compare`}>{text.comparison}</h2><button type="button" className="collection-view-all" onClick={()=>openCollection('all',undefined,changeSort)}>{text.viewAll}<LuChevronRight aria-hidden className="rtl:rotate-180"/></button></div>
+      <div className="collection-gain-switch" role="group" aria-label={text.comparison}>
+        <button type="button" data-side="above" aria-pressed={gainSide==='above'} onClick={()=>setGainSide('above')}><LuArrowUpRight aria-hidden/>{text.above}</button>
+        <button type="button" data-side="below" aria-pressed={gainSide==='below'} onClick={()=>setGainSide('below')}><LuArrowDownRight aria-hidden/>{text.below}</button>
+      </div>
+      <p className="collection-note">{number(figures.compared)}/{number(figures.comparableTotal)} {text.compared}</p>
+      <ul className="space-y-1.5 collection-change-list">{rankedChanges.map(item=><ListCard key={item.card.id}>
+        <CollectionCardRow name={item.card.name} subtitle={`${item.card.setName} · #${item.card.number}`} imageUrl={item.card.imageUrl}
+          detailsLabel={t('inventory.details')} onOpen={()=>openCollection('all',item.copyId,changeSort)}
+          detail={marketChangeDetail(item.change,format,text.cost,text.market)}
+          metric={<MarketChangeMetric change={item.change} format={formatGain} locale={i18n.language} unavailable={t('inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>}
+          action={<button type="button" aria-label={`${t('inventory.copyDetails')}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
+      </ListCard>)}</ul>
+      {!rankedChanges.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : !figures.compared ? text.comparisonEmpty : gainSide==='above'?text.noGainers:text.noLosers}</p>}
+    </Card>
 
     <div className="collection-highlights"><CardCarousel title={text.favorites} actionLabel={text.choose} onAction={() => setChoosing(true)}
       items={highlights.map(holding => ({id:holding.copy.id,name:holding.card.name,imageUrl:holding.card.imageUrl,showName:true,
@@ -149,35 +207,9 @@ export function CollectionOverviewPage() {
       empty={featured.loading ? text.loading : featured.error ? <>{text.favoriteFailed} <button type="button" onClick={featured.retry}>{text.retry}</button></> : <span className="collection-highlight-empty"><LuSparkles aria-hidden />{text.emptyFavorites}</span>} />
     </div>
 
-    <Card className="collection-comparison" aria-labelledby={`${id}-compare`}>
-      <div className="collection-section-heading"><h2 id={`${id}-compare`}>{text.comparison}</h2><LuArrowUpRight aria-hidden /></div>
-      <p className="collection-note">{number(figures.compared)}/{number(figures.comparableTotal)} {text.compared}</p>
-      {(['above','below'] as const).map(side => figures[side].length > 0 && <div className="collection-gain-section" key={side} data-gain={side}>
-        <h3>{side==='above'?<LuArrowUpRight aria-hidden />:<LuArrowDownRight aria-hidden />}{text[side]}</h3>
-        <ul>{figures[side].map(holding => <li key={holding.copy.id}><HoldingRow holding={holding} onOpen={()=>openCollection('received',holding.copy.id)}
-          subtitle={`${text.cost} ${format(holding.basis)} · ${text.market} ${format(holding.market)}`}>
-          <bdi>{format(holding.gain,true)}</bdi><span>{holding.roi === null ? '—' : `${holding.roi>0?'+':''}${holding.roi.toFixed(1)}%`}</span>
-        </HoldingRow></li>)}</ul>
-      </div>)}
-      {!figures.above.length && !figures.below.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : figures.compared ? text.even : text.comparisonEmpty}</p>}
-    </Card>
-
-    <Card className="collection-concentration" aria-labelledby={`${id}-value`}>
-      <div className="collection-section-heading"><h2 id={`${id}-value`}>{text.concentration}</h2><LuChartPie aria-hidden /></div>
-      {figures.total > 0 ? <>
-        <div className="collection-concentration-summary"><div><span>{text.top} {number(figures.top.length)}</span>
-          <strong>{(figures.topValue/figures.total*100).toFixed(0)}<small>%</small></strong><span>{text.ofValue}</span></div>
-          <bdi>{format(figures.topValue)}</bdi></div>
-        <div className="collection-value-bar" role="img" aria-label={`${text.top} ${figures.top.length}: ${(figures.topValue/figures.total*100).toFixed(1)}%`}>
-          {figures.top.map((group,index)=><span key={group.card.id} data-rank={index} style={{flexGrow:group.minor}} />)}
-          {figures.total>figures.topValue&&<span data-rank="rest" style={{flexGrow:figures.total-figures.topValue}} />}
-        </div>
-        <ul className="collection-value-rows">{figures.top.map((group,index)=><li key={group.card.id}><button type="button" onClick={()=>openCollection('received',group.copyId)}>
-          <span className="collection-value-dot" data-rank={index} /><span>{group.card.name}</span><bdi>{format(group.minor)}</bdi><span>{(group.minor/figures.total*100).toFixed(1)}%</span>
-        </button></li>)}{figures.total>figures.topValue&&<li className="collection-value-rest"><span className="collection-value-dot" data-rank="rest" /><span>{text.rest}</span><bdi>{format(figures.total-figures.topValue)}</bdi><span>{((figures.total-figures.topValue)/figures.total*100).toFixed(1)}%</span></li>}</ul>
-      </> : <p className="collection-empty">{priceLoading ? text.loading : text.concentrationEmpty}</p>}
-      <p className="collection-note">{number(figures.priced)}/{number(figures.received)} {text.receivedPriced}</p>
-    </Card>
+    <TopHoldings id={`${id}-top`} title={text.top} actionLabel={text.viewAll} onViewAll={()=>openCollection('received',undefined,'value')}
+      items={figures.top.map(holding=>({id:holding.copy.id,name:holding.card.name,subtitle:`${holding.card.setName} · #${holding.card.number}`,imageUrl:holding.card.imageUrl,value:format(holding.market),onOpen:()=>openCollection('received',holding.copy.id)}))}
+      empty={priceLoading?text.loading:text.topEmpty}/>
     {!preview && (prices.failed || fx.failed || display?.failed) && <p className="collection-note" role="status">{text.pricesFailed} <button type="button" onClick={()=>{
       prices.retry();void fx.retry();
       if(display?.failed) { void client.invalidateQueries({queryKey:['reference-fx']}); void client.invalidateQueries({queryKey:['display-currency',account.owner]}); }
@@ -185,14 +217,6 @@ export function CollectionOverviewPage() {
     {choosing && <HighlightPicker key={owner} cards={available} initial={featured.ids} busy={featured.busy} unavailable={featured.loading || featured.error}
       text={text} onClose={()=>setChoosing(false)} onSave={async ids=>{await featured.save(ids);setChoosing(false);}} />}
   </article>;
-}
-
-function HoldingRow({holding,onOpen,subtitle,children}: {holding:Holding;onOpen:()=>void;subtitle:string;children:ReactNode}) {
-  return <button type="button" className="collection-holding-row" onClick={onOpen}>
-    <PokemonArt src={holding.card.imageUrl} alt={holding.card.name} />
-    <span className="collection-holding-identity"><strong>{holding.card.name}</strong><span>{holding.card.setName} · #{holding.card.number}</span><small>{subtitle}</small></span>
-    <span className="collection-holding-result">{children}</span><LuChevronRight aria-hidden className="rtl:rotate-180" />
-  </button>;
 }
 
 function HighlightPicker({cards,initial,busy,unavailable,text,onClose,onSave}: {

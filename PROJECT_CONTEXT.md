@@ -769,3 +769,10 @@ against the filtered list; clearing the projection restores the original list.
 The Collection Cards delivery filter accepts received links as well as pending.
 Sample highlights and prices are memory-only; no migration or legacy changes.
 See docs/COLLECTION_OVERVIEW.md and PR/CI receipts for release verification.
+
+## Collection Overview breakdown (2026-11-28)
+The overview keeps three count tiles and shows one horizontal distribution by the selected metric (market value or quantity). The total, percentages and segment amounts always use that same metric. Pending prices use the existing printing quote cache; remaining Wishlist prices use LP. Missing quotes/FX are excluded from priced totals with visible coverage. No persistence, rules, migration or legacy changes are required.
+
+Cost vs. Market now includes pending acquisitions and ranks catalog groups by net comparable market gain, not daily price movement. Both Cards and Overview share the copy comparison and row component, with dated FX, visible coverage and direct market-change sort navigation. Received-only concentration and highlights remain unchanged.
+
+Value Concentration is replaced by the shared Dashboard Top Holdings view (ten rows on Collection Overview; Dashboard remains unchanged). Your Highlights follows Cost vs. Market. Rankings are per received physical copy, as on Dashboard.

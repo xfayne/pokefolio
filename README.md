@@ -284,3 +284,9 @@ feature up to five received cards. Highlights are stored separately under
 `users/{uid}/preferences/collection`; collection/transaction/Binder data is unchanged.
 The sample route `#/collection/overview?inventory=sample` uses synthetic prices and
 in-memory highlights only. See [Overview contracts](docs/COLLECTION_OVERVIEW.md).
+
+Collection Overview uses three compact count tiles and a single proportional breakdown that switches between quantity and market value. The latter includes pending-copy quotes and a fixed-LP estimate for remaining wishes, with explicit price coverage.
+
+Cost vs. Market includes received and pending copies with comparable costs and market quotes. Top Gainers/Losers and Cards market-change sorting share the group comparison calculation and compact card row; incomplete amounts remain unknown or visibly partial.
+
+Collection Overview places Your Highlights after Cost vs. Market and uses the Dashboard's shared Top Holdings component with up to ten priced received physical copies.

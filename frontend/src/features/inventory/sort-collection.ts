@@ -1,6 +1,7 @@
 import type { InventoryGroup } from '@/domain/inventory';
+import { compareMarketChanges, type MarketChange } from './market-change';
 
-export type CollectionSort = 'value' | 'name' | 'copies' | 'acquired' | 'setNumber';
+export type CollectionSort = 'value' | 'name' | 'copies' | 'acquired' | 'setNumber' | 'marketChangeDesc' | 'marketChangeAsc';
 type VisibleMarket = InventoryGroup['market'];
 
 function label(group: InventoryGroup): string {
@@ -34,8 +35,10 @@ export function compareCollectionGroups(
   sort: CollectionSort,
   market: (group: InventoryGroup) => VisibleMarket,
   locale = 'en',
+  change?: (group:InventoryGroup)=>MarketChange|undefined,
 ): number {
   const tie = () => label(a).localeCompare(label(b), locale) || a.key.localeCompare(b.key);
+  if (sort === 'marketChangeDesc' || sort === 'marketChangeAsc') return compareMarketChanges(change?.(a),change?.(b),sort==='marketChangeAsc') || tie();
   if (sort === 'copies') return b.copies.length - a.copies.length || tie();
   if (sort === 'acquired') return compareKnownDates(newestAcquiredOn(a), newestAcquiredOn(b)) || tie();
   if (sort === 'setNumber') {

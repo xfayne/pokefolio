@@ -27,6 +27,8 @@ export function InventoryPage() {
   const transactionPreview = params.get('transactions') === 'sample';
   const cardCopyId = params.get('cardCopy');
   const navigationProps = {
+    initialSort: params.get('sort') === 'value' ? 'value' as const : params.get('sort') === 'marketChangeDesc' ? 'marketChangeDesc' as const : params.get('sort') === 'marketChangeAsc' ? 'marketChangeAsc' as const : 'acquired' as const,
+    comparisonPreview: preview || transactionPreview,
     initialDeliveryFilter: params.get('delivery') === 'pending' ? 'pending' as const : params.get('delivery') === 'received' ? 'received' as const : 'all' as const,
     inspectCopyId: params.get('copy') ?? undefined,
     cardCopyId,
