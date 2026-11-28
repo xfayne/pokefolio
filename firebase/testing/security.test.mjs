@@ -301,6 +301,29 @@ test('display currency preferences are private, bounded and use server time',asy
  }finally{await env.cleanup();}
 });
 
+test('collection highlights are owner-only with at most five distinct catalog references',async()=>{
+ const env=await environment('firestore.private.rules');
+ try{
+  const db=env.authenticatedContext(alice).firestore();
+  const foreign=env.authenticatedContext(bob).firestore();
+  const anon=env.unauthenticatedContext().firestore();
+  const path=`users/${alice}/preferences/collection`;
+  const payload=featuredCardIds=>({featuredCardIds,updatedAt:serverTimestamp()});
+  await assertSucceeds(getDoc(doc(db,path)));
+  await assertSucceeds(setDoc(doc(db,path),payload(['base1-4','base3-5','base2-11','neo2-13','basep-9'])));
+  for(const client of [foreign,anon]){
+   await assertFails(getDoc(doc(client,path)));
+   await assertFails(setDoc(doc(client,path),payload([])));
+  }
+  for(const ids of [['base1-4','base1-4'],['not-a-card'],[1],['base1-4','base3-5','base2-11','neo2-13','basep-9','basep-3']])
+   await assertFails(setDoc(doc(db,path),payload(ids)));
+  await assertFails(setDoc(doc(db,path),{...payload([]),extra:true}));
+  await assertFails(setDoc(doc(db,path),{featuredCardIds:[]}));
+  await assertFails(deleteDoc(doc(db,path)));
+  await assertSucceeds(setDoc(doc(db,path),payload([])));
+ }finally{await env.cleanup();}
+});
+
 test('nine-copy sale edits fit the atomic audit policy and lifecycle writes remain owner-only',async()=>{
  const env=await environment('firestore.private.rules');
  try {

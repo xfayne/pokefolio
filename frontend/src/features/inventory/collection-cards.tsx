@@ -19,7 +19,7 @@ import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/d
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, cardCopyId, initialDeliveryFilter = 'all', onCloseCard, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; cardCopyId?: string | null; initialDeliveryFilter?: 'all' | 'pending'; onCloseCard?: () => void; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, cardCopyId, initialDeliveryFilter = 'all', onCloseCard, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; cardCopyId?: string | null; initialDeliveryFilter?: 'all' | 'received' | 'pending'; onCloseCard?: () => void; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(initialDeliveryFilter === 'pending');

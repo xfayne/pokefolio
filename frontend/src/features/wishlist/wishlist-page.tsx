@@ -18,6 +18,8 @@ import { useDisplayMoney } from '@/services/display-currency';
 import { positionWish, emptyWishlist } from './model';
 import { sampleWishlistIds } from './sample';
 import { useWishlist } from './use-wishlist';
+import { remainingWishes } from '@/features/collection/overview-model';
+import { createSampleCopies } from '@/features/inventory/sample';
 import './wishlist.css';
 
 const catalog = new Map(catalogCards.map(card => [card.id, card]));
@@ -34,25 +36,28 @@ export function WishlistPage() {
   const navigate = useNavigate();
   const [sample, setSample] = useState(() => ({ ...emptyWishlist('sample-wishlist'), cardIds: [...sampleWishlistIds] }));
   const wishlist = preview ? sample : account.wishlist;
+  const remaining = params.get('remaining') === '1';
+  const shownIds = remaining ? remainingWishes(preview ? createSampleCopies() : portfolio.history.copies, wishlist.cardIds) : wishlist.cardIds;
   const reorder = async (id: string, position: number) => {
     if (preview) setSample(current => ({ ...current, revision: current.revision + 1, cardIds: positionWish(current.cardIds, id, position) }));
     else await account.update(ids => positionWish(ids, id, position));
   };
   const demo = () => { const next = new URLSearchParams(params); next.set('wishlist', 'sample'); setParams(next); };
-  if (!preview && (account.loading || account.error)) {
-    return <section className="wishlist-feedback" role="status">{account.loading ? t('loading') : <><span role="alert">{t('wishlistUi.loadFailed')}</span> <Button variant="outline" onClick={account.retry}>{t('reload')}</Button></>}</section>;
+  if (!preview && (account.loading || account.error || remaining && (portfolio.loading || portfolio.error))) {
+    return <section className="wishlist-feedback" role="status">{account.loading || remaining && portfolio.loading ? t('loading') : <><span role="alert">{t('wishlistUi.loadFailed')}</span> <Button variant="outline" onClick={account.retry}>{t('reload')}</Button></>}</section>;
   }
   return <section aria-label={t('wishlistUi.title')} className="wishlist-page">
     {preview && <p className="wishlist-preview-note">{t('wishlistUi.sample')}</p>}
     {!preview && !account.owner && <div className="wishlist-feedback"><p>{t('wishlistUi.signIn')}</p><Button variant="outline" onClick={demo}>{t('wishlistUi.tryDemo')}</Button></div>}
     {!preview && !!account.owner && !wishlist.cardIds.length && <p className="wishlist-preview-note">{t('wishlistUi.addHint')}</p>}
-    <WishlistCardsView cardIds={wishlist.cardIds} busy={account.busy && !preview} onOrder={preview || !!account.owner ? reorder : undefined} priceEnabled={!!account.owner || preview} sample={preview} portfolio={preview ? undefined : portfolio} onViewPurchase={id => { void navigate(`/transactions/purchases/${id}`); }} />
+    {remaining && <div className="wishlist-preview-note"><button type="button" onClick={() => { const next = new URLSearchParams(params); next.delete('remaining'); setParams(next); }}>{t('wishlistUi.stillToBuy')} ×</button></div>}
+    <WishlistCardsView cardIds={shownIds} busy={account.busy && !preview} onOrder={!remaining && (preview || !!account.owner) ? reorder : undefined} priceEnabled={!!account.owner || preview} sample={preview} emptyLabel={remaining ? t('wishlistUi.noneRemaining') : undefined} portfolio={preview ? undefined : portfolio} onViewPurchase={id => { void navigate(`/transactions/purchases/${id}`); }} />
   </section>;
 }
 
-export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true, sample = false, portfolio, onViewPurchase }: {
+export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled = true, sample = false, emptyLabel, portfolio, onViewPurchase }: {
   cardIds: readonly string[]; onOrder?: ((cardId: string, position: number) => Promise<void>) | undefined;
-  busy?: boolean; priceEnabled?: boolean; sample?: boolean;
+  busy?: boolean; priceEnabled?: boolean; sample?: boolean; emptyLabel?: string | undefined;
   portfolio?: ReturnType<typeof usePortfolio> | undefined;
   onViewPurchase?: ((id: string) => void) | undefined;
 }) {
@@ -232,7 +237,7 @@ export function WishlistCardsView({ cardIds, onOrder, busy = false, priceEnabled
       </div>
     </div>
     {saveFailed && <p role="alert" className="wishlist-error">{t('wishlistUi.saveFailed')}</p>}
-    {!ordered.length && <p className="wishlist-empty">{t(cardIds.length ? 'wishlistUi.noResults' : 'wishlistUi.empty')}</p>}
+    {!ordered.length && <p className="wishlist-empty">{!cardIds.length && emptyLabel ? emptyLabel : t(cardIds.length ? 'wishlistUi.noResults' : 'wishlistUi.empty')}</p>}
     <ul className="wishlist-rows">{shown.map(id => {
       const card = catalog.get(id)!;
       const quote = priceMap.get(id);
