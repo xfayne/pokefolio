@@ -19,7 +19,7 @@ it('expands duplicates with separate grades/prices and edits the exact chosen co
   expect(screen.getByText('3 cards · 5 copies')).toBeInTheDocument();
   expect(screen.queryByText('2 copies',{exact:true})).not.toBeInTheDocument();
   expect(screen.queryByText('1 copy',{exact:true})).not.toBeInTheDocument();
-  expect(screen.getByLabelText('Sort cards')).toHaveValue('value');
+  expect(screen.getByLabelText('Sort cards')).toHaveValue('acquired');
   await userEvent.click(screen.getByRole('button', { name: '2 copies: Charizard' }));
   expect(screen.getByText('Cost: $180')).toBeInTheDocument();
   expect(screen.getByText('Cost: $150')).toBeInTheDocument();
