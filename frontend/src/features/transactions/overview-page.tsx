@@ -5,7 +5,6 @@ import { LuChartNoAxesCombined, LuChevronDown, LuChevronRight, LuTag, LuTruck, L
 import { Button } from '@/components/ui/button';
 import { CardCarousel } from '@/components/ui/card-carousel';
 import { Card, EmptyState } from '@/components/ui/surfaces';
-import { ValueChart } from '@/components/ui/value-chart';
 import { catalogCards } from '@/features/catalog/catalog';
 import { PortfolioStatus } from '@/features/portfolio-status';
 import { usePortfolio } from '@/hooks/use-portfolio';
@@ -21,7 +20,7 @@ const labels = {
   en: {
     net: 'Total net', purchases: 'Purchases', sales: 'Sales', cardsPurchased: 'Cards purchased', spend: 'Purchase spend', proceeds: 'Net sale proceeds',
     realized: 'Realized P/L', month: 'This month', activity: 'Monthly activity', netSales: 'Net sales',
-    metric: 'Chart metric', period: 'Chart period', explore: 'Explore chart', all: 'All', emptyChart: 'No amounts to chart.',
+    metric: 'Chart metric', period: 'Chart period', all: 'All',
     unavailable: 'Some amounts or exchange rates are unavailable.', undated: 'Purchases without known dates are excluded.',
     cards: 'Cards on the way', emptyCards: 'No cards on the way.', viewAll: 'View all', unknown: 'Unknown card',
     shipments: 'Shipment updates', allShipments: 'All shipments', emptyShipments: 'No shipment updates yet.',
@@ -30,7 +29,7 @@ const labels = {
   he: {
     net: 'סה״כ נטו', purchases: 'רכישות', sales: 'מכירות', cardsPurchased: 'קלפים שנרכשו', spend: 'סכום הרכישות', proceeds: 'תמורה נטו ממכירות',
     realized: 'רווח או הפסד ממומש', month: 'החודש', activity: 'פעילות חודשית', netSales: 'מכירות נטו',
-    metric: 'מדד הגרף', period: 'תקופת הגרף', explore: 'בדיקת הגרף', all: 'הכול', emptyChart: 'אין סכומים להצגה.',
+    metric: 'מדד הגרף', period: 'תקופת הגרף', all: 'הכול',
     unavailable: 'חלק מהסכומים או שערי ההמרה חסרים.', undated: 'רכישות ללא תאריך ידוע אינן כלולות.',
     cards: 'קלפים בדרך', emptyCards: 'אין קלפים בדרך.', viewAll: 'הצגת הכול', unknown: 'קלף לא מזוהה',
     shipments: 'עדכוני משלוחים', allShipments: 'כל המשלוחים', emptyShipments: 'אין עדיין עדכוני משלוחים.',
@@ -87,13 +86,14 @@ export function OverviewPage() {
   const monthLabel = new Intl.DateTimeFormat(locale, {
     month: 'short', timeZone: 'UTC', ...(figures.months.length > 12 ? { year: '2-digit' } : {}),
   });
-  const points = figures.trend.map(point => ({ date: point.date, value: overviewAmount(point.figures, mode) }));
   const total = overviewAmount(figures.total, mode);
   const current = overviewAmount(figures.thisMonth, mode);
-  const purchaseUrl = (transactionId: string, copyId?: string) => {
-    const params = new URLSearchParams(location.search);
-    if (copyId) params.set('copy', copyId);
-    return { pathname: `/transactions/purchases/${transactionId}`, search: params.toString() };
+  const cardsOnTheWay = selectCardsOnTheWay(history);
+  const openCollection = (cardCopyId?: string) => {
+    const params = new URLSearchParams({ delivery: 'pending' });
+    if (preview) params.set('transactions', 'sample');
+    if (cardCopyId) params.set('cardCopy', cardCopyId);
+    void navigate({ pathname: '/collection/cards', search: params.toString() });
   };
   const shipmentHistory = new URLSearchParams(location.search);
   shipmentHistory.set('shipments', '1');
@@ -136,13 +136,6 @@ export function OverviewPage() {
         <bdi className="dashboard-big">{format(total)}</bdi>
         <div><span>{text.month}</span><bdi>{format(current)}</bdi></div>
       </div>
-      <ValueChart key={`${mode}-${period}`} points={points} label={text[mode]} format={format} empty={text.emptyChart} explore={text.explore} />
-      <div className="dashboard-kpis">
-        {metrics.map(({ label, value, Icon }, index) => <div key={label}>
-          <Icon aria-hidden className={index === 0 ? 'text-blue-600' : 'text-teal-600'} />
-          <span><span className="dashboard-stat-label">{label}</span><bdi>{value}</bdi></span>
-        </div>)}
-      </div>
       {(unavailable || (figures.undated > 0 && mode !== 'sales')) && <p className="dashboard-note">
         {unavailable ? fx.loading ? t('loading') : text.unavailable : null}{unavailable && figures.undated > 0 && mode !== 'sales' ? ' ' : ''}
         {figures.undated > 0 && mode !== 'sales' ? text.undated : null}
@@ -157,21 +150,27 @@ export function OverviewPage() {
         </div>
         <MonthlyActivity bars={bars} mode={mode} title={text.activity} labels={text} format={format} />
       </section>
+      <div className="dashboard-kpis">
+        {metrics.map(({ label, value, Icon }, index) => <div key={label}>
+          <Icon aria-hidden className={index === 0 ? 'text-blue-600' : 'text-teal-600'} />
+          <span><span className="dashboard-stat-label">{label}</span><bdi>{value}</bdi></span>
+        </div>)}
+      </div>
       <div className="dashboard-periods" role="group" aria-label={text.period}>
         {overviewPeriods.map(value => <button key={value} type="button" aria-pressed={period === value} onClick={() => setPeriod(value)}>
           {value === 'All' ? text.all : value}
         </button>)}
       </div>
     </Card>
-    <CardCarousel title={text.cards} actionLabel={text.viewAll} empty={text.emptyCards}
-      onAction={() => { void navigate('/search?cards=on-the-way', { state: { backgroundLocation: location } }); }}
-      items={selectCardsOnTheWay(history).slice(0, 12).map(({ copy, date, transactionId }) => {
+    <CardCarousel title={text.cards} count={counts.format(cardsOnTheWay.length)} actionLabel={text.viewAll} empty={text.emptyCards}
+      onAction={() => openCollection()}
+      items={cardsOnTheWay.slice(0, 12).map(({ copy, date }) => {
         const card = copy.catalog.kind === 'identified' ? cardById.get(copy.catalog.cardId) : undefined;
         const name = card?.name ?? (copy.catalog.kind === 'unidentified' ? copy.catalog.description : text.unknown);
         return {
           id: copy.id, name, imageUrl: card?.imageUrl, showName: true,
           caption: date ? <time dateTime={date}>{shortDate.format(new Date(date))}</time> : '—',
-          onOpen: () => { void navigate(purchaseUrl(transactionId, copy.id), { state: { purchaseFrom: 'history' } }); },
+          onOpen: () => openCollection(copy.id),
         };
       })} />
     <Card className="overview-shipments" aria-labelledby={`${id}-shipments`}>
@@ -183,7 +182,7 @@ export function OverviewPage() {
       </div>
       {events.length ? <ul>{events.map(({ shipment, event, unread }) =>
         <li key={`${shipment.id}:${event.id}`}>
-          <Link to={purchaseUrl(shipment.transactionId)} state={{ purchaseFrom: 'history' }}>
+          <Link to={{ pathname: `/transactions/purchases/${shipment.transactionId}`, search: location.search }} state={{ purchaseFrom: 'history' }}>
             <span className="overview-shipment-icon"><LuTruck aria-hidden /></span>
             <span className="overview-shipment-description">
               <strong>{event.description}</strong>

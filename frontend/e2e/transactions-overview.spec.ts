@@ -1,12 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-test('the Transactions overview shares a bottom period control and hands off to existing screens', async ({ page }) => {
+test('the Transactions overview shows monthly activity and hands off to existing screens', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-12-10T12:00:00Z'));
   await page.goto('./#/transactions/overview?transactions=sample');
   await expect(page.locator('.overview-amount > bdi')).toHaveText('-$227');
   const activity = page.getByRole('region', { name: 'Monthly activity' });
   const periods = page.getByRole('group', { name: 'Chart period' });
-  expect((await periods.boundingBox())!.y).toBeGreaterThan((await activity.boundingBox())!.y);
+  await expect(page.locator('.dashboard-chart')).toHaveCount(0);
+  const metrics = page.locator('.overview-figures .dashboard-kpis');
+  await expect(metrics.locator('bdi')).toHaveText(['$312', '$85']);
+  expect((await metrics.boundingBox())!.y).toBeGreaterThan((await activity.boundingBox())!.y);
+  expect((await periods.boundingBox())!.y).toBeGreaterThan((await metrics.boundingBox())!.y);
   await periods.getByRole('button', { name: '1M', exact: true }).click();
   await expect(activity.getByText('Nov', { exact: true })).toHaveCount(0);
   await expect(page.locator('.overview-amount > bdi')).toHaveText('$0');
@@ -23,9 +27,20 @@ test('the Transactions overview shares a bottom period control and hands off to 
   const art = (await onTheWay.locator('.card-carousel-art').first().boundingBox())!;
   expect(art.width / art.height).toBeCloseTo(63 / 88, 2);
   expect((await onTheWay.boundingBox())!.y).toBeLessThan((await page.getByRole('region', { name: 'Shipment updates' }).boundingBox())!.y);
-  await onTheWay.getByRole('button', { name: 'View all' }).click();
-  await expect(page.getByRole('dialog').getByText('3 results', { exact: true })).toBeVisible();
+  await expect(onTheWay.getByText('3', { exact: true })).toBeVisible();
+  await onTheWay.getByRole('button', { name: /Gengar/ }).click();
+  await expect(page).toHaveURL(/collection\/cards\?delivery=pending&transactions=sample&cardCopy=sample-nov-19-copy-1$/);
+  await expect(page.getByRole('dialog', { name: /^card details$/i })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Gengar', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page).not.toHaveURL(/cardCopy=/);
+  await page.goBack();
+  await onTheWay.getByRole('button', { name: 'View all' }).click();
+  await expect(page).toHaveURL(/collection\/cards\?delivery=pending&transactions=sample$/);
+  await expect(page.getByLabel('Delivery status')).toHaveValue('pending');
+  await expect(page.getByRole('button', { name: /^Card details: Gengar/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Card details: Jolteon/ })).toHaveCount(0);
+  await page.goBack();
   await page.getByRole('link', { name: 'All shipments' }).click();
   await expect(page).toHaveURL(/transactions\/history\?transactions=sample&shipments=1$/);
   await expect(page.locator('.history-row')).toHaveCount(1);

@@ -12,8 +12,9 @@ type CarouselItem = Readonly<{
   onOpen: () => void;
 }>;
 
-export function CardCarousel({ title, actionLabel, onAction, items, empty }: {
+export function CardCarousel({ title, count, actionLabel, onAction, items, empty }: {
   title: string;
+  count?: string;
   actionLabel: string;
   onAction: () => void;
   items: readonly CarouselItem[];
@@ -23,7 +24,10 @@ export function CardCarousel({ title, actionLabel, onAction, items, empty }: {
   const scrollable = items.length > 3;
   return <Card className="card-carousel" aria-labelledby={id}>
     <div className="dashboard-section-heading">
-      <h2 id={id}>{title}</h2>
+      <div className="flex min-w-0 items-center gap-2">
+        <h2 id={id}>{title}</h2>
+        {count !== undefined && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold tabular-nums text-blue-800">{count}</span>}
+      </div>
       <button type="button" onClick={onAction}>{actionLabel}<LuChevronRight aria-hidden /></button>
     </div>
     {items.length ? <ul className="card-carousel-track" data-scrollable={scrollable || undefined}
