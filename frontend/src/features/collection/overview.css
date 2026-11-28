@@ -21,22 +21,6 @@
 .collection-highlight-empty svg { color: #b58b20; width: 1.5rem; height: 1.5rem; }
 .collection-section-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .collection-section-heading > svg { width: 1.125rem; height: 1.125rem; color: var(--adventure-blue); }
-.collection-gain-section { margin-top: .75rem; }
-.collection-gain-section h3 { display: flex; align-items: center; gap: .25rem; font-size: .6875rem; font-weight: var(--font-weight-bold); }
-.collection-gain-section h3 svg { width: 1rem; height: 1rem; }
-.collection-gain-section[data-gain="above"] h3, .collection-gain-section[data-gain="above"] .collection-holding-result { color: #117126; }
-.collection-gain-section[data-gain="below"] h3, .collection-gain-section[data-gain="below"] .collection-holding-result { color: var(--dashboard-negative); }
-.collection-gain-section li + li { border-top: 1px solid #d7e3f2; }
-.collection-holding-row { display: flex; width: 100%; min-width: 0; gap: .5rem; padding-block: .5rem; align-items: center; text-align: start; border-radius: .375rem; }
-.collection-holding-row .pokemon-art { flex-shrink: 0; width: 2.5rem; height: 2.875rem; }
-.collection-holding-identity { flex: 1; min-width: 0; }
-.collection-holding-identity strong { display: block; font-size: .9375rem; line-height: 1.2; overflow-wrap: anywhere; }
-.collection-holding-identity > span { display: block; color: #526580; font-size: .6875rem; line-height: 1.4; }
-.collection-holding-identity small { display: block; color: #445575; font-size: .625rem; line-height: 1.4; }
-.collection-holding-result { display: flex; align-items: flex-end; flex-direction: column; flex-shrink: 0; max-width: 30%; font-variant-numeric: tabular-nums; }
-.collection-holding-result bdi { font-size: 1rem; font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
-.collection-holding-result > span { font-size: .6875rem; }
-.collection-holding-row > svg { width: .875rem; height: .875rem; flex-shrink: 0; color: #7087a9; }
 .collection-empty { padding-block: 1rem; font-size: .8125rem; color: #526580; line-height: 1.5; text-align: center; }
 .collection-concentration-summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .75rem; }
 .collection-concentration-summary > div { display: grid; grid-template-columns: auto auto; align-items: baseline; gap: 0 .5rem; }
@@ -89,3 +73,13 @@
 .collection-breakdown-key i { display: block; width: .5rem; height: .5rem; flex-shrink: 0; border-radius: .1875rem; background: var(--breakdown-fill); border: 1px solid var(--breakdown-ink); }
 .collection-breakdown-key > bdi { color: var(--breakdown-ink); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .collection-breakdown-note { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; color: #526580; font-size: .6875rem; margin-top: .625rem; }
+
+.collection-gain-switch { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .25rem; margin-top: .75rem; padding: .25rem; background: #e1ebf8; border-radius: .75rem; }
+.collection-gain-switch button { min-height: 2.25rem; display: flex; align-items: center; justify-content: center; gap: .25rem; border: 1px solid transparent; border-radius: .5rem; color: #445575; font-size: .75rem; font-weight: var(--font-weight-bold); }
+.collection-gain-switch button svg { width: 1rem; height: 1rem; }
+.collection-gain-switch button[aria-pressed="true"][data-side="above"] { color: #166534; background: #e5f5e9; border-color: #aed5b8; }
+.collection-gain-switch button[aria-pressed="true"][data-side="below"] { color: #9f1239; background: #fce7ef; border-color: #e5b5c5; }
+.collection-view-all { display: flex; align-items: center; gap: .125rem; flex-shrink: 0; min-height: 2rem; color: #0059dd; font-size: .75rem; font-weight: var(--font-weight-bold); }
+.collection-view-all svg { width: .875rem; height: .875rem; }
+.collection-change-list { margin-top: .5rem; }
+.collection-comparison .ui-list-card { box-shadow: none; }

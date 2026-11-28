@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,11 +15,12 @@ import { useWishlist } from '@/features/wishlist/use-wishlist';
 import { sampleWishlistIds } from '@/features/wishlist/sample';
 import { createSampleCopies, sampleOwner, sampleQuotes } from '@/features/inventory/sample';
 import { catalogCards, catalogMarketReference } from '@/features/catalog/catalog';
-import { useDisplayCurrency, convertDisplay } from '@/services/display-currency';
-import { useHistoricalFx } from '@/services/historical-fx';
+import { useMarketChange } from '../inventory/use-market-change';
+import { compareMarketChanges } from '../inventory/market-change';
+import { CollectionCardRow, MarketChangeMetric } from '../inventory/collection-card-row';
+import { ListCard } from '@/components/ui/list-card';
 import type { CopyQuote, InventoryCatalogCard } from '@/domain/inventory';
-import type { Money } from '@/domain/schema';
-import { currentCopies, remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode, type Holding } from './overview-model';
+import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode } from './overview-model';
 import { useOverviewPrices } from './use-overview-prices';
 import { useFeaturedCards } from './use-featured-cards';
 import './overview.css';
@@ -33,8 +34,8 @@ const labels = {
     emptyFavorites: 'Give your favorite cards a place in the spotlight.', save: 'Save selection', saveFailed: 'Could not save your selection. Try again.',
     favoriteFailed: 'Could not load your highlights.', search: 'Search your collection', noMatches: 'No matching cards.',
     noCards: 'Your received cards will appear here.',
-    comparison: 'Cost vs. Market', above: 'Above cost', below: 'Below cost', cost: 'Cost', market: 'Market',
-    compared: 'received copies with comparable prices and costs', comparisonEmpty: 'Comparable market prices and complete acquisition costs will appear here.',
+    comparison: 'Cost vs. Market', above: 'Top Gainers', below: 'Top Losers', viewAll: 'View all', noGainers: 'No cards above cost.', noLosers: 'No cards below cost.', cost: 'Cost', market: 'Market',
+    compared: 'copies with comparable prices and costs', comparisonEmpty: 'Comparable market prices and complete acquisition costs will appear here.',
     even: 'Your priced cards are currently at their recorded cost.',
     concentration: 'Value Concentration', top: 'Top', ofValue: 'of priced value', rest: 'Rest of collection',
     concentrationEmpty: 'Available market prices will reveal how your collection value is distributed.',
@@ -51,8 +52,8 @@ const labels = {
     emptyFavorites: 'מקום לקלפים האהובים עליך באוסף.', save: 'שמירת הבחירה', saveFailed: 'לא ניתן לשמור את הבחירה. נסה שוב.',
     favoriteFailed: 'לא ניתן לטעון את הקלפים הנבחרים.', search: 'חיפוש באוסף', noMatches: 'לא נמצאו קלפים מתאימים.',
     noCards: 'כאן יופיעו הקלפים שכבר התקבלו.',
-    comparison: 'עלות מול שווי', above: 'מעל העלות', below: 'מתחת לעלות', cost: 'עלות', market: 'שוק',
-    compared: 'עותקים שהתקבלו עם מחיר שוק ועלות להשוואה', comparisonEmpty: 'כאן יוצגו קלפים עם מחיר שוק ועלות רכישה מלאה להשוואה.',
+    comparison: 'עלות מול שווי', above: 'המובילים ברווח', below: 'המובילים בהפסד', viewAll: 'הצג הכול', noGainers: 'אין קלפים מעל העלות.', noLosers: 'אין קלפים מתחת לעלות.', cost: 'עלות', market: 'שוק',
+    compared: 'עותקים עם מחיר שוק ועלות להשוואה', comparisonEmpty: 'כאן יוצגו קלפים עם מחיר שוק ועלות רכישה מלאה להשוואה.',
     even: 'שווי הקלפים המתומחרים שלך כרגע שווה לעלותם המתועדת.',
     concentration: 'הרכב השווי', top: 'המובילים', ofValue: 'מהשווי המתומחר', rest: 'שאר האוסף',
     concentrationEmpty: 'מחירי השוק הזמינים יציגו כיצד מתחלק שווי האוסף שלך.',
@@ -70,39 +71,35 @@ const demoWishQuotes: CopyQuote[] = sampleWishlistIds.slice(0, -1).map((id, inde
 }));
 
 export function CollectionOverviewPage() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const he = i18n.language === 'he', text = labels[he ? 'he' : 'en'];
   const [params] = useSearchParams();
   const preview = params.get('inventory') === 'sample';
   const navigate = useNavigate();
   const client = useQueryClient();
-  const account = usePortfolio(), wish = useWishlist(), display = useDisplayCurrency();
+  const account = usePortfolio(), wish = useWishlist();
   const copies = preview ? createSampleCopies() : account.history.copies;
   const owner = preview ? sampleOwner : account.owner ?? 'disconnected';
   const wishes = remainingWishes(copies, preview ? sampleWishlistIds : wish.wishlist.cardIds);
   const enabled = !preview && !!account.owner && !account.loading && !account.error;
   const prices = useOverviewPrices(copies, wish.loading || wish.error ? [] : wishes, enabled);
-  const currency = preview ? 'USD' : display?.currency ?? 'USD';
-  const convert = (money: Money) => preview ? convertDisplay(money.minor, money.currency, 'USD', { USD:1, GBP:0.8, EUR:0.9, ILS:3.7 })
-    : display ? display.convert(money.minor, money.currency) : money.currency === currency ? money.minor : null;
-  const held = currentCopies(copies).filter(copy => copy.possession === 'received');
-  const dates = held.flatMap(copy => copy.acquiredOn.status === 'known' ? [copy.acquiredOn.value] : []);
-  const needsHistoricalFx = held.some(copy => [copy.cardCost,copy.shippingCost,copy.taxCost,copy.feeCost].some(cost =>
-    (cost.status === 'exact' || cost.status === 'estimated') && cost.value.currency !== currency));
-  const fx = useHistoricalFx(dates, new Date().toISOString().slice(0,10), enabled && needsHistoricalFx);
+  const {display,currency,convert,fx} = useMarketChange(copies,enabled,preview);
   const figures = selectCollectionOverview({ owner, copies, catalog: catalogCards, quotes: preview ? sampleQuotes : prices.quotes,
     currency, fx: fx.rows, convert });
   const budget = selectWishlistBudget(wishes, preview ? demoWishQuotes : prices.quotes, 'LP', convert);
   const featured = useFeaturedCards(account.owner, preview);
   const [choosing, setChoosing] = useState(false);
   const [breakdownMode, setBreakdownMode] = useState<BreakdownMode>('value');
+  const [gainSide,setGainSide] = useState<'above'|'below'>('above');
   const id = useId();
   const format = (minor: number | null, signed = false) => minor === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
     style:'currency', currency, maximumFractionDigits:0, minimumFractionDigits:0, ...(signed ? {signDisplay:'always' as const} : {}),
   }).format(minor / 100);
   const number = (value: number) => new Intl.NumberFormat(he ? 'he-IL' : 'en-US').format(value);
-  const openCollection = (delivery: 'received' | 'pending', copyId?: string) => {
-    const next = new URLSearchParams({delivery});
+  const openCollection = (delivery: 'received' | 'pending' | 'all', copyId?: string, sort?: string) => {
+    const next = new URLSearchParams();
+    if (delivery !== 'all') next.set('delivery',delivery);
+    if (sort) next.set('sort',sort);
     if (preview) next.set('inventory','sample');
     if (copyId) next.set('cardCopy',copyId);
     void navigate({pathname:'/collection/cards',search:next.toString()});
@@ -139,6 +136,9 @@ export function CollectionOverviewPage() {
     const inline = (item.share ?? 0) >= Math.max(.09, short.length * .024);
     return {...item, full, short, inline, label:text[item.key], percent:percent(item.share)};
   });
+  const changeSort = gainSide==='above'?'marketChangeDesc':'marketChangeAsc';
+  const rankedChanges = figures.changes.filter(item=>item.change.gain!==null&&(gainSide==='above'?item.change.gain>0:item.change.gain<0)).sort((a,b)=>compareMarketChanges(a.change,b.change,gainSide==='below')||a.card.name.localeCompare(b.card.name,i18n.language)||a.card.id.localeCompare(b.card.id)).slice(0,3);
+  const formatGain = (minor:number) => format(minor,true);
   const metrics = [
     {key:'received',label:text.received,value:number(figures.received),Icon:LuLayers,onOpen:()=>openCollection('received')},
     {key:'pending',label:text.pending,value:number(figures.pending),Icon:LuTruck,onOpen:()=>openCollection('pending')},
@@ -190,16 +190,19 @@ export function CollectionOverviewPage() {
     </div>
 
     <Card className="collection-comparison" aria-labelledby={`${id}-compare`}>
-      <div className="collection-section-heading"><h2 id={`${id}-compare`}>{text.comparison}</h2><LuArrowUpRight aria-hidden /></div>
+      <div className="collection-section-heading"><h2 id={`${id}-compare`}>{text.comparison}</h2><button type="button" className="collection-view-all" onClick={()=>openCollection('all',undefined,changeSort)}>{text.viewAll}<LuChevronRight aria-hidden className="rtl:rotate-180"/></button></div>
+      <div className="collection-gain-switch" role="group" aria-label={text.comparison}>
+        <button type="button" data-side="above" aria-pressed={gainSide==='above'} onClick={()=>setGainSide('above')}><LuArrowUpRight aria-hidden/>{text.above}</button>
+        <button type="button" data-side="below" aria-pressed={gainSide==='below'} onClick={()=>setGainSide('below')}><LuArrowDownRight aria-hidden/>{text.below}</button>
+      </div>
       <p className="collection-note">{number(figures.compared)}/{number(figures.comparableTotal)} {text.compared}</p>
-      {(['above','below'] as const).map(side => figures[side].length > 0 && <div className="collection-gain-section" key={side} data-gain={side}>
-        <h3>{side==='above'?<LuArrowUpRight aria-hidden />:<LuArrowDownRight aria-hidden />}{text[side]}</h3>
-        <ul>{figures[side].map(holding => <li key={holding.copy.id}><HoldingRow holding={holding} onOpen={()=>openCollection('received',holding.copy.id)}
-          subtitle={`${text.cost} ${format(holding.basis)} · ${text.market} ${format(holding.market)}`}>
-          <bdi>{format(holding.gain,true)}</bdi><span>{holding.roi === null ? '—' : `${holding.roi>0?'+':''}${holding.roi.toFixed(1)}%`}</span>
-        </HoldingRow></li>)}</ul>
-      </div>)}
-      {!figures.above.length && !figures.below.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : figures.compared ? text.even : text.comparisonEmpty}</p>}
+      <ul className="space-y-1.5 collection-change-list">{rankedChanges.map(item=><ListCard key={item.card.id}>
+        <CollectionCardRow name={item.card.name} subtitle={`${item.card.setName} · #${item.card.number}`} imageUrl={item.card.imageUrl}
+          detailsLabel={t('inventory.details')} onOpen={()=>openCollection('all',item.copyId,changeSort)}
+          metric={<MarketChangeMetric change={item.change} format={formatGain} locale={i18n.language} unavailable={t('inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>}
+          action={<button type="button" aria-label={`${t('inventory.details')}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
+      </ListCard>)}</ul>
+      {!rankedChanges.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : !figures.compared ? text.comparisonEmpty : gainSide==='above'?text.noGainers:text.noLosers}</p>}
     </Card>
 
     <Card className="collection-concentration" aria-labelledby={`${id}-value`}>
@@ -225,14 +228,6 @@ export function CollectionOverviewPage() {
     {choosing && <HighlightPicker key={owner} cards={available} initial={featured.ids} busy={featured.busy} unavailable={featured.loading || featured.error}
       text={text} onClose={()=>setChoosing(false)} onSave={async ids=>{await featured.save(ids);setChoosing(false);}} />}
   </article>;
-}
-
-function HoldingRow({holding,onOpen,subtitle,children}: {holding:Holding;onOpen:()=>void;subtitle:string;children:ReactNode}) {
-  return <button type="button" className="collection-holding-row" onClick={onOpen}>
-    <PokemonArt src={holding.card.imageUrl} alt={holding.card.name} />
-    <span className="collection-holding-identity"><strong>{holding.card.name}</strong><span>{holding.card.setName} · #{holding.card.number}</span><small>{subtitle}</small></span>
-    <span className="collection-holding-result">{children}</span><LuChevronRight aria-hidden className="rtl:rotate-180" />
-  </button>;
 }
 
 function HighlightPicker({cards,initial,busy,unavailable,text,onClose,onSave}: {

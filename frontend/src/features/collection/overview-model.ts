@@ -1,5 +1,6 @@
 import { catalogIdentity, selectInventory, type CopyQuote, type CopyView, type InventoryCatalogCard } from '@/domain/inventory';
-import { acquisitionBasis, referenceConverter, type FxRow } from '@/domain/performance';
+import { referenceConverter, type FxRow } from '@/domain/performance';
+import { compareCopyToMarket, summarizeMarketChange, type MarketChange } from '../inventory/market-change';
 import { safeInteger } from '@/domain/money';
 import type { CardCopy, Condition, Currency, Money } from '@/domain/schema';
 import { catalogMarketReference } from '@/features/catalog/catalog';
@@ -54,16 +55,18 @@ export function selectCollectionOverview(input: {
     .filter(view => view.copy.possession === 'pending').map(marketFor) : []);
   const pendingKnown = pendingMarkets.filter((minor): minor is number => minor !== null);
   const pendingValue = safeInteger(pendingKnown.reduce((sum, minor) => sum + BigInt(minor), 0n));
-  const holdings: Holding[] = inventory.groups.flatMap(group => group.card ? group.copies.flatMap(view => {
-    const copy = view.copy;
-    if (copy.possession !== 'received') return [];
-    const market = marketFor(view);
-    const basis = acquisitionBasis([copy.cardCost, copy.shippingCost, copy.taxCost, copy.feeCost],
-      copy.acquiredOn.status === 'known' ? copy.acquiredOn.value : null, input.currency, historical);
-    const amount = basis.status === 'unavailable' ? null : basis.minor;
-    const gain = market !== null && amount !== null ? safeInteger(BigInt(market) - BigInt(amount)) : null;
-    return [{ copy, card: group.card!, market, basis: amount, gain, roi: gain !== null && amount !== null && amount > 0 ? gain / amount * 100 : null }];
+  const comparisons: Holding[] = inventory.groups.flatMap(group => group.card ? group.copies.flatMap(view => {
+    if (view.copy.possession !== 'received' && view.copy.possession !== 'pending') return [];
+    return [{copy:view.copy,card:group.card!,...compareCopyToMarket(view,input.currency,historical,input.convert)}];
   }) : []);
+  const holdings = comparisons.filter(holding => holding.copy.possession === 'received');
+  const byCopy = new Map(comparisons.map(holding=>[holding.copy.id,holding]));
+  const changes = inventory.groups.flatMap(group=> {
+    if (!group.card) return [];
+    const eligible = group.copies.filter(view=>view.copy.possession==='received'||view.copy.possession==='pending');
+    const change: MarketChange = summarizeMarketChange(eligible.map(view=>byCopy.get(view.copy.id)!));
+    return eligible.length ? [{card:group.card,copyId:eligible[0]!.copy.id,change}] : [];
+  });
   // Concentration is by catalog card, aggregating its physical copies.
   const groups = new Map<string, { card: InventoryCatalogCard; copyId: string; minor: number }>();
   for (const holding of holdings) if (holding.market !== null) {
@@ -78,10 +81,10 @@ export function selectCollectionOverview(input: {
   return {
     received: inventory.counts.received, pending: inventory.counts.pending, unknown: inventory.counts.unknownPossession,
     holdings, top, total, topValue, pendingValue, pendingPriced: pendingKnown.length, priced: holdings.filter(holding => holding.market !== null).length,
-    compared: holdings.filter(holding => holding.gain !== null).length,
-    comparableTotal: inventory.counts.received,
-    above: holdings.filter(holding => holding.gain !== null && holding.gain > 0).sort((a,b) => b.gain! - a.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
-    below: holdings.filter(holding => holding.gain !== null && holding.gain < 0).sort((a,b) => a.gain! - b.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
+    changes, compared: comparisons.filter(holding => holding.gain !== null).length,
+    comparableTotal: inventory.counts.received + inventory.counts.pending,
+    above: comparisons.filter(holding => holding.gain !== null && holding.gain > 0).sort((a,b) => b.gain! - a.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
+    below: comparisons.filter(holding => holding.gain !== null && holding.gain < 0).sort((a,b) => a.gain! - b.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
   };
 }
 

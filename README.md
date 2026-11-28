@@ -286,3 +286,5 @@ The sample route `#/collection/overview?inventory=sample` uses synthetic prices 
 in-memory highlights only. See [Overview contracts](docs/COLLECTION_OVERVIEW.md).
 
 Collection Overview uses three compact count tiles and a single proportional breakdown that switches between quantity and market value. The latter includes pending-copy quotes and a fixed-LP estimate for remaining wishes, with explicit price coverage.
+
+Cost vs. Market includes received and pending copies with comparable costs and market quotes. Top Gainers/Losers and Cards market-change sorting share the group comparison calculation and compact card row; incomplete amounts remain unknown or visibly partial.

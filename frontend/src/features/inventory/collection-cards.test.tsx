@@ -140,3 +140,16 @@ it('offers date and catalog ordering in the existing compact sort select', async
   await userEvent.selectOptions(sorter, 'setNumber');
   expect(sorter).toHaveValue('setNumber');
 });
+
+it('sorts market changes in either direction using comparable physical copies, including pending', async()=> {
+  render(<CollectionCards data={data()} initialSort="marketChangeDesc"/>);
+  const sorter=screen.getByLabelText('Sort cards');
+  expect(sorter).toHaveValue('marketChangeDesc');
+  expect(screen.getByRole('button',{name:/^Card details: Charizard/})).toHaveTextContent('+$150');
+  expect(screen.getByRole('button',{name:/^Card details: Gengar/})).toHaveTextContent('+$32');
+  const names=()=>screen.getAllByRole('button',{name:/^Card details:/}).map(button=>button.textContent);
+  expect(names()[0]).toContain('Charizard');
+  await userEvent.selectOptions(sorter,'marketChangeAsc');
+  expect(names()[0]).toContain('Gengar');
+  expect(names()[2]).toContain('Snorlax');
+});

@@ -48,7 +48,9 @@ describe('Collection overview projections', () => {
     expect(result.top.map(group=>[group.card.id,group.minor])).toEqual([['base1-4',48000],['base3-5',6500]]);
     expect(result.priced).toBe(3);
     expect(result.above.map(holding=>[holding.copy.id,holding.gain])).toEqual([['charizard-a',8000],['charizard-b',7000],['gengar-a',2000]]);
-    expect(result.compared).toBe(3);
+    expect(result.compared).toBe(4);
+    expect(result.comparableTotal).toBe(5);
+    expect(result.changes.find(item=>item.card.id==='base3-5')?.change).toMatchObject({gain:3200,basis:7500,market:10700,covered:2,total:2});
     expect(result.holdings.find(holding=>holding.copy.id==='snorlax-a')!.basis).toBeNull();
   });
   it('uses dated FX for acquisition costs and excludes foreign-language market values', () => {

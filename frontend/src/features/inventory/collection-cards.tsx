@@ -15,15 +15,19 @@ import { selectInventory, visibleCopyMarket, type CopyMetadataEdit, type CopyVie
 import { CardMarketPrice } from './card-market-price';
 import { bestCopy } from './copy-condition';
 import { compareCollectionGroups, type CollectionSort } from './sort-collection';
+import { CollectionCardRow, MarketChangeMetric } from './collection-card-row';
+import { compareCopyToMarket, summarizeMarketChange } from './market-change';
+import { useMarketChange } from './use-market-change';
+import { referenceConverter } from '@/domain/performance';
 import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/domain/schema';
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, cardCopyId, initialDeliveryFilter = 'all', onCloseCard, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; cardCopyId?: string | null; initialDeliveryFilter?: 'all' | 'received' | 'pending'; onCloseCard?: () => void; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, cardCopyId, initialDeliveryFilter = 'all', initialSort = 'acquired', comparisonPreview = true, onCloseCard, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; cardCopyId?: string | null; initialDeliveryFilter?: 'all' | 'received' | 'pending'; initialSort?: CollectionSort; comparisonPreview?: boolean; onCloseCard?: () => void; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(initialDeliveryFilter === 'pending');
-  const [sort, setSort] = useState<CollectionSort>('acquired');
+  const [sort, setSort] = useState<CollectionSort>(initialSort);
   const [filter, setFilter] = useState<string>(initialDeliveryFilter);
   const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
   const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
@@ -44,7 +48,12 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const groups = inventory.groups.filter(g => `${title(g)} ${g.card?.setName ?? ''} ${g.card?.number ?? ''}`.toLocaleLowerCase(i18n.language).includes(needle) && (filter === 'all' || g.copies.some(v => v.copy.possession === filter)));
   const quotedGroups = new Map(groups.map(g => [g.key,visibleCopyMarket(g.copies,data.currency)]));
   const visibleMarket = (g: InventoryGroup) => quotedGroups.get(g.key)!;
-  groups.sort((a, b) => compareCollectionGroups(a, b, sort, visibleMarket, i18n.language));
+  const changeMode=sort==='marketChangeDesc'||sort==='marketChangeAsc';
+  const {currency:changeCurrency,convert:changeConvert,fx:changeFx}=useMarketChange(data.copies,changeMode,!onSave||comparisonPreview);
+  const historical=referenceConverter(changeFx.rows);
+  const changes=new Map(changeMode?groups.map(g=>[g.key,summarizeMarketChange(g.copies.filter(v=>(v.copy.possession==='received'||v.copy.possession==='pending')&&(filter==='all'||v.copy.possession===filter)).map(v=>compareCopyToMarket(v,changeCurrency,historical,changeConvert)))] as const):[]);
+  const formatGain=(minor:number)=>new Intl.NumberFormat(i18n.language,{style:'currency',currency:changeCurrency,maximumFractionDigits:0,signDisplay:'exceptZero'}).format(minor/100);
+  groups.sort((a, b) => compareCollectionGroups(a, b, sort, visibleMarket, i18n.language,g=>changes.get(g.key)));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
   const isExpanded = (group: InventoryGroup) => expansionOverrides.get(group.key) ?? false;
   const toggle = (group: InventoryGroup) => setExpansionOverrides(previous => { const next = new Map(previous); next.set(group.key, !(previous.get(group.key) ?? false)); return next; });
@@ -53,7 +62,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
       <SearchInput id={`${id}-search`} label={t('inventory.search')} placeholder={t('inventory.search')} value={search} onChange={e => setSearch(e.target.value)} />
       <div className="collection-list-controls flex min-w-0 items-center gap-2 py-2">
         <p className="min-w-0 flex-1 text-sm font-extrabold text-slate-600">{t('inventory.listCounts', { cards: groups.length, copies: groups.reduce((count, group) => count + group.copies.length, 0) })}</p>
-        <label className="min-w-0 border-s border-blue-200 ps-2"><span className="sr-only">{t('inventory.sort')}</span><Select aria-label={t('inventory.sort')} className="max-w-36 font-semibold text-blue-700" value={sort} onChange={e => setSort(e.target.value as CollectionSort)}><option value="value">{t('inventory.value')} ↓</option><option value="name">{t('inventory.name')}</option><option value="copies">{t('inventory.quantity')}</option><option value="acquired">{t('inventory.purchaseDate')} ↓</option><option value="setNumber">{t('inventory.setNumber')}</option></Select></label>
+        <label className="min-w-0 border-s border-blue-200 ps-2"><span className="sr-only">{t('inventory.sort')}</span><Select aria-label={t('inventory.sort')} className="max-w-36 font-semibold text-blue-700" value={sort} onChange={e => setSort(e.target.value as CollectionSort)}><option value="value">{t('inventory.value')} ↓</option><option value="name">{t('inventory.name')}</option><option value="copies">{t('inventory.quantity')}</option><option value="acquired">{t('inventory.purchaseDate')} ↓</option><option value="setNumber">{t('inventory.setNumber')}</option><option value="marketChangeDesc">{t('inventory.marketChange')} ↓</option><option value="marketChangeAsc">{t('inventory.marketChange')} ↑</option></Select></label>
         <button type="button" onClick={() => setOptionsOpen(v => !v)} aria-label={t('inventory.options')} aria-expanded={optionsOpen} aria-controls={`${id}-options`} className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-blue-300 bg-white/80 text-blue-700 shadow-sm"><LuFilter aria-hidden className="size-5" /></button>
       </div>
       <div id={`${id}-options`} className="collection-options" data-open={optionsOpen} aria-hidden={!optionsOpen} inert={!optionsOpen}>
@@ -63,16 +72,12 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
     <p role="status" className="sr-only">{notice}</p>
     {!groups.length && <EmptyState title={t('inventory.empty')} description={t('inventory.emptyDetail')} />}
     <ul className="space-y-1.5">{groups.map(g => <ListCard key={g.key}>
-      <div className="flex items-stretch">
-        <button type="button" onClick={() => { setInitialInspection(null); setInitialCopy(null); setSelected(g.key); }} className="flex min-h-16 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 ps-2 text-start">
-          <span className="sr-only">{t('inventory.details')}: </span><PokemonArt src={g.card?.imageUrl} alt={g.card?.name ?? title(g)} />
-          <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold leading-[1.125rem] tracking-tight text-slate-950">{title(g)}</span><span className="mt-0.5 block truncate text-xs leading-[0.875rem] text-slate-600">{g.card ? `${g.card.setName} · #${g.card.number}` : t('inventory.noCatalog')}</span></span>
-          <span className="ms-1 flex min-h-11 w-24 shrink-0 flex-col justify-center border-s border-blue-200 ps-3"><span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount ? 'text-slate-950' : 'text-amber-800'}`}>{visibleMarket(g).pricedCount ? rowMoney(visibleMarket(g)) : t(pricesLoading ? 'loading' : 'inventory.unpriced')}</span>{visibleMarket(g).pricedCount > 0 && visibleMarket(g).missingCount > 0 && <span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}</span>
-        </button>
-        <DisclosureButton aria-label={`${t('inventory.copies', { count: g.copies.length })}: ${title(g)}`} open={isExpanded(g)} contentId={`${id}-${g.key}`} onClick={() => toggle(g)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950">
-          <DisclosureChevron open={isExpanded(g)} />
-        </DisclosureButton>
-      </div>
+      <CollectionCardRow name={title(g)} subtitle={g.card?`${g.card.setName} · #${g.card.number}`:t('inventory.noCatalog')} imageUrl={g.card?.imageUrl} detailsLabel={t('inventory.details')}
+        onOpen={()=>{setInitialInspection(null);setInitialCopy(null);setSelected(g.key);}}
+        metric={changeMode?<MarketChangeMetric change={changes.get(g.key)} format={formatGain} locale={i18n.language} unavailable={t(pricesLoading||changeFx.loading?'loading':'inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>:<>
+          <span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount?'text-slate-950':'text-amber-800'}`}>{visibleMarket(g).pricedCount?rowMoney(visibleMarket(g)):t(pricesLoading?'loading':'inventory.unpriced')}</span>{visibleMarket(g).pricedCount>0&&visibleMarket(g).missingCount>0&&<span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}
+        </>}
+        action={<DisclosureButton aria-label={`${t('inventory.copies',{count:g.copies.length})}: ${title(g)}`} open={isExpanded(g)} contentId={`${id}-${g.key}`} onClick={()=>toggle(g)} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950"><DisclosureChevron open={isExpanded(g)}/></DisclosureButton>}/>
       <DisclosureContent id={`${id}-${g.key}`} className="copy-accordion" open={isExpanded(g)}><div className="mx-2 mb-2 rounded-xl bg-blue-100/50 px-2">
         <div className="flex items-center justify-between gap-2 py-1 text-[11px] font-medium text-slate-600"><span>{t('inventory.copyCondition')}</span><span className="me-11">{t('inventory.marketValue')}</span></div>
         {g.copies.map((v, n) => <div key={v.copy.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-t border-blue-200">

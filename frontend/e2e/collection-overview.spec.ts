@@ -24,6 +24,18 @@ test('Collection overview counts received/pending copies and keeps LP wishes sep
   await expect(breakdown.locator('.collection-breakdown-note')).toHaveCount(0);
   await metric.selectOption('value');
   await expect(overview.locator('.collection-concentration')).toContainText('3/4 received copies priced');
+  const comparison=overview.locator('.collection-comparison');
+  await expect(comparison).toContainText('4/5 copies with comparable prices and costs');
+  await expect(comparison.getByRole('button',{name:'Top Gainers'})).toHaveAttribute('aria-pressed','true');
+  await comparison.getByRole('button',{name:'Top Losers'}).click();
+  await expect(comparison.getByText('No cards below cost.')).toBeVisible();
+  await comparison.getByRole('button',{name:'View all'}).click();
+  await expect(page.getByLabel('Sort cards')).toHaveValue('marketChangeAsc');
+  await page.goBack();
+  await comparison.getByRole('button',{name:'Top Gainers'}).click();
+  await comparison.getByRole('button',{name:'View all'}).click();
+  await expect(page.getByLabel('Sort cards')).toHaveValue('marketChangeDesc');
+  await page.goBack();
   await overview.locator('[data-metric="received"]').click();
   await expect(page.getByLabel('Delivery status')).toHaveValue('received');
   await page.goBack();
