@@ -748,3 +748,24 @@ remains manual and its exclusions are unchanged. No backend or data changes.
 Deals links to the existing Analyzer with the selected eBay URL prefilled; photo
 loading and AI remain manual. The Deals gallery is photo-only; the seller-detail
 check and scan behavior remain unchanged. See [Deals migration](docs/DEALS_MIGRATION.md).
+
+
+## Owner-approved Collection Overview — 2026-11-28
+
+The owner rejected set-completion, duplicate-management and condition/finish
+distribution as the Overview focus. The approved screen uses received/pending
+physical-copy counts, unique remaining Wishlist cards and a fixed-LP budget
+(no condition selector), followed by personal highlights, cost/market comparisons
+and value concentration. No set-completion target or automatic Wishlist cleanup.
+
+Existing public printing quotes are reused independently of historical-price
+provider work in #171. LP budget coverage is explicit; no unpriced card, missing
+FX or incomplete cost basis is fabricated. Ranked gains require exact variant
+market matching and complete cost evidence, including dated acquisition FX.
+
+Up to five owner-chosen catalog cards are saved in an isolated owner preference.
+The existing Wishlist screen accepts a remaining-only projection with no reorder
+against the filtered list; clearing the projection restores the original list.
+The Collection Cards delivery filter accepts received links as well as pending.
+Sample highlights and prices are memory-only; no migration or legacy changes.
+See docs/COLLECTION_OVERVIEW.md and PR/CI receipts for release verification.

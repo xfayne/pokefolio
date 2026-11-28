@@ -27,7 +27,7 @@ export function InventoryPage() {
   const transactionPreview = params.get('transactions') === 'sample';
   const cardCopyId = params.get('cardCopy');
   const navigationProps = {
-    initialDeliveryFilter: params.get('delivery') === 'pending' ? 'pending' as const : 'all' as const,
+    initialDeliveryFilter: params.get('delivery') === 'pending' ? 'pending' as const : params.get('delivery') === 'received' ? 'received' as const : 'all' as const,
     inspectCopyId: params.get('copy') ?? undefined,
     cardCopyId,
     onCloseCard: () => {

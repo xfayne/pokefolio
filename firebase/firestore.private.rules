@@ -12,6 +12,17 @@ service cloud.firestore {
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    function validFeaturedCard(id) {
+      return id is string && id.matches('^((?:base[1-6]|basep|gym[12]|neo[1-4]|si1)-[1-9][0-9]{0,2}|movie2000-ancient-mew)$');
+    }
+    function validFeaturedCards(ids) {
+      return ids is list && ids.size() <= 5 && ids.toSet().size() == ids.size()
+        && (ids.size() < 1 || validFeaturedCard(ids[0]))
+        && (ids.size() < 2 || validFeaturedCard(ids[1]))
+        && (ids.size() < 3 || validFeaturedCard(ids[2]))
+        && (ids.size() < 4 || validFeaturedCard(ids[3]))
+        && (ids.size() < 5 || validFeaturedCard(ids[4]));
+    }
     function validProgress(data) {
       return data.keys().hasAll(['progress','revision','updatedAt','clientTimestamp'])
         && data.keys().hasOnly(['progress','revision','updatedAt','clientTimestamp'])
@@ -180,7 +191,12 @@ service cloud.firestore {
         allow list, delete: if false;
       }
       match /preferences/{id} {
-        allow read: if isOwner(uid) && id in ['display','purchases'];
+        allow read: if isOwner(uid) && id in ['display','purchases','collection'];
+        allow create, update: if isOwner(uid) && id == 'collection'
+          && request.resource.data.keys().hasOnly(['featuredCardIds','updatedAt'])
+          && request.resource.data.keys().hasAll(['featuredCardIds','updatedAt'])
+          && validFeaturedCards(request.resource.data.featuredCardIds)
+          && request.resource.data.updatedAt == request.time;
         allow create, update: if isOwner(uid) && id == 'display'
           && request.resource.data.keys().hasOnly(['currency','updatedAt'])
           && request.resource.data.currency in ['USD','ILS','EUR','GBP']

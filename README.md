@@ -269,3 +269,18 @@ for behavior and remaining roadmap acceptance; no legacy data or Worker changes.
 Deals listing actions include a direct handoff to the existing Analyzer with the
 eBay listing URL prefilled. Photos and AI analysis remain explicitly initiated;
 the Deals photo gallery is photo-only. See [Deals migration](docs/DEALS_MIGRATION.md).
+
+## Collection Overview (#13)
+
+Collection → Overview summarizes received copies, pending copies, remaining Wishlist
+cards and their **fixed LP** market-price estimate. Wishlist projections exclude
+received/pending cards without changing membership or priority. The estimate buys
+one of each remaining catalog card and excludes shipping, taxes and fees. Partial
+price/FX coverage is explicit; unavailable prices never become zero.
+
+The screen also compares received-copy market values with complete acquisition
+costs (dated FX), shows value concentration by catalog card, and lets the owner
+feature up to five received cards. Highlights are stored separately under
+`users/{uid}/preferences/collection`; collection/transaction/Binder data is unchanged.
+The sample route `#/collection/overview?inventory=sample` uses synthetic prices and
+in-memory highlights only. See [Overview contracts](docs/COLLECTION_OVERVIEW.md).
