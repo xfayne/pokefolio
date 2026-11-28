@@ -1,3 +1,4 @@
+import { selectCardsOnTheWay } from '@/domain/transaction-overview';
 import { DealsPage } from '@/features/deals/deals-page';
 import { WishlistPage } from '@/features/wishlist/wishlist-page';
 import { SectionTabsBar } from '@/components/ui/section-tabs-bar';
@@ -42,6 +43,8 @@ const BinderPage = lazy(async () => { const module = await import('@/features/bi
 const SharedBinderPage = lazy(async () => { const module = await import('@/features/binder/shared-binder-page'); return { default: module.SharedBinderPage }; });
 const InventoryPage = lazy(async () => { const module = await import('@/features/inventory/inventory-page'); return { default: module.InventoryPage }; });
 
+const OverviewPage = lazy(async () => { const module = await import('@/features/transactions/overview-page'); return { default: module.OverviewPage }; });
+
 const HistoryPage = lazy(async () => { const module = await import('@/features/transactions/history-page'); return { default: module.HistoryPage }; });
 
 const PurchasePage = lazy(async () => { const module = await import('@/features/transactions/purchase-page'); return { default: module.PurchasePage }; });
@@ -71,7 +74,7 @@ function SectionPage({ name }: { name: Destination }) {
   };
   return <div className={location.pathname === '/collection/binder' ? 'binder-section' : ['/collection/cards', '/wishlist/cards', '/wishlist/deals', '/transactions/history'].includes(location.pathname) ? 'space-y-1' : 'space-y-6'}>
     {hasTabs && <SectionTabsBar section={name as Section} search={isTransactions ? location.search : ''} action={isTransactions ? <button type="button" onClick={createTransaction} aria-label={t('transactionHistory.new')} title={t('transactionHistory.new')} className="transactions-add flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white focus-visible:outline-blue-800"><LuPlus aria-hidden className="size-5" /></button> : undefined} />}
-    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage initialListingUrl={new URLSearchParams(location.search).get('listing')?.slice(0,750)??''} /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/wishlist/deals' ? <DealsPage /> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
+    {location.pathname === '/collection/binder' ? <Suspense fallback={<LoadingState label={t('loading')} />}><BinderPage /></Suspense> : name === 'analyze' ? <AnalyzePage initialListingUrl={new URLSearchParams(location.search).get('listing')?.slice(0,750)??''} /> : name === 'dashboard' ? <DashboardPage /> : location.pathname === '/collection/cards' ? <Suspense fallback={<LoadingState label={t('loading')} />}><InventoryPage /></Suspense> : location.pathname === '/wishlist/cards' ? <WishlistPage /> : location.pathname === '/wishlist/deals' ? <DealsPage /> : location.pathname === '/transactions/overview' ? <Suspense fallback={<LoadingState label={t('loading')} />}><OverviewPage /></Suspense> : location.pathname === '/transactions/history' ? <Suspense fallback={<LoadingState label={t('loading')} />}><HistoryPage /></Suspense> : <EmptyState title={t('comingTitle')} description={t('description')} />}
   </div>;
 }
 function Shell() {
@@ -83,6 +86,7 @@ function Shell() {
   const [catalogCard, setCatalogCard] = useState<InventoryCatalogCard | null>(null);
   const query = useUIStore(s => s.searchQuery);
   const setQuery = useUIStore(s => s.setSearchQuery);
+  const [filteredSearch, setFilteredSearch] = useState({ key: '', query: '' });
   const utility = location.pathname === '/search' ? 'search' : location.pathname === '/settings' ? 'settings' : null;
   const background = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
   const contentLocation = utility ? background ?? { ...location, pathname: '/dashboard' } : location;
@@ -96,6 +100,10 @@ function Shell() {
   const account = usePortfolio();
   const wish = useWishlist();
   const contextParams = new URLSearchParams(contentLocation.search);
+  const onlyOnTheWay = utility === 'search' && new URLSearchParams(location.search).get('cards') === 'on-the-way';
+  const allowedCardIds = onlyOnTheWay ? new Set(selectCardsOnTheWay(
+    contextParams.get('transactions') === 'sample' ? demoTransactions.history : account.history,
+  ).flatMap(({copy}) => copy.catalog.kind === 'identified' ? [copy.catalog.cardId] : [])) : undefined;
   const tracking = useTrackingSync(account.owner, account.records, contextParams.get('transactions') !== 'sample' && contextParams.get('inventory') !== 'sample');
   const unread = account.records.reduce((sum,e) => sum + (e.collection === 'shipments' ? unreadTracking(e.record) : 0), 0);
   const previewCopies = contextParams.get('inventory') === 'sample' ? createSampleCopies() : contextParams.get('transactions') === 'sample' ? demoTransactions.history.copies : account.history.copies;
@@ -164,8 +172,12 @@ function Shell() {
     </nav>
     {/* Keep Search mounted behind Card Details. Returning reveals the same
         scrollport and decoded images, without replaying the catalog entrance. */}
-    {utility && <UtilitySheet title={t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
-      {utility === 'search' ? <CatalogSearch owned={catalogOwned} wishlist={wish.wishlist.cardIds} state={catalogUi} onState={setCatalogUi} query={query} onQuery={setQuery} onSelect={setCatalogCard} scrollPositionRef={catalogScrollPosition} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><PurchaseWishlistSettings /><StagingYearLoader /><StagingEnglishLanguageRepair /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
+    {utility && <UtilitySheet title={onlyOnTheWay ? (i18n.language === 'he' ? 'קלפים בדרך' : 'Cards on the way') : t(utility === 'search' ? 'searchCards' : 'settings')} onClose={closeUtility} contentMode={utility === 'search' ? 'contained' : 'scroll'}>
+      {utility === 'search' ? <CatalogSearch key={onlyOnTheWay ? location.key : 'catalog'} owned={catalogOwned} wishlist={wish.wishlist.cardIds} {...(allowedCardIds ? {
+        allowedCardIds,
+        query: filteredSearch.key === location.key ? filteredSearch.query : '',
+        onQuery: (value: string) => setFilteredSearch({ key: location.key, query: value }),
+      } : { state: catalogUi, onState: setCatalogUi, scrollPositionRef: catalogScrollPosition, query, onQuery: setQuery })} onSelect={setCatalogCard} /> : <div className="space-y-4"><p className="text-xs font-medium text-slate-600">Pokefolio · {t('staging')}</p><AccountControls /><CurrencySettings /><PurchaseWishlistSettings /><StagingYearLoader /><StagingEnglishLanguageRepair /><p className="text-sm text-slate-600">{t('language')}</p><Button variant="outline" onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'he' : 'en')}>{i18n.language === 'en' ? 'עברית' : 'English'}</Button></div>}
     </UtilitySheet>}
     {utility === 'search' && catalogCard && <CatalogDetails card={catalogCard} onClose={() => setCatalogCard(null)} portfolio={['inventory','transactions','wishlist','binder','dashboard'].some(key => contextParams.get(key) === 'sample') ? undefined : account} onViewPurchase={id => { setCatalogCard(null); void navigate(`/transactions/purchases/${id}`, {replace:true}); }} />}
   </div>;

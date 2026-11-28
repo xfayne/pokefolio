@@ -9,6 +9,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   await expect(page.getByText('Sample collection', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Priced holdings')).toHaveCount(0);
   await expect(page.getByLabel('Sort cards', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Sort cards', { exact: true })).toHaveValue('acquired');
   await expect(page.getByLabel('Sort cards', { exact: true }).locator('option[value="acquired"]')).toHaveText('Purchase date ↓');
   await expect(page.getByLabel('Sort cards', { exact: true }).locator('option[value="setNumber"]')).toHaveText('Set / number');
   await expect(page.getByRole('button', { name: /^Card details: Charizard/ }).getByText('Charizard', { exact: true })).toHaveCSS('font-weight', '700');
@@ -26,7 +27,8 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
   const toolbarBottom = await toolbar.evaluate(el => el.getBoundingClientRect().bottom);
   expect(listTop - toolbarBottom).toBeLessThanOrEqual(8);
   await page.getByRole('button', { name: '2 copies: Charizard' }).click();
-  const expanded = page.locator('.inventory-card').first().locator('.copy-accordion');
+  const charizardRow = page.locator('.inventory-card').filter({ has: page.getByRole('button', { name: '2 copies: Charizard' }) });
+  const expanded = charizardRow.locator('.copy-accordion');
   await expect(expanded).toHaveAttribute('data-open', 'true');
   await expect(expanded).toHaveCSS('transition-duration', '0.24s, 0.18s');
   await expanded.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
@@ -59,7 +61,7 @@ test('sample physical-copy journey stays isolated, accessible and fits English/H
     const style = getComputedStyle(el);
     return { position: style.objectPosition, transform: style.transform };
   });
-  const thumbCrop = await page.locator('.inventory-card').first().locator('.pokemon-art img').evaluate(el => {
+  const thumbCrop = await charizardRow.locator('.pokemon-art img').evaluate(el => {
     const style = getComputedStyle(el);
     return { position: style.objectPosition, transform: style.transform };
   });

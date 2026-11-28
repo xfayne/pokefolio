@@ -468,14 +468,34 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard-note { font-size: 0.625rem; line-height: 1.4; color: #526178; margin: 0.3125rem 0 0; }
 .dashboard-text-link { color: #0047d1; text-decoration: underline; font-weight: var(--font-weight-bold); cursor: pointer; }
 .dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
-.dashboard-section-heading > button, .dashboard-month-link { color: #1010c5; font-weight: var(--font-weight-bold); font-size: 0.875rem; display: flex; align-items: center; gap: 0.125rem; white-space: nowrap; cursor: pointer; }
-.dashboard-section-heading button svg, .dashboard-month-link svg { width: 1.125rem; height: 1.125rem; }
-.dashboard-acquisitions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0.625rem; }
-.dashboard-acquisitions > button { min-width: 0; text-align: center; cursor: pointer; }
-.dashboard-acquisitions .dashboard-acquisition-art { width: 100%; max-width: 100%; aspect-ratio: 63 / 88; border-width: 0; border-radius: 0.625rem; background: transparent; box-shadow: 0 2px 5px #216dc226; }
-.dashboard-acquisition-art .pokemon-art-window { position: absolute; inset: 0; background: transparent; }
-.dashboard-acquisition-art img { padding: 0; object-fit: contain; }
-.dashboard-acquisitions > button > span { display: block; margin-top: 0.375rem; font-size: clamp(0.6875rem, 3vw, 0.875rem); font-weight: var(--font-weight-bold); line-height: 1.3; }
+.dashboard-section-heading > :is(button,a), .dashboard-month-link { color: #1010c5; font-weight: var(--font-weight-bold); font-size: 0.875rem; display: flex; align-items: center; gap: 0.125rem; white-space: nowrap; cursor: pointer; }
+.dashboard-section-heading :is(button,a) svg, .dashboard-month-link svg { width: 1.125rem; height: 1.125rem; }
+.card-carousel { border-radius: 1rem; }
+.card-carousel h2 { font-size: 1rem; font-weight: var(--font-weight-bold); }
+.card-carousel-track {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 0.625rem;
+}
+.card-carousel-track[data-scrollable="true"] {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 3.3rem) / 3);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-border) transparent;
+  padding: 0.125rem 0.125rem 0.375rem;
+}
+.card-carousel-track > li { min-width: 0; scroll-snap-align: start; }
+.card-carousel-track button { width: 100%; min-width: 0; text-align: center; border-radius: 0.625rem; cursor: pointer; }
+.card-carousel-track button:focus-visible { outline-offset: -2px; }
+.card-carousel .card-carousel-art { width: 100%; height: auto; max-width: 100%; aspect-ratio: 63 / 88; border-width: 0; border-radius: 0.625rem; background: transparent; box-shadow: 0 2px 5px #216dc226; }
+.card-carousel-art .pokemon-art-window { position: absolute; inset: 0; background: transparent; }
+.card-carousel-art img { padding: 0; object-fit: contain; object-position: center; transform: none; }
+.card-carousel-track button > :is(strong, span:not(.sr-only,.card-carousel-art)) { display: block; margin-top: 0.375rem; font-size: clamp(0.6875rem, 3vw, 0.875rem); line-height: 1.3; overflow-wrap: anywhere; }
+.card-carousel-track button > .card-carousel-detail { margin-top: 0.125rem; color: #475569; font-size: 0.6875rem; }
 .dashboard-month { border-radius: 1.25rem; padding: 0.875rem; }
 .dashboard-month-heading { display: flex; align-items: center; gap: 0.625rem; }
 .dashboard-month-heading > svg { width: 1.5rem; height: 1.5rem; color: #10104c; flex-shrink: 0; }
@@ -494,7 +514,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard-holdings bdi { font-size: 1.125rem; font-weight: var(--font-weight-bold); white-space: nowrap; }
 .dashboard-holdings button > svg { width: 1rem; height: 1rem; flex-shrink: 0; }
 .dashboard-empty { color: #526178; font-size: 0.8125rem; margin: 0; padding-block: 0.75rem; }
-[dir="rtl"] .dashboard-section-heading button > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
+[dir="rtl"] .dashboard-section-heading :is(button,a) > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
 @media (min-width: 640px) { .dashboard-banner { margin-inline: -1.5rem; } }
 
 /* Deals-only sheet treatment; other utility sheets keep the Adventure Blue header. */
@@ -510,3 +530,31 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .deals-scan-progress::-webkit-progress-bar { background: #e3edfa; border-radius: 999px; }
 .deals-scan-progress::-webkit-progress-value { background: var(--adventure-blue); border-radius: 999px; }
 .deals-scan-progress::-moz-progress-bar { background: var(--adventure-blue); border-radius: 999px; }
+
+.transactions-overview { display: grid; gap: 0.875rem; min-width: 0; }
+.overview-figures { border-radius: 1.25rem; padding: 0.875rem; }
+.overview-amount { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; margin-block: 0.375rem; }
+.overview-amount > div { display: grid; justify-items: end; flex-shrink: 0; font-weight: var(--font-weight-bold); }
+.overview-amount > div span { font-size: 0.75rem; color: #475569; }
+.overview-figures .dashboard-big { overflow-wrap: anywhere; }
+.overview-figures .dashboard-stat-label { white-space: normal; }
+.overview-activity { border-top: 1px solid var(--surface-border); margin-top: 0.75rem; padding-top: 0.625rem; }
+.overview-activity-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.375rem; }
+.overview-legend { display: flex; gap: 0.625rem; flex-wrap: wrap; color: #475569; font-size: 0.6875rem; }
+.overview-legend > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.overview-legend > span::before { content: ''; display: block; width: 0.5rem; height: 0.5rem; border-radius: 2px; background: var(--series-color); }
+.overview-activity [data-series="purchases"] { --series-color: #397cec; }
+.overview-activity [data-series="sales"] { --series-color: #6cafaa; }
+.overview-bars { display: block; width: 100%; max-height: 12rem; margin-top: 0.375rem; direction: ltr; }
+.overview-bars rect { fill: var(--series-color); }
+.overview-bars text { font-size: 9px; fill: #475569; }
+.overview-figures .dashboard-periods { border-top: 1px solid var(--surface-border); margin-top: 0.375rem; padding-top: 0.625rem; }
+.overview-shipments { border-radius: 1rem; }
+.overview-shipments .dashboard-section-heading { margin-bottom: 0.25rem; }
+.overview-shipments li { border-top: 1px solid #d1e0f2; }
+.overview-shipments li > a { min-height: 2.875rem; display: flex; align-items: center; gap: 0.5rem; padding-block: 0.375rem; }
+.overview-shipment-icon { display: grid; place-items: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 0.5rem; color: #1557bc; background: #e1edff; }
+.overview-shipment-description { flex: 1; min-width: 0; display: grid; overflow-wrap: anywhere; font-size: 0.8125rem; }
+.overview-shipment-description > span, .overview-shipments time { font-size: 0.6875rem; color: #475569; }
+.overview-shipments time { flex-shrink: 0; }
+.overview-shipment-unread { width: 0.375rem; height: 0.375rem; flex-shrink: 0; border-radius: 50%; background: var(--adventure-blue); }

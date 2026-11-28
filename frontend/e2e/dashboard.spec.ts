@@ -11,7 +11,7 @@ test('dashboard follows the approved sections and links each physical copy safel
  await expect(page.locator('.dashboard-value .dashboard-note')).toHaveCount(0);
  await expect(page.locator('.dashboard-chart-line').first()).toHaveAttribute('pathLength','1');
  await expect(page.locator('.dashboard-chart-line').first()).toHaveCSS('animation-name','dashboard-chart-draw');
- await expect(page.locator('.dashboard-acquisitions > button')).toHaveCount(3);
+ await expect(page.locator('.card-carousel-track button')).toHaveCount(8);
  await expect(page.locator('.dashboard-holdings li')).toHaveCount(3);
  await expect(page.locator('.dashboard-holdings')).not.toContainText('Gengar');
  await expect(page.locator('.dashboard-periods button[aria-pressed=true]')).toHaveText('3M');
@@ -46,13 +46,13 @@ test('dashboard follows the approved sections and links each physical copy safel
  await page.getByLabel('Reporting month').fill('2026-11');
  await expect(page.locator('.dashboard-month .dashboard-kpis bdi').first()).toHaveText('$312');
  await page.evaluate(()=>document.fonts.ready);
- await page.locator('.dashboard img').evaluateAll(imgs=>Promise.all(imgs.map(img=>(img as HTMLImageElement).decode().catch(()=>undefined))));
+ await page.locator('.dashboard img').evaluateAll(imgs=>Promise.all(imgs.map(img=>{const image=img as HTMLImageElement;return image.complete ? image.decode().catch(()=>undefined) : undefined;})));
  await page.evaluate(()=>{(document.activeElement as HTMLElement)?.blur();window.scrollTo(0,0);});
  await page.screenshot({path:test.info().outputPath('dashboard-top-en.png')});
  await page.locator('.dashboard-month').scrollIntoViewIfNeeded();
  await page.screenshot({path:test.info().outputPath('dashboard-scrolled-en.png')});
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
- await page.locator('.dashboard-acquisitions > button').nth(1).click();
+ await page.locator('.card-carousel-track button').nth(1).click();
  await expect(page).toHaveURL(/purchases\/sample-nov-19\?transactions=sample&copy=sample-nov-19-copy-1$/);
  await expect(page.locator('[data-copy-id="sample-nov-19-copy-1"]')).toBeFocused();
  await page.goto('./#/dashboard?dashboard=sample');
@@ -143,6 +143,6 @@ test('signed-out dashboard never invents money or calls authenticated price APIs
  await page.goto('./#/dashboard');
  await expect(page.locator('.dashboard-big')).toHaveText('—');
  await expect(page.getByText('Sign in through Settings to view your portfolio.')).toBeVisible();
- await expect(page.locator('.dashboard-acquisitions > button')).toHaveCount(0);
+ await expect(page.locator('.card-carousel-track button')).toHaveCount(0);
  expect(calls).toEqual([]);
 });
