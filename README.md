@@ -284,3 +284,5 @@ feature up to five received cards. Highlights are stored separately under
 `users/{uid}/preferences/collection`; collection/transaction/Binder data is unchanged.
 The sample route `#/collection/overview?inventory=sample` uses synthetic prices and
 in-memory highlights only. See [Overview contracts](docs/COLLECTION_OVERVIEW.md).
+
+Collection Overview uses three compact count tiles and a single proportional breakdown that switches between quantity and market value. The latter includes pending-copy quotes and a fixed-LP estimate for remaining wishes, with explicit price coverage.

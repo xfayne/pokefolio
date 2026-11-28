@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuChartPie, LuSparkles, LuTruck, LuWallet } from 'react-icons/lu';
+import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuChartPie, LuSparkles, LuTruck, LuChartNoAxesCombined, LuChevronDown } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { Card, EmptyState } from '@/components/ui/surfaces';
 import { PokemonArt } from '@/components/ui/pokemon-art';
@@ -19,7 +19,7 @@ import { useDisplayCurrency, convertDisplay } from '@/services/display-currency'
 import { useHistoricalFx } from '@/services/historical-fx';
 import type { CopyQuote, InventoryCatalogCard } from '@/domain/inventory';
 import type { Money } from '@/domain/schema';
-import { currentCopies, remainingWishes, selectCollectionOverview, selectWishlistBudget, type Holding } from './overview-model';
+import { currentCopies, remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode, type Holding } from './overview-model';
 import { useOverviewPrices } from './use-overview-prices';
 import { useFeaturedCards } from './use-featured-cards';
 import './overview.css';
@@ -27,7 +27,7 @@ import './overview.css';
 const labels = {
   en: {
     title: 'Collection overview', received: 'In Collection', pending: 'On the Way', wishlist: 'Wishlist', budget: 'Wishlist Estimate',
-    physical: 'received copies', arriving: 'copies arriving', toBuy: 'cards still to buy', lp: 'LP · card prices only',
+    breakdown: 'Collection Breakdown', chartMetric: 'Breakdown metric', quantity: 'Quantity', value: 'Market Value', totalCards: 'Total cards', totalValue: 'Total market value', partialValue: 'Partial market value', lp: 'Wishlist · LP',
     priced: 'priced', partial: 'Partial estimate', estimate: 'Market estimate',
     favorites: 'Your Highlights', choose: 'Choose cards', chooseTitle: 'Choose your highlights', chooseHint: 'Choose up to 5 cards from your collection.',
     emptyFavorites: 'Give your favorite cards a place in the spotlight.', save: 'Save selection', saveFailed: 'Could not save your selection. Try again.',
@@ -45,7 +45,7 @@ const labels = {
   },
   he: {
     title: 'סקירת האוסף', received: 'באוסף שלי', pending: 'בדרך אליי', wishlist: 'רשימת משאלות', budget: 'אומדן המשאלות',
-    physical: 'עותקים שהתקבלו', arriving: 'עותקים בדרך', toBuy: 'קלפים שעוד ארצה לקנות', lp: 'LP · מחירי קלפים בלבד',
+    breakdown: 'התפלגות האוסף', chartMetric: 'מדד ההתפלגות', quantity: 'כמות', value: 'שווי שוק', totalCards: 'סך הקלפים', totalValue: 'שווי שוק כולל', partialValue: 'שווי שוק חלקי', lp: 'רשימת משאלות · LP',
     priced: 'מתומחרים', partial: 'אומדן חלקי', estimate: 'אומדן שוק',
     favorites: 'הנבחרים שלי', choose: 'בחירת קלפים', chooseTitle: 'בחירת הקלפים הנבחרים', chooseHint: 'בחר עד 5 קלפים מתוך האוסף שלך.',
     emptyFavorites: 'מקום לקלפים האהובים עליך באוסף.', save: 'שמירת הבחירה', saveFailed: 'לא ניתן לשמור את הבחירה. נסה שוב.',
@@ -95,6 +95,7 @@ export function CollectionOverviewPage() {
   const budget = selectWishlistBudget(wishes, preview ? demoWishQuotes : prices.quotes, 'LP', convert);
   const featured = useFeaturedCards(account.owner, preview);
   const [choosing, setChoosing] = useState(false);
+  const [breakdownMode, setBreakdownMode] = useState<BreakdownMode>('value');
   const id = useId();
   const format = (minor: number | null, signed = false) => minor === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
     style:'currency', currency, maximumFractionDigits:0, minimumFractionDigits:0, ...(signed ? {signDisplay:'always' as const} : {}),
@@ -121,26 +122,65 @@ export function CollectionOverviewPage() {
     return holding ? [holding] : [];
   });
   const available = [...new Map(figures.holdings.map(holding => [holding.card.id,holding.card])).values()];
-  const coverage = `${number(budget.covered)}/${number(budget.total)} ${text.priced}`;
+  const breakdown = selectCollectionBreakdown(figures, budget, breakdownMode);
+  const valueMode = breakdownMode === 'value';
+  const complete = breakdown.covered === breakdown.count;
+  const formatBreakdown = (amount: number | null) => amount === null ? '—' : valueMode ? format(amount) : number(amount);
+  const compact = (amount: number | null) => amount === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
+    notation:'compact', maximumFractionDigits:1, ...(valueMode ? {style:'currency' as const, currency} : {}),
+  }).format(valueMode ? amount / 100 : amount);
+  const percent = (share: number | null) => share === null ? '—' : new Intl.NumberFormat(he ? 'he-IL' : 'en-US', {
+    style:'percent', maximumFractionDigits:1,
+  }).format(share);
+  const segments = breakdown.categories.map(item => {
+    const full = formatBreakdown(item.amount);
+    const short = (item.share ?? 0) < .27 && full.length > 4 ? compact(item.amount) : full;
+    // Very small shares cannot fit readable text without falsifying the segment width.
+    const inline = (item.share ?? 0) >= Math.max(.09, short.length * .024);
+    return {...item, full, short, inline, label:text[item.key], percent:percent(item.share)};
+  });
   const metrics = [
-    {key:'received',label:text.received,value:number(figures.received),detail:text.physical,Icon:LuLayers,onOpen:()=>openCollection('received')},
-    {key:'pending',label:text.pending,value:number(figures.pending),detail:text.arriving,Icon:LuTruck,onOpen:()=>openCollection('pending')},
-    {key:'wishlist',label:text.wishlist,value:wishReady?number(wishes.length):'—',detail:text.toBuy,Icon:LuHeart,onOpen:openWishlist},
-    {key:'budget',label:text.budget,value:wishReady?format(budget.minor):'—',detail:text.lp,Icon:LuWallet,onOpen:openWishlist},
+    {key:'received',label:text.received,value:number(figures.received),Icon:LuLayers,onOpen:()=>openCollection('received')},
+    {key:'pending',label:text.pending,value:number(figures.pending),Icon:LuTruck,onOpen:()=>openCollection('pending')},
+    {key:'wishlist',label:text.wishlist,value:wishReady?number(wishes.length):'—',Icon:LuHeart,onOpen:openWishlist},
   ];
   return <article className="collection-overview" aria-label={text.title}>
-    <div className="collection-metrics">{metrics.map(({key,label,value,detail,Icon,onOpen}) => <button type="button" key={key}
-      className="collection-metric surface-panel" data-metric={key} onClick={onOpen} disabled={!wishReady && ['wishlist','budget'].includes(key)}>
+    <div className="collection-metrics">{metrics.map(({key,label,value,Icon,onOpen}) => <button type="button" key={key}
+      className="collection-metric surface-panel" data-metric={key} onClick={onOpen} disabled={!wishReady && key==='wishlist'}>
       <span className="collection-metric-top"><span className="collection-metric-icon"><Icon aria-hidden /></span><LuChevronRight aria-hidden className="collection-metric-chevron rtl:rotate-180" /></span>
-      <span className="collection-metric-label">{label}</span><bdi className="collection-metric-value">{key==='budget'&&budget.minor!==null&&budget.total>0&&wishReady&&<span aria-hidden>≈ </span>}{value}</bdi>
-      <span className="collection-metric-detail">{detail}</span>
+      <span className="collection-metric-label">{label}</span><bdi className="collection-metric-value">{value}</bdi>
     </button>)}</div>
-    <div className="collection-budget-note" aria-live="polite">
-      <span>{!wishReady ? wish.error ? text.wishlistFailed : text.loading : budget.covered < budget.total ? text.partial : text.estimate}</span>
-      {wishReady && <span>{coverage}{priceLoading ? ' · …' : ''}</span>}
-      {!preview && wish.error && <button type="button" onClick={wish.retry}>{text.retry}</button>}
-    </div>
-    <p className="sr-only">{text.estimateNote}</p>
+    <Card className="collection-breakdown" aria-labelledby={`${id}-breakdown`}>
+      <div className="collection-section-heading"><h2 id={`${id}-breakdown`}>{text.breakdown}</h2>
+        <label className="dashboard-icon-control"><LuChartNoAxesCombined aria-hidden /><LuChevronDown aria-hidden className="dashboard-chevron" />
+          <select aria-label={text.chartMetric} value={breakdownMode} onChange={e=>setBreakdownMode(e.target.value as BreakdownMode)}>
+            <option value="value">{text.value}</option><option value="quantity">{text.quantity}</option>
+          </select>
+        </label>
+      </div>
+      <div className="collection-breakdown-summary" aria-live="polite">
+        <bdi className="collection-breakdown-total">{wishReady ? formatBreakdown(breakdown.total) : '—'}</bdi>
+        <span>{valueMode ? complete ? text.totalValue : text.partialValue : text.totalCards}</span>
+      </div>
+      {wishReady && <>
+        <div className="collection-breakdown-bar" role="img" aria-label={segments.map(item=>`${item.label}: ${item.percent}, ${item.full}`).join('; ')}>
+          {segments.filter(item => (item.share ?? 0)>0).map(item=><div key={item.key} data-category={item.key}
+            data-amount={item.amount ?? undefined} className="collection-breakdown-segment" style={{flexGrow:item.amount ?? 0}}
+            title={`${item.label}: ${item.percent} · ${item.full}`}>
+            {item.inline && <span className="collection-breakdown-labels" aria-hidden><bdi>{item.percent}</bdi><bdi>{item.short}</bdi></span>}
+          </div>)}
+        </div>
+        <div className="collection-breakdown-legend">
+          {segments.map(item=><div key={item.key} data-category={item.key} className="collection-breakdown-key">
+            <span><i aria-hidden />{item.label}</span>
+            {!item.inline && <bdi>{item.percent} · {item.full}</bdi>}
+          </div>)}
+        </div>
+        {valueMode && <div className="collection-breakdown-note"><span>{text.lp}</span><span>{number(breakdown.covered)}/{number(breakdown.count)} {text.priced}{priceLoading?' · …':''}</span></div>}
+        {valueMode && <p className="sr-only">{text.estimateNote}</p>}
+      </>}
+      {!wishReady && <p className="collection-note">{wish.error ? text.wishlistFailed : text.loading} {wish.error && <button type="button" onClick={wish.retry}>{text.retry}</button>}</p>}
+    </Card>
     {figures.unknown > 0 && <p className="collection-note">{number(figures.unknown)} {text.unknown}</p>}
 
     <div className="collection-highlights"><CardCarousel title={text.favorites} actionLabel={text.choose} onAction={() => setChoosing(true)}

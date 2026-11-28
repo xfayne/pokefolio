@@ -3,7 +3,7 @@ import { createSampleCopies, sampleOwner, sampleQuotes } from '@/features/invent
 import { catalogCards, catalogMarketReference } from '@/features/catalog/catalog';
 import type { CopyQuote } from '@/domain/inventory';
 import type { Money } from '@/domain/schema';
-import { remainingWishes, selectCollectionOverview, selectWishlistBudget } from './overview-model';
+import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown } from './overview-model';
 
 const convert = (money: Money) => money.currency === 'USD' ? money.minor : null;
 const input = () => ({owner:sampleOwner,copies:createSampleCopies(),catalog:catalogCards,quotes:sampleQuotes,currency:'USD' as const,fx:[],convert});
@@ -73,5 +73,36 @@ describe('Collection overview projections', () => {
     expect(result.above.find(holding=>holding.copy.id==='charizard-b')!.roi).toBeNull();
     data.copies = data.copies.map(copy=>copy.id==='charizard-a' ? {...copy,shippingCost:{status:'unknown',reason:'Not recorded'}} : copy);
     expect(selectCollectionOverview(data).holdings.find(holding=>holding.copy.id==='charizard-a')!.gain).toBeNull();
+  });
+});
+
+describe('Collection breakdown', () => {
+  it('uses the same metric for total, shares and segment amounts, including pending market quotes', () => {
+    const figures = selectCollectionOverview(input());
+    const budget = {minor:90000, covered:9, total:9};
+    expect(figures.pendingValue).toBe(4200);
+    expect(figures.pendingPriced).toBe(1);
+    const value = selectCollectionBreakdown(figures,budget,'value');
+    expect(value.total).toBe(148700);
+    expect(value.categories.map(item=>item.amount)).toEqual([54500,4200,90000]);
+    expect(value.categories[2]!.share).toBeCloseTo(90000/148700);
+    expect(value.covered).toBe(13);
+    expect(value.count).toBe(14);
+    const quantity = selectCollectionBreakdown(figures,budget,'quantity');
+    expect(quantity.total).toBe(14);
+    expect(quantity.categories.map(item=>item.amount)).toEqual([4,1,9]);
+    expect(quantity.categories[0]!.share).toBeCloseTo(4/14);
+  });
+  it('does not invent prices or percentages for unpriced, zero or empty groups', () => {
+    const figures = selectCollectionOverview({...input(),quotes:[]});
+    const unknown = selectCollectionBreakdown(figures,{minor:null,covered:0,total:2},'value');
+    expect(unknown.total).toBeNull();
+    expect(unknown.categories.map(item=>item.share)).toEqual([null,null,null]);
+    const empty = selectCollectionBreakdown(selectCollectionOverview({...input(),copies:[]}),{minor:0,covered:0,total:0},'value');
+    expect(empty.total).toBe(0);
+    expect(empty.categories.map(item=>item.share)).toEqual([null,null,null]);
+    const partial = selectCollectionBreakdown(figures,{minor:100,covered:1,total:2},'value');
+    expect(partial.categories.map(item=>item.share)).toEqual([null,null,1]);
+    expect(partial.covered).toBe(1);
   });
 });

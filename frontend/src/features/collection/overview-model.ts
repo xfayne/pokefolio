@@ -1,4 +1,4 @@
-import { catalogIdentity, selectInventory, type CopyQuote, type InventoryCatalogCard } from '@/domain/inventory';
+import { catalogIdentity, selectInventory, type CopyQuote, type CopyView, type InventoryCatalogCard } from '@/domain/inventory';
 import { acquisitionBasis, referenceConverter, type FxRow } from '@/domain/performance';
 import { safeInteger } from '@/domain/money';
 import type { CardCopy, Condition, Currency, Money } from '@/domain/schema';
@@ -43,13 +43,21 @@ export function selectCollectionOverview(input: {
 }) {
   const inventory = selectInventory(input.owner, input.copies, input.catalog, input.quotes, 'USD');
   const historical = referenceConverter(input.fx);
-  const holdings: Holding[] = inventory.groups.flatMap(group => group.card ? group.copies.flatMap(view => {
+  const marketFor = (view: CopyView) => {
     const copy = view.copy;
-    if (copy.possession !== 'received') return [];
     // The current provider covers English only. Unknown/foreign language must not inherit its prices.
     const english = copy.catalog.kind === 'identified' && copy.catalog.language.status === 'known'
       && ['en', 'english'].includes(copy.catalog.language.value.toLowerCase());
-    const market = english && view.market.status !== 'unavailable' ? input.convert(view.market) : null;
+    return english && view.market.status !== 'unavailable' ? input.convert(view.market) : null;
+  };
+  const pendingMarkets = inventory.groups.flatMap(group => group.card ? group.copies
+    .filter(view => view.copy.possession === 'pending').map(marketFor) : []);
+  const pendingKnown = pendingMarkets.filter((minor): minor is number => minor !== null);
+  const pendingValue = safeInteger(pendingKnown.reduce((sum, minor) => sum + BigInt(minor), 0n));
+  const holdings: Holding[] = inventory.groups.flatMap(group => group.card ? group.copies.flatMap(view => {
+    const copy = view.copy;
+    if (copy.possession !== 'received') return [];
+    const market = marketFor(view);
     const basis = acquisitionBasis([copy.cardCost, copy.shippingCost, copy.taxCost, copy.feeCost],
       copy.acquiredOn.status === 'known' ? copy.acquiredOn.value : null, input.currency, historical);
     const amount = basis.status === 'unavailable' ? null : basis.minor;
@@ -69,10 +77,30 @@ export function selectCollectionOverview(input: {
   const topValue = safeInteger(top.reduce((sum, group) => sum + BigInt(group.minor), 0n));
   return {
     received: inventory.counts.received, pending: inventory.counts.pending, unknown: inventory.counts.unknownPossession,
-    holdings, top, total, topValue, priced: holdings.filter(holding => holding.market !== null).length,
+    holdings, top, total, topValue, pendingValue, pendingPriced: pendingKnown.length, priced: holdings.filter(holding => holding.market !== null).length,
     compared: holdings.filter(holding => holding.gain !== null).length,
     comparableTotal: inventory.counts.received,
     above: holdings.filter(holding => holding.gain !== null && holding.gain > 0).sort((a,b) => b.gain! - a.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
     below: holdings.filter(holding => holding.gain !== null && holding.gain < 0).sort((a,b) => a.gain! - b.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),
   };
+}
+
+export type BreakdownMode = 'value' | 'quantity';
+export function selectCollectionBreakdown(
+  figures: Pick<ReturnType<typeof selectCollectionOverview>, 'received' | 'pending' | 'total' | 'priced' | 'pendingValue' | 'pendingPriced'>,
+  budget: ReturnType<typeof selectWishlistBudget>, mode: BreakdownMode,
+) {
+  const categories = [
+    {key:'received' as const, count:figures.received, minor:figures.priced || !figures.received ? figures.total : null, covered:figures.priced},
+    {key:'pending' as const, count:figures.pending, minor:figures.pendingPriced || !figures.pending ? figures.pendingValue : null, covered:figures.pendingPriced},
+    {key:'wishlist' as const, count:budget.total, minor:budget.minor, covered:budget.covered},
+  ];
+  const count = categories.reduce((sum, item) => sum + item.count, 0);
+  const covered = categories.reduce((sum, item) => sum + item.covered, 0);
+  const minor = covered || !count ? safeInteger(categories.reduce((sum, item) => sum + BigInt(item.minor ?? 0), 0n)) : null;
+  const total = mode === 'value' ? minor : count;
+  return { total, count, covered, categories: categories.map(item => {
+    const amount = mode === 'value' ? item.minor : item.count;
+    return {...item, amount, share: amount !== null && total !== null && total > 0 ? amount / total : null};
+  }) };
 }

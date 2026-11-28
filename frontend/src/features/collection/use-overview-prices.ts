@@ -12,7 +12,7 @@ const catalog = new Map(catalogCards.map(card => [card.id, card]));
 export function useOverviewPrices(copies: readonly CardCopy[], wishIds: readonly string[], enabled: boolean) {
   const references = new Map<string, CatalogRef>(currentCopies(copies).flatMap(copy => {
     const ref = copy.catalog;
-    return copy.possession === 'received' && copy.condition.status === 'known' && ref.kind === 'identified'
+    return (copy.possession === 'received' || copy.possession === 'pending') && copy.condition.status === 'known' && ref.kind === 'identified'
       && ref.language.status === 'known' && ['en', 'english'].includes(ref.language.value.toLowerCase())
       && ref.edition !== 'unknown' && ref.finish.status === 'known' ? [[catalogIdentity(ref), ref] as const] : [];
   }));

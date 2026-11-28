@@ -9,11 +9,20 @@ test('Collection overview counts received/pending copies and keeps LP wishes sep
   await expect(overview.locator('[data-metric="received"] .collection-metric-value')).toHaveText('4');
   await expect(overview.locator('[data-metric="pending"] .collection-metric-value')).toHaveText('1');
   await expect(overview.locator('[data-metric="wishlist"] .collection-metric-value')).toHaveText('9');
-  await expect(overview.locator('[data-metric="budget"] .collection-metric-value')).toContainText('$670');
-  await expect(overview.locator('.collection-budget-note')).toContainText('8/9 priced');
-  await expect(overview.locator('.collection-budget-note')).toContainText('Partial estimate');
-  await expect(overview.getByRole('combobox')).toHaveCount(0);
-  await expect(overview.getByText('LP · card prices only')).toBeVisible();
+  await expect(overview.locator('.collection-metric')).toHaveCount(3);
+  const breakdown = overview.locator('.collection-breakdown');
+  const metric = breakdown.getByRole('combobox',{name:'Breakdown metric'});
+  await expect(metric).toHaveValue('value');
+  await expect(breakdown.getByText('Partial market value')).toBeVisible();
+  await expect(breakdown.locator('.collection-breakdown-bar')).toHaveAttribute('aria-label', /In Collection: .*\$545; On the Way: .*\$42; Wishlist: .*\$670/);
+  await expect(breakdown.locator('.collection-breakdown-note')).toContainText('12/14 priced');
+  await expect(breakdown.getByText('Wishlist · LP')).toBeVisible();
+  await metric.selectOption('quantity');
+  await expect(breakdown.locator('.collection-breakdown-total')).toHaveText('14');
+  await expect(breakdown.getByText('Total cards')).toBeVisible();
+  await expect(breakdown.locator('.collection-breakdown-bar')).toHaveAttribute('aria-label', /In Collection: .*4; On the Way: .*1; Wishlist: .*9/);
+  await expect(breakdown.locator('.collection-breakdown-note')).toHaveCount(0);
+  await metric.selectOption('value');
   await expect(overview.locator('.collection-concentration')).toContainText('3/4 received copies priced');
   await overview.locator('[data-metric="received"]').click();
   await expect(page.getByLabel('Delivery status')).toHaveValue('received');
@@ -50,6 +59,8 @@ test('Collection overview fits narrow screens, remains accessible, and supports 
   for (const width of [320,390,768]) {
     await page.setViewportSize({width,height:844});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const tops = await page.locator('.collection-metric').evaluateAll(items=>items.map(item=>item.getBoundingClientRect().top));
+    expect(new Set(tops).size).toBe(1);
   }
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:test.info().outputPath('collection-overview-en.png'),fullPage:true});
@@ -58,7 +69,7 @@ test('Collection overview fits narrow screens, remains accessible, and supports 
   await page.getByRole('button',{name:'עברית',exact:true}).click();
   await page.getByRole('button',{name:'סגירה',exact:true}).click();
   await expect(page.getByRole('article',{name:'סקירת האוסף'})).toBeVisible();
-  await expect(page.getByRole('article').getByText('LP · מחירי קלפים בלבד')).toBeVisible();
+  await expect(page.getByRole('article').getByText('רשימת משאלות · LP')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await page.screenshot({path:test.info().outputPath('collection-overview-he.png'),fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
