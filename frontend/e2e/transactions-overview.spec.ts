@@ -20,6 +20,8 @@ test('the Transactions overview shares a bottom period control and hands off to 
 
   const onTheWay = page.getByRole('region', { name: 'Cards on the way' });
   await expect(onTheWay.getByRole('listitem')).toHaveCount(3);
+  const art = (await onTheWay.locator('.card-carousel-art').first().boundingBox())!;
+  expect(art.width / art.height).toBeCloseTo(63 / 88, 2);
   expect((await onTheWay.boundingBox())!.y).toBeLessThan((await page.getByRole('region', { name: 'Shipment updates' }).boundingBox())!.y);
   await onTheWay.getByRole('button', { name: 'View all' }).click();
   await expect(page.getByRole('dialog').getByText('3 results', { exact: true })).toBeVisible();
