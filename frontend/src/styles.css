@@ -468,8 +468,8 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard-note { font-size: 0.625rem; line-height: 1.4; color: #526178; margin: 0.3125rem 0 0; }
 .dashboard-text-link { color: #0047d1; text-decoration: underline; font-weight: var(--font-weight-bold); cursor: pointer; }
 .dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
-.dashboard-section-heading > button, .dashboard-month-link { color: #1010c5; font-weight: var(--font-weight-bold); font-size: 0.875rem; display: flex; align-items: center; gap: 0.125rem; white-space: nowrap; cursor: pointer; }
-.dashboard-section-heading button svg, .dashboard-month-link svg { width: 1.125rem; height: 1.125rem; }
+.dashboard-section-heading > :is(button,a), .dashboard-month-link { color: #1010c5; font-weight: var(--font-weight-bold); font-size: 0.875rem; display: flex; align-items: center; gap: 0.125rem; white-space: nowrap; cursor: pointer; }
+.dashboard-section-heading :is(button,a) svg, .dashboard-month-link svg { width: 1.125rem; height: 1.125rem; }
 .card-carousel { border-radius: 1rem; }
 .card-carousel h2 { font-size: 1rem; font-weight: var(--font-weight-bold); }
 .card-carousel-track {
@@ -491,9 +491,9 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .card-carousel-track > li { min-width: 0; scroll-snap-align: start; }
 .card-carousel-track button { width: 100%; min-width: 0; text-align: center; border-radius: 0.625rem; cursor: pointer; }
 .card-carousel-track button:focus-visible { outline-offset: -2px; }
-.card-carousel .card-carousel-art { width: 100%; max-width: 100%; aspect-ratio: 63 / 88; border-width: 0; border-radius: 0.625rem; background: transparent; box-shadow: 0 2px 5px #216dc226; }
+.card-carousel .card-carousel-art { width: 100%; height: auto; max-width: 100%; aspect-ratio: 63 / 88; border-width: 0; border-radius: 0.625rem; background: transparent; box-shadow: 0 2px 5px #216dc226; }
 .card-carousel-art .pokemon-art-window { position: absolute; inset: 0; background: transparent; }
-.card-carousel-art img { padding: 0; object-fit: contain; }
+.card-carousel-art img { padding: 0; object-fit: contain; object-position: center; transform: none; }
 .card-carousel-track button > :is(strong, span:not(.sr-only,.card-carousel-art)) { display: block; margin-top: 0.375rem; font-size: clamp(0.6875rem, 3vw, 0.875rem); line-height: 1.3; overflow-wrap: anywhere; }
 .card-carousel-track button > .card-carousel-detail { margin-top: 0.125rem; color: #475569; font-size: 0.6875rem; }
 .dashboard-month { border-radius: 1.25rem; padding: 0.875rem; }
@@ -514,7 +514,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dashboard-holdings bdi { font-size: 1.125rem; font-weight: var(--font-weight-bold); white-space: nowrap; }
 .dashboard-holdings button > svg { width: 1rem; height: 1rem; flex-shrink: 0; }
 .dashboard-empty { color: #526178; font-size: 0.8125rem; margin: 0; padding-block: 0.75rem; }
-[dir="rtl"] .dashboard-section-heading button > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
+[dir="rtl"] .dashboard-section-heading :is(button,a) > svg, [dir="rtl"] .dashboard-month-link > svg, [dir="rtl"] .dashboard-holdings button > svg { transform: rotate(180deg); }
 @media (min-width: 640px) { .dashboard-banner { margin-inline: -1.5rem; } }
 
 /* Deals-only sheet treatment; other utility sheets keep the Adventure Blue header. */
