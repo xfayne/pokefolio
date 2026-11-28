@@ -177,7 +177,7 @@ export function OverviewPage() {
     <Card className="overview-shipments" aria-labelledby={`${id}-shipments`}>
       <div className="dashboard-section-heading">
         <h2 id={`${id}-shipments`} className="font-bold">{text.shipments}</h2>
-        <Link className="dashboard-month-link" to={{ pathname: '/transactions/history', search: shipmentHistory.toString() }}>
+        <Link to={{ pathname: '/transactions/history', search: shipmentHistory.toString() }}>
           {text.allShipments}<LuChevronRight aria-hidden />
         </Link>
       </div>
