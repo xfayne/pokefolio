@@ -1,7 +1,7 @@
 import {useDisplayCurrency,useDisplayMoney} from '@/services/display-currency';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuChevronRight, LuFilter, LuShoppingCart, LuTag } from 'react-icons/lu';
+import { LuChevronRight, LuFilter, LuShoppingCart, LuTag, LuX } from 'react-icons/lu';
 import { TransactionStatus } from './transaction-status';
 import { Button } from '@/components/ui/button';
 import { DisclosureButton, DisclosureContent } from '@/components/ui/disclosure';
@@ -15,8 +15,8 @@ import { groupHistory, selectHistory, type HistoryData, type HistoryFilters, typ
 
 const initialFilters: HistoryFilters = { query: '', kind: 'all', currency: 'all', status: 'all' };
 const statuses = ['inTransit', 'received', 'pending', 'partial', 'unknown', 'completed', 'reversed'] as const;
-export function TransactionHistory({ data, empty, onOpen, canOpen }: {
-  data: HistoryData; empty?: ReactNode; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
+export function TransactionHistory({ data, empty, onOpen, canOpen, shipmentIds, clearShipmentFilter }: {
+  data: HistoryData; shipmentIds?: ReadonlySet<string> | undefined; clearShipmentFilter?: (() => void) | undefined; empty?: ReactNode; onOpen?: (id: string) => void; canOpen?: (row: HistoryRow) => boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [filters, setFilters] = useState(initialFilters);
@@ -24,7 +24,8 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   const [notice, setNotice] = useState('');
   const id = useId();
   const rows = useMemo(() => selectHistory(data), [data]);
-  const months = useMemo(() => groupHistory(rows, filters), [rows, filters]);
+  const visibleRows = shipmentIds ? rows.filter(row => shipmentIds.has(row.id)) : rows;
+  const months = useMemo(() => groupHistory(visibleRows, filters), [visibleRows, filters]);
   const display=useDisplayCurrency(); const formatDisplay=useDisplayMoney();
   const monthlyTotal=(month:ReturnType<typeof groupHistory>[number])=>{
     if (!display) return null;
@@ -41,6 +42,9 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
   const advancedCount = Number(filters.currency !== 'all') + Number(filters.status !== 'all');
   return <section className="transaction-history" aria-label={t('transactionHistory.title')}>
     <div className="history-tools">
+      {clearShipmentFilter && <Button variant="outline" onClick={clearShipmentFilter} className="mb-2">
+        {i18n.language === 'he' ? 'משלוחים' : 'Shipments'}<LuX aria-hidden className="size-4" />
+      </Button>}
       <div className="history-search-row">
         <SearchInput label={t('transactionHistory.search')} placeholder={t('transactionHistory.searchShort')} value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} />
         <Select className="history-kind-select" aria-label={t('transactionHistory.type')} value={filters.kind} onChange={e => setFilters(f => ({ ...f, kind: e.target.value as HistoryFilters['kind'] }))}>
@@ -65,7 +69,7 @@ export function TransactionHistory({ data, empty, onOpen, canOpen }: {
       </DisclosureContent>
     </div>
     <p role="status" className={notice ? 'text-sm text-slate-600' : 'sr-only'}>{notice}</p>
-    {!rows.length && empty ? empty : !months.length ? <EmptyState title={t('transactionHistory.noResults')} description={t('transactionHistory.noResultsDetail')} action={<Button variant="outline" onClick={() => setFilters(initialFilters)}>{t('transactionHistory.reset')}</Button>} /> : months.map(month => <section key={month.month ?? 'undated'} aria-labelledby={`${id}-${month.month ?? 'undated'}`} className="history-month">
+    {!rows.length && empty ? empty : !months.length ? <EmptyState title={t('transactionHistory.noResults')} description={t('transactionHistory.noResultsDetail')} action={<Button variant="outline" onClick={() => { setFilters(initialFilters); clearShipmentFilter?.(); }}>{t('transactionHistory.reset')}</Button>} /> : months.map(month => <section key={month.month ?? 'undated'} aria-labelledby={`${id}-${month.month ?? 'undated'}`} className="history-month">
       <div className="history-month-heading">
         <h2 id={`${id}-${month.month ?? 'undated'}`}>{month.month ? date(month.month, true) : t('transactionHistory.undated')}</h2>
         <div className="history-month-totals" title={t('transactionHistory.monthTotal')}>
