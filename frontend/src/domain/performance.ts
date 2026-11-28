@@ -1,4 +1,4 @@
-import {cardCopySchema, currencySchema, dateSchema, idSchema, type CardCopy, type CatalogRef, type Condition, type Cost, type Currency, type Money, type Revision} from './schema';
+import {cardCopySchema, currencySchema, dateSchema, idSchema, type CardCopy, type CatalogRef, type Condition, type Cost, type Currency, type Money, type Revision,type Sale,type SaleLine} from './schema';
 import {portfolioRecordSchema,recordKey,type PortfolioRecord} from './persistence';
 import {catalogIdentity,type InventoryCatalogCard} from './inventory';
 import {costBasis,netSaleProceeds,safeInteger,type Metric} from './money';
@@ -51,6 +51,35 @@ export function acquisitionBasis(costs:readonly Cost[],date:string|null,currency
  if(native.status==='unavailable')return native;
  const converted=convert(native,currency,date);
  return converted.status==='unavailable'?converted:{...converted,status:native.status==='estimated'?'estimated':converted.status};
+}
+export function selectSaleFigures(
+ sales:readonly Sale[],saleLines:readonly SaleLine[],copies:readonly CardCopy[],
+ currency:Currency,convert:ReturnType<typeof referenceConverter>,
+):RealizedSaleEvent[]{
+ const copiesById=new Map(copies.map(copy=>[copy.id,copy]));
+ const linesBySale=new Map<string,SaleLine[]>();
+ for(const line of saleLines){
+  const lines=linesBySale.get(line.transactionId)??[];
+  lines.push(line);
+  linesBySale.set(line.transactionId,lines);
+ }
+ // Use the same audited sale membership and dated FX for all three numbers:
+ // net proceeds, frozen acquisition basis, and their difference.
+ return sales.filter(sale=>!sale.reversedAt).map(sale=>{
+  const lines=linesBySale.get(sale.id)??[];
+  const validMembership=lines.length>0&&(!sale.copyIds||(lines.length===sale.copyIds.length&&lines.every(l=>sale.copyIds!.includes(l.copyId))));
+  const costs=validMembership?lines.map(line=>{
+   const copy=copiesById.get(line.copyId);
+   return copy&&line.basisCosts?acquisitionBasis(line.basisCosts,copy.acquiredOn.status==='known'?copy.acquiredOn.value:null,currency,convert):unavailable('Frozen sale basis unavailable');
+  }):[];
+  const basisTotal=validMembership&&costs.every(c=>c.status!=='unavailable')?sum(costs,currency):null;
+  const basis:Metric=basisTotal!==null&&basisTotal.minor!==null
+   ?{status:basisTotal.estimated?'estimated':'exact',currency,minor:basisTotal.minor}
+   :unavailable('Incomplete sale basis');
+  const net=netSaleProceeds(sale);
+  const proceeds=validMembership?(net.status==='unavailable'?net:convert(net,currency,sale.transactionOn)):unavailable('Incomplete sale membership');
+  return {id:sale.id,date:sale.transactionOn,basis,proceeds,profit:subtract(proceeds,basis)};
+ });
 }
 const stable=(v:unknown):string=>JSON.stringify(v&&typeof v==='object'?Array.isArray(v)?v.map(x=>JSON.parse(stable(x))):Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>[k,JSON.parse(stable(x))])):v);
 
@@ -114,26 +143,7 @@ export function selectPerformance(input:PerformanceInput) {
  const unrealized=sum(holdings.map(h=>subtract(h.market,h.basis)),currency);
  const matchedBasis=sum(holdings.filter(h=>h.market.status!=='unavailable'&&h.basis.status!=='unavailable').map(h=>h.basis),currency);
  const roi=matchedBasis.minor&&unrealized.minor!==null?unrealized.minor/matchedBasis.minor*100:null;
- const activeSales=transactions.filter(t=>t.kind==='sale'&&!t.reversedAt);
- // Use the same audited sale membership and dated FX for all three numbers:
- // net proceeds, frozen acquisition basis, and their difference.
- const saleFigures:RealizedSaleEvent[]=activeSales.flatMap(sale=>{
-  if(sale.kind!=='sale')return [];
-
-  const lines=saleLines.filter(l=>l.transactionId===sale.id);
-  const validMembership=lines.length>0&&(!sale.copyIds||(lines.length===sale.copyIds.length&&lines.every(l=>sale.copyIds!.includes(l.copyId))));
-  const costs=validMembership?lines.map(line=>{
-   const copy=copies.find(c=>c.id===line.copyId);
-   return copy&&line.basisCosts?acquisitionBasis(line.basisCosts,acquired(copy),currency,convert):unavailable('Frozen sale basis unavailable');
-  }):[];
-  const basisTotal=validMembership&&costs.every(c=>c.status!=='unavailable')?sum(costs,currency):null;
-  const basis:Metric=basisTotal!==null&&basisTotal.minor!==null
-   ?{status:basisTotal.estimated?'estimated':'exact',currency,minor:basisTotal.minor}
-   :unavailable('Incomplete sale basis');
-  const net=netSaleProceeds(sale);
-  const proceeds=validMembership?(net.status==='unavailable'?net:convert(net,currency,sale.transactionOn)):unavailable('Incomplete sale membership');
-  return [{id:sale.id,date:sale.transactionOn,basis,proceeds,profit:subtract(proceeds,basis)}];
- });
+ const saleFigures=selectSaleFigures(transactions.filter(t=>t.kind==='sale'),saleLines,copies,currency,convert);
  const realized=sum(saleFigures.map(s=>s.profit),currency);
  const realizedProceeds=sum(saleFigures.map(s=>s.proceeds),currency);
  const soldCostBasis=sum(saleFigures.map(s=>s.basis),currency);
@@ -165,7 +175,7 @@ export function selectPerformance(input:PerformanceInput) {
   return payable?convert(payable,currency,purchaseDate(p)):unavailable('Unknown purchase amount');
  }),currency);
  const monthCopyCount=copies.filter(c=>c.acquisition.kind==='purchase'&&monthPurchases.some(p=>p.id===(c.acquisition.kind==='purchase'?c.acquisition.transactionId:null))).length;
- const recent=copies.filter(c=>c.acquisition.kind==='purchase'&&purchases.some(p=>p.id===(c.acquisition.kind==='purchase'?c.acquisition.transactionId:null))).sort((a,b)=>(acquired(b)??'').localeCompare(acquired(a)??'')||b.createdAt.localeCompare(a.createdAt)||a.id.localeCompare(b.id)).slice(0,3).map(copy=>({copy,paid:copy.cardCost.status==='exact'||copy.cardCost.status==='estimated'?convert(copy.cardCost.value,currency,acquired(copy)):unavailable('Unknown acquisition cost')}));
+ const recent=copies.filter(c=>c.acquisition.kind==='purchase'&&purchases.some(p=>p.id===(c.acquisition.kind==='purchase'?c.acquisition.transactionId:null))).sort((a,b)=>(acquired(b)??'').localeCompare(acquired(a)??'')||b.createdAt.localeCompare(a.createdAt)||a.id.localeCompare(b.id)).slice(0,12).map(copy=>({copy,paid:copy.cardCost.status==='exact'||copy.cardCost.status==='estimated'?convert(copy.cardCost.value,currency,acquired(copy)):unavailable('Unknown acquisition cost')}));
  const top=holdings.filter(h=>h.market.status!=='unavailable').sort((a,b)=>(b.market.status==='unavailable'?0:b.market.minor)-(a.market.status==='unavailable'?0:a.market.minor)||a.copy.id.localeCompare(b.copy.id)).slice(0,3);
  return {value,knownCost,unrealized,realized,realizedProceeds,soldCostBasis,saleEvents:saleFigures,roi,holdings,points,recent,top,month:{month,spend,copies:monthCopyCount,undatedPurchases:purchases.filter(p=>purchaseDate(p)===null).length},pending:copies.filter(c=>c.possession==='pending'&&c.disposition==='held').length,stale:holdings.some(h=>h.stale),historicalFrom:points[0]?.date??null};
 }
