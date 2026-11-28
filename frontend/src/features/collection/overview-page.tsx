@@ -17,7 +17,7 @@ import { createSampleCopies, sampleOwner, sampleQuotes } from '@/features/invent
 import { catalogCards, catalogMarketReference } from '@/features/catalog/catalog';
 import { useMarketChange } from '../inventory/use-market-change';
 import { compareMarketChanges } from '../inventory/market-change';
-import { CollectionCardRow, MarketChangeMetric } from '../inventory/collection-card-row';
+import { CollectionCardRow, MarketChangeMetric, marketChangeDetail } from '../inventory/collection-card-row';
 import { ListCard } from '@/components/ui/list-card';
 import type { CopyQuote, InventoryCatalogCard } from '@/domain/inventory';
 import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode } from './overview-model';
@@ -199,8 +199,9 @@ export function CollectionOverviewPage() {
       <ul className="space-y-1.5 collection-change-list">{rankedChanges.map(item=><ListCard key={item.card.id}>
         <CollectionCardRow name={item.card.name} subtitle={`${item.card.setName} · #${item.card.number}`} imageUrl={item.card.imageUrl}
           detailsLabel={t('inventory.details')} onOpen={()=>openCollection('all',item.copyId,changeSort)}
+          detail={marketChangeDetail(item.change,format,text.cost,text.market)}
           metric={<MarketChangeMetric change={item.change} format={formatGain} locale={i18n.language} unavailable={t('inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>}
-          action={<button type="button" aria-label={`${t('inventory.details')}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
+          action={<button type="button" aria-label={`${text.viewAll}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
       </ListCard>)}</ul>
       {!rankedChanges.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : !figures.compared ? text.comparisonEmpty : gainSide==='above'?text.noGainers:text.noLosers}</p>}
     </Card>

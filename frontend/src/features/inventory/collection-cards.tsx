@@ -15,7 +15,7 @@ import { selectInventory, visibleCopyMarket, type CopyMetadataEdit, type CopyVie
 import { CardMarketPrice } from './card-market-price';
 import { bestCopy } from './copy-condition';
 import { compareCollectionGroups, type CollectionSort } from './sort-collection';
-import { CollectionCardRow, MarketChangeMetric } from './collection-card-row';
+import { CollectionCardRow, MarketChangeMetric, marketChangeDetail } from './collection-card-row';
 import { compareCopyToMarket, summarizeMarketChange } from './market-change';
 import { useMarketChange } from './use-market-change';
 import { referenceConverter } from '@/domain/performance';
@@ -52,6 +52,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
   const {currency:changeCurrency,convert:changeConvert,fx:changeFx}=useMarketChange(data.copies,changeMode,!onSave||comparisonPreview);
   const historical=referenceConverter(changeFx.rows);
   const changes=new Map(changeMode?groups.map(g=>[g.key,summarizeMarketChange(g.copies.filter(v=>(v.copy.possession==='received'||v.copy.possession==='pending')&&(filter==='all'||v.copy.possession===filter)).map(v=>compareCopyToMarket(v,changeCurrency,historical,changeConvert)))] as const):[]);
+  const formatChangeAmount=(minor:number)=>new Intl.NumberFormat(i18n.language,{style:'currency',currency:changeCurrency,maximumFractionDigits:0}).format(minor/100);
   const formatGain=(minor:number)=>new Intl.NumberFormat(i18n.language,{style:'currency',currency:changeCurrency,maximumFractionDigits:0,signDisplay:'exceptZero'}).format(minor/100);
   groups.sort((a, b) => compareCollectionGroups(a, b, sort, visibleMarket, i18n.language,g=>changes.get(g.key)));
   const selectedGroup = inventory.groups.find(g => g.key === selected);
@@ -74,6 +75,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
     <ul className="space-y-1.5">{groups.map(g => <ListCard key={g.key}>
       <CollectionCardRow name={title(g)} subtitle={g.card?`${g.card.setName} · #${g.card.number}`:t('inventory.noCatalog')} imageUrl={g.card?.imageUrl} detailsLabel={t('inventory.details')}
         onOpen={()=>{setInitialInspection(null);setInitialCopy(null);setSelected(g.key);}}
+        detail={changeMode?marketChangeDetail(changes.get(g.key),formatChangeAmount,t('inventory.cost'),t('inventory.marketValue')):undefined}
         metric={changeMode?<MarketChangeMetric change={changes.get(g.key)} format={formatGain} locale={i18n.language} unavailable={t(pricesLoading||changeFx.loading?'loading':'inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>:<>
           <span className="text-xs font-medium leading-4 text-slate-600">{t('inventory.marketValue')}</span><span className={`text-xl font-bold tracking-tight ${visibleMarket(g).pricedCount?'text-slate-950':'text-amber-800'}`}>{visibleMarket(g).pricedCount?rowMoney(visibleMarket(g)):t(pricesLoading?'loading':'inventory.unpriced')}</span>{visibleMarket(g).pricedCount>0&&visibleMarket(g).missingCount>0&&<span className="text-[10px] text-slate-600">{visibleMarket(g).pricedCount}/{g.copies.length} {t('inventory.priced')}</span>}
         </>}

@@ -1,4 +1,4 @@
-import { catalogIdentity, selectInventory, type CopyQuote, type CopyView, type InventoryCatalogCard } from '@/domain/inventory';
+import { catalogIdentity, selectInventory, type CopyQuote, type InventoryCatalogCard } from '@/domain/inventory';
 import { referenceConverter, type FxRow } from '@/domain/performance';
 import { compareCopyToMarket, summarizeMarketChange, type MarketChange } from '../inventory/market-change';
 import { safeInteger } from '@/domain/money';
@@ -44,22 +44,13 @@ export function selectCollectionOverview(input: {
 }) {
   const inventory = selectInventory(input.owner, input.copies, input.catalog, input.quotes, 'USD');
   const historical = referenceConverter(input.fx);
-  const marketFor = (view: CopyView) => {
-    const copy = view.copy;
-    // The current provider covers English only. Unknown/foreign language must not inherit its prices.
-    const english = copy.catalog.kind === 'identified' && copy.catalog.language.status === 'known'
-      && ['en', 'english'].includes(copy.catalog.language.value.toLowerCase());
-    return english && view.market.status !== 'unavailable' ? input.convert(view.market) : null;
-  };
-  const pendingMarkets = inventory.groups.flatMap(group => group.card ? group.copies
-    .filter(view => view.copy.possession === 'pending').map(marketFor) : []);
-  const pendingKnown = pendingMarkets.filter((minor): minor is number => minor !== null);
-  const pendingValue = safeInteger(pendingKnown.reduce((sum, minor) => sum + BigInt(minor), 0n));
   const comparisons: Holding[] = inventory.groups.flatMap(group => group.card ? group.copies.flatMap(view => {
     if (view.copy.possession !== 'received' && view.copy.possession !== 'pending') return [];
     return [{copy:view.copy,card:group.card!,...compareCopyToMarket(view,input.currency,historical,input.convert)}];
   }) : []);
   const holdings = comparisons.filter(holding => holding.copy.possession === 'received');
+  const pendingKnown = comparisons.filter(holding=>holding.copy.possession==='pending'&&holding.market!==null);
+  const pendingValue = safeInteger(pendingKnown.reduce((sum,holding)=>sum+BigInt(holding.market!),0n));
   const byCopy = new Map(comparisons.map(holding=>[holding.copy.id,holding]));
   const changes = inventory.groups.flatMap(group=> {
     if (!group.card) return [];
