@@ -58,20 +58,13 @@ export function selectCollectionOverview(input: {
     const change: MarketChange = summarizeMarketChange(eligible.map(view=>byCopy.get(view.copy.id)!));
     return eligible.length ? [{card:group.card,copyId:eligible[0]!.copy.id,change}] : [];
   });
-  // Concentration is by catalog card, aggregating its physical copies.
-  const groups = new Map<string, { card: InventoryCatalogCard; copyId: string; minor: number }>();
-  for (const holding of holdings) if (holding.market !== null) {
-    const existing = groups.get(holding.card.id);
-    groups.set(holding.card.id, { card: holding.card, copyId: existing?.copyId ?? holding.copy.id,
-      minor: safeInteger(BigInt(existing?.minor ?? 0) + BigInt(holding.market)) });
-  }
-  const ranked = [...groups.values()].sort((a, b) => b.minor - a.minor || a.card.id.localeCompare(b.card.id));
-  const total = safeInteger(ranked.reduce((sum, group) => sum + BigInt(group.minor), 0n));
-  const top = ranked.slice(0, 5);
-  const topValue = safeInteger(top.reduce((sum, group) => sum + BigInt(group.minor), 0n));
+  // Match Dashboard: rank received physical copies, not catalog-group sums.
+  const pricedHoldings = holdings.filter(holding=>holding.market!==null);
+  const total = safeInteger(pricedHoldings.reduce((sum,holding)=>sum+BigInt(holding.market!),0n));
+  const top = [...pricedHoldings].sort((a,b)=>b.market!-a.market!||a.copy.id.localeCompare(b.copy.id)).slice(0,10);
   return {
     received: inventory.counts.received, pending: inventory.counts.pending, unknown: inventory.counts.unknownPossession,
-    holdings, top, total, topValue, pendingValue, pendingPriced: pendingKnown.length, priced: holdings.filter(holding => holding.market !== null).length,
+    holdings, top, total, pendingValue, pendingPriced: pendingKnown.length, priced: holdings.filter(holding => holding.market !== null).length,
     changes, compared: comparisons.filter(holding => holding.gain !== null).length,
     comparableTotal: inventory.counts.received + inventory.counts.pending,
     above: comparisons.filter(holding => holding.gain !== null && holding.gain > 0).sort((a,b) => b.gain! - a.gain! || a.copy.id.localeCompare(b.copy.id)).slice(0,3),

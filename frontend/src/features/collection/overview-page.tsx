@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuChartPie, LuSparkles, LuTruck, LuChartNoAxesCombined, LuChevronDown } from 'react-icons/lu';
+import { LuArrowDownRight, LuArrowUpRight, LuCheck, LuChevronRight, LuHeart, LuLayers, LuSparkles, LuTruck, LuChartNoAxesCombined, LuChevronDown } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { Card, EmptyState } from '@/components/ui/surfaces';
 import { PokemonArt } from '@/components/ui/pokemon-art';
@@ -19,6 +19,7 @@ import { useMarketChange } from '../inventory/use-market-change';
 import { compareMarketChanges } from '../inventory/market-change';
 import { CollectionCardRow, MarketChangeMetric, marketChangeDetail } from '../inventory/collection-card-row';
 import { ListCard } from '@/components/ui/list-card';
+import { TopHoldings } from '@/components/ui/top-holdings';
 import type { CopyQuote, InventoryCatalogCard } from '@/domain/inventory';
 import { remainingWishes, selectCollectionOverview, selectWishlistBudget, selectCollectionBreakdown, type BreakdownMode } from './overview-model';
 import { useOverviewPrices } from './use-overview-prices';
@@ -37,8 +38,8 @@ const labels = {
     comparison: 'Cost vs. Market', above: 'Top Gainers', below: 'Top Losers', viewAll: 'View all', noGainers: 'No cards above cost.', noLosers: 'No cards below cost.', cost: 'Cost', market: 'Market',
     compared: 'copies with comparable prices and costs', comparisonEmpty: 'Comparable market prices and complete acquisition costs will appear here.',
     even: 'Your priced cards are currently at their recorded cost.',
-    concentration: 'Value Concentration', top: 'Top', ofValue: 'of priced value', rest: 'Rest of collection',
-    concentrationEmpty: 'Available market prices will reveal how your collection value is distributed.',
+    top: 'Top Holdings',
+    topEmpty: 'No priced, received holdings yet.',
     receivedPriced: 'received copies priced', unknown: 'copies with unknown receipt status',
     loading: 'Loading prices…', wishlistFailed: 'Could not load Wishlist.', pricesFailed: 'Some prices or exchange rates are unavailable.',
     signIn: 'Sign in to see your collection overview.', explore: 'Explore sample collection', retry: 'Retry',
@@ -55,8 +56,8 @@ const labels = {
     comparison: 'עלות מול שווי', above: 'המובילים ברווח', below: 'המובילים בהפסד', viewAll: 'הצג הכול', noGainers: 'אין קלפים מעל העלות.', noLosers: 'אין קלפים מתחת לעלות.', cost: 'עלות', market: 'שוק',
     compared: 'עותקים עם מחיר שוק ועלות להשוואה', comparisonEmpty: 'כאן יוצגו קלפים עם מחיר שוק ועלות רכישה מלאה להשוואה.',
     even: 'שווי הקלפים המתומחרים שלך כרגע שווה לעלותם המתועדת.',
-    concentration: 'הרכב השווי', top: 'המובילים', ofValue: 'מהשווי המתומחר', rest: 'שאר האוסף',
-    concentrationEmpty: 'מחירי השוק הזמינים יציגו כיצד מתחלק שווי האוסף שלך.',
+    top: 'הקלפים היקרים באוסף',
+    topEmpty: 'עדיין אין עותקים שהתקבלו עם מחיר שוק.',
     receivedPriced: 'עותקים שהתקבלו מתומחרים', unknown: 'עותקים שסטטוס הקבלה שלהם לא ידוע',
     loading: 'טוען מחירים…', wishlistFailed: 'לא ניתן לטעון את רשימת המשאלות.', pricesFailed: 'חלק מהמחירים או שערי ההמרה אינם זמינים.',
     signIn: 'התחבר כדי לראות את סקירת האוסף שלך.', explore: 'צפייה באוסף לדוגמה', retry: 'ניסיון נוסף',
@@ -183,12 +184,6 @@ export function CollectionOverviewPage() {
     </Card>
     {figures.unknown > 0 && <p className="collection-note">{number(figures.unknown)} {text.unknown}</p>}
 
-    <div className="collection-highlights"><CardCarousel title={text.favorites} actionLabel={text.choose} onAction={() => setChoosing(true)}
-      items={highlights.map(holding => ({id:holding.copy.id,name:holding.card.name,imageUrl:holding.card.imageUrl,showName:true,
-        caption:holding.market === null ? holding.card.setName : format(holding.market),onOpen:()=>openCollection('received',holding.copy.id)}))}
-      empty={featured.loading ? text.loading : featured.error ? <>{text.favoriteFailed} <button type="button" onClick={featured.retry}>{text.retry}</button></> : <span className="collection-highlight-empty"><LuSparkles aria-hidden />{text.emptyFavorites}</span>} />
-    </div>
-
     <Card className="collection-comparison" aria-labelledby={`${id}-compare`}>
       <div className="collection-section-heading"><h2 id={`${id}-compare`}>{text.comparison}</h2><button type="button" className="collection-view-all" onClick={()=>openCollection('all',undefined,changeSort)}>{text.viewAll}<LuChevronRight aria-hidden className="rtl:rotate-180"/></button></div>
       <div className="collection-gain-switch" role="group" aria-label={text.comparison}>
@@ -201,27 +196,20 @@ export function CollectionOverviewPage() {
           detailsLabel={t('inventory.details')} onOpen={()=>openCollection('all',item.copyId,changeSort)}
           detail={marketChangeDetail(item.change,format,text.cost,text.market)}
           metric={<MarketChangeMetric change={item.change} format={formatGain} locale={i18n.language} unavailable={t('inventory.unavailable')} pricedLabel={t('inventory.comparable')}/>}
-          action={<button type="button" aria-label={`${text.viewAll}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
+          action={<button type="button" aria-label={`${t('inventory.copyDetails')}: ${item.card.name}`} className="flex w-11 shrink-0 items-center justify-center rounded-xl text-slate-950" onClick={()=>openCollection('all',item.copyId,changeSort)}><LuChevronRight aria-hidden className="rtl:rotate-180"/></button>}/>
       </ListCard>)}</ul>
       {!rankedChanges.length && <p className="collection-empty">{priceLoading || fx.loading ? text.loading : !figures.compared ? text.comparisonEmpty : gainSide==='above'?text.noGainers:text.noLosers}</p>}
     </Card>
 
-    <Card className="collection-concentration" aria-labelledby={`${id}-value`}>
-      <div className="collection-section-heading"><h2 id={`${id}-value`}>{text.concentration}</h2><LuChartPie aria-hidden /></div>
-      {figures.total > 0 ? <>
-        <div className="collection-concentration-summary"><div><span>{text.top} {number(figures.top.length)}</span>
-          <strong>{(figures.topValue/figures.total*100).toFixed(0)}<small>%</small></strong><span>{text.ofValue}</span></div>
-          <bdi>{format(figures.topValue)}</bdi></div>
-        <div className="collection-value-bar" role="img" aria-label={`${text.top} ${figures.top.length}: ${(figures.topValue/figures.total*100).toFixed(1)}%`}>
-          {figures.top.map((group,index)=><span key={group.card.id} data-rank={index} style={{flexGrow:group.minor}} />)}
-          {figures.total>figures.topValue&&<span data-rank="rest" style={{flexGrow:figures.total-figures.topValue}} />}
-        </div>
-        <ul className="collection-value-rows">{figures.top.map((group,index)=><li key={group.card.id}><button type="button" onClick={()=>openCollection('received',group.copyId)}>
-          <span className="collection-value-dot" data-rank={index} /><span>{group.card.name}</span><bdi>{format(group.minor)}</bdi><span>{(group.minor/figures.total*100).toFixed(1)}%</span>
-        </button></li>)}{figures.total>figures.topValue&&<li className="collection-value-rest"><span className="collection-value-dot" data-rank="rest" /><span>{text.rest}</span><bdi>{format(figures.total-figures.topValue)}</bdi><span>{((figures.total-figures.topValue)/figures.total*100).toFixed(1)}%</span></li>}</ul>
-      </> : <p className="collection-empty">{priceLoading ? text.loading : text.concentrationEmpty}</p>}
-      <p className="collection-note">{number(figures.priced)}/{number(figures.received)} {text.receivedPriced}</p>
-    </Card>
+    <div className="collection-highlights"><CardCarousel title={text.favorites} actionLabel={text.choose} onAction={() => setChoosing(true)}
+      items={highlights.map(holding => ({id:holding.copy.id,name:holding.card.name,imageUrl:holding.card.imageUrl,showName:true,
+        caption:holding.market === null ? holding.card.setName : format(holding.market),onOpen:()=>openCollection('received',holding.copy.id)}))}
+      empty={featured.loading ? text.loading : featured.error ? <>{text.favoriteFailed} <button type="button" onClick={featured.retry}>{text.retry}</button></> : <span className="collection-highlight-empty"><LuSparkles aria-hidden />{text.emptyFavorites}</span>} />
+    </div>
+
+    <TopHoldings id={`${id}-top`} title={text.top} actionLabel={text.viewAll} onViewAll={()=>openCollection('received',undefined,'value')}
+      items={figures.top.map(holding=>({id:holding.copy.id,name:holding.card.name,subtitle:`${holding.card.setName} · #${holding.card.number}`,imageUrl:holding.card.imageUrl,value:format(holding.market),onOpen:()=>openCollection('received',holding.copy.id)}))}
+      empty={priceLoading?text.loading:text.topEmpty}/>
     {!preview && (prices.failed || fx.failed || display?.failed) && <p className="collection-note" role="status">{text.pricesFailed} <button type="button" onClick={()=>{
       prices.retry();void fx.retry();
       if(display?.failed) { void client.invalidateQueries({queryKey:['reference-fx']}); void client.invalidateQueries({queryKey:['display-currency',account.owner]}); }

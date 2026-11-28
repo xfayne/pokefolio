@@ -42,10 +42,10 @@ describe('Collection overview projections', () => {
     expect(selectWishlistBudget(['neo2-13'],quotes,'LP',convert).minor).toBeNull();
     expect(selectWishlistBudget(['neo2-13'],[quote('neo2-13',100)],'LP',()=>null).covered).toBe(0);
   });
-  it('aggregates concentration by catalog card and ranks gains only with complete costs', () => {
+  it('ranks received physical holdings and compares only complete costs', () => {
     const result = selectCollectionOverview(input());
     expect(result.total).toBe(54500);
-    expect(result.top.map(group=>[group.card.id,group.minor])).toEqual([['base1-4',48000],['base3-5',6500]]);
+    expect(result.top.map(holding=>[holding.copy.id,holding.market])).toEqual([['charizard-a',26000],['charizard-b',22000],['gengar-a',6500]]);
     expect(result.priced).toBe(3);
     expect(result.above.map(holding=>[holding.copy.id,holding.gain])).toEqual([['charizard-a',8000],['charizard-b',7000],['gengar-a',2000]]);
     expect(result.compared).toBe(4);
@@ -107,4 +107,12 @@ describe('Collection breakdown', () => {
     expect(partial.categories.map(item=>item.share)).toEqual([null,null,1]);
     expect(partial.covered).toBe(1);
   });
+});
+
+it('limits top holdings to ten received priced physical copies',()=> {
+  const data=input(), original=data.copies[0]!;
+  data.copies.push(...Array.from({length:12},(_,i)=>({...original,id:`extra-${i}`})));
+  const result=selectCollectionOverview(data);
+  expect(result.top).toHaveLength(10);
+  expect(result.top.every(holding=>holding.copy.possession==='received'&&holding.market===26000)).toBe(true);
 });
