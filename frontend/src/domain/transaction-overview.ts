@@ -15,11 +15,6 @@ const combine = (a: Figures, b: Figures): Figures => ({
 const minor = (metric: Metric) => metric.status === 'unavailable' ? null : metric.minor;
 const dateAt = (date: Date) => date.toISOString().slice(0, 10);
 const dateObject = (date: string) => new Date(`${date}T00:00:00Z`);
-const shiftDay = (date: string, offset: number) => {
-  const next = dateObject(date);
-  next.setUTCDate(next.getUTCDate() + offset);
-  return dateAt(next);
-};
 const shiftMonth = (month: string, offset: number) => {
   const next = dateObject(`${month}-01`);
   next.setUTCMonth(next.getUTCMonth() + offset);
@@ -84,27 +79,14 @@ export function selectTransactionOverview(
   for (let month = start; month <= currentMonth; month = shiftMonth(month, 1)) {
     months.push({ date: `${month}-01`, figures: byMonth.get(month) ?? zero });
   }
-  const trend = [{ date: shiftDay(`${start}-01`, -1), figures: zero }];
-  let total = zero;
-  if (period === '1M') {
-    for (let date = `${start}-01`; date <= today; date = shiftDay(date, 1)) {
-      total = combine(total, activity.get(date) ?? zero);
-      trend.push({ date, figures: total });
-    }
-  } else {
-    for (const { date, figures } of months) {
-      total = combine(total, figures);
-      const nextMonth = `${shiftMonth(date.slice(0, 7), 1)}-01`;
-      trend.push({ date: nextMonth > today ? today : shiftDay(nextMonth, -1), figures: total });
-    }
-  }
+  const total = months.reduce((sum, month) => combine(sum, month.figures), zero);
   const selectedPurchases = new Set([...purchaseDates].filter(([, date]) =>
     date <= today && date.slice(0, 7) >= start).map(([id]) => id));
   const cardCount = data.copies.filter(copy =>
     copy.acquisition.kind === 'purchase' && selectedPurchases.has(copy.acquisition.transactionId)).length;
   const saleCount = sales.filter(sale => !sale.reversedAt && sale.transactionOn <= today && sale.transactionOn.slice(0, 7) >= start).length;
   return {
-    total, thisMonth: byMonth.get(currentMonth) ?? zero, months, trend, undated,
+    total, thisMonth: byMonth.get(currentMonth) ?? zero, months, undated,
     purchaseCount: selectedPurchases.size, cardCount, saleCount,
   };
 }
