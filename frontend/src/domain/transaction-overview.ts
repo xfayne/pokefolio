@@ -40,8 +40,8 @@ export function selectCardsOnTheWay({ copies, transactions }: HistoryData) {
     if (!purchase) return [];
     const date = copy.acquiredOn.status === 'known' ? copy.acquiredOn.value : transactionDate(purchase);
     return [{ copy, date, transactionId: purchase.id }];
-  }).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') ||
-    b.copy.createdAt.localeCompare(a.copy.createdAt) || a.copy.id.localeCompare(b.copy.id));
+  }).sort((a, b) => (a.date ?? '9999-12-31').localeCompare(b.date ?? '9999-12-31') ||
+    a.copy.createdAt.localeCompare(b.copy.createdAt) || a.copy.id.localeCompare(b.copy.id));
 }
 
 /** Recorded transactions only. Undated purchases cannot be placed on the charts. */
