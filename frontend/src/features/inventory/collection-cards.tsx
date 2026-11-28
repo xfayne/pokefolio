@@ -19,16 +19,16 @@ import { conditionSchema, type CardCopy, type Money, type CatalogRef } from '@/d
 
 export type InventoryData = Readonly<{ ownerUid: string; copies: readonly CardCopy[]; catalog: readonly InventoryCatalogCard[]; quotes: readonly CopyQuote[]; currency: Money['currency'] }>;
 export type SaveCopy = (copy: CardCopy, patch: CopyMetadataEdit) => Promise<void>;
-export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
+export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = false, inspectCopyId, cardCopyId, initialDeliveryFilter = 'all', onCloseCard, wishlistIds, onToggleWishlist, wishlistBusy }: { inspectCopyId?: string | undefined; cardCopyId?: string | null; initialDeliveryFilter?: 'all' | 'pending'; onCloseCard?: () => void; pricesLoading?: boolean; data: InventoryData; onSave?: SaveCopy | undefined; onViewPurchase?: (id: string) => void; wishlistIds?: readonly string[]; onToggleWishlist?: ((id: string) => Promise<void>) | undefined; wishlistBusy?: boolean }) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(initialDeliveryFilter === 'pending');
   const [sort, setSort] = useState<CollectionSort>('acquired');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState<string>(initialDeliveryFilter);
   const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
   const inventory = selectInventory(data.ownerUid, data.copies, data.catalog, data.quotes, data.currency);
-  const initialGroup = inventory.groups.find(g => g.copies.some(c => c.copy.id === inspectCopyId));
-  const [initialInspection, setInitialInspection] = useState<string | null>(initialGroup ? inspectCopyId! : null);
+  const initialGroup = inventory.groups.find(g => g.copies.some(c => c.copy.id === (cardCopyId ?? inspectCopyId)));
+  const [initialInspection, setInitialInspection] = useState<string | null>(initialGroup && !cardCopyId ? inspectCopyId ?? null : null);
   const [initialCopy, setInitialCopy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(initialGroup?.key ?? null);
   const [notice, setNotice] = useState('');
@@ -86,7 +86,7 @@ export function CollectionCards({ data, onSave, onViewPurchase, pricesLoading = 
         </div>)}
       </div></DisclosureContent>
     </ListCard>)}</ul>
-    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} wishlistIds={wishlistIds} onToggleWishlist={onToggleWishlist} wishlistBusy={!!wishlistBusy} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => setSelected(null)} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
+    {selectedGroup && <CardDetailsSheet livePrices={!!onViewPurchase && !!onSave} onViewPurchase={onViewPurchase} wishlistIds={wishlistIds} onToggleWishlist={onToggleWishlist} wishlistBusy={!!wishlistBusy} key={selectedGroup.key} group={selectedGroup} catalog={(bestCopy(selectedGroup.copies)?.copy ?? selectedGroup.copies[0]!.copy).catalog} quotes={data.quotes} currency={data.currency} initialCopy={initialCopy} initialInspection={initialInspection} onClose={() => { setSelected(null); onCloseCard?.(); }} onSave={onSave ? async (copy, patch) => { await onSave(copy, patch); setNotice(t('inventory.saved')); } : undefined} money={money} cost={cost} metric={metric} />}
   </section>;
 }
 
